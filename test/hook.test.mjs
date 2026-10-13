@@ -120,3 +120,24 @@ test('既定の記録先は ~/.local/state/testgate', async () => {
   assert.equal(logPath({ HOME: '/h' }), '/h/.local/state/testgate/log.jsonl')
   assert.equal(logPath({ HOME: '/h', XDG_STATE_HOME: '/s' }), '/s/testgate/log.jsonl')
 })
+
+// Grok（tool_name=run_terminal_command）と Cursor（tool_name=Shell）が ~/.claude/settings.json の hook を相乗りで呼んだ時は、記録も書き換えもせず通す
+for (const [name, event] of [
+  ['grok 相乗り', { tool_name: 'run_terminal_command', tool_input: { command: 'node --test a.test.mjs' }, tool_use_id: 'call-1', session_id: 's', transcript_path: '/home/x/.grok/sessions/s/updates.jsonl', cwd: '/tmp' }],
+  ['cursor 相乗り', { tool_name: 'Shell', tool_input: { command: 'node --test a.test.mjs' }, tool_use_id: '350753db', session_id: 's', cwd: '/tmp' }],
+]) {
+  test(`hook claude に Bash 以外の道具名が来たら黙って通す（${name}）`, () => {
+    const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+    const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify(event), encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
+    assert.equal(r.status, 0)
+    assert.equal(r.stdout, '')
+    assert.equal(r.stderr, '')
+    assert.equal(existsSync(log), false, '相乗りの分は記録しない')
+  })
+}
+
+test('hook claude: tool_name が無い入力は従来どおり RTK に渡す', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const raw = JSON.stringify({ tool_input: { command: 'git status' }, cwd: '/tmp' })
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8' })
+  assert.equal(r.stdout, spawnSync('rtk', ['hook', 'claude'], { input: raw, encoding: 'utf8' }).stdout)
+})

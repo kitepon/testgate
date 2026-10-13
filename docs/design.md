@@ -42,6 +42,7 @@
 
 **実装（2026-10-13 試作済み、`work/testgate/`）**: `testgate hook <harness>` は stdin の hook 入力をそのまま `rtk hook <harness>` へ渡し、stdout と終了コードを中継する。RTK 単体と出力が一致することを試験で確かめている（claude・cursor・codex）。RTK が無い時は何も書き換えずに通す。違いは、テスト実行だった時に `~/.local/share/testgate/log.jsonl` へ一行足すことだけ。複合コマンド（`cd x && npm test`）も記録はする。判定表は `lib/detect.mjs` で、アダプタが揃ったら各アダプタの `detect` に置き換える。
 
+- **相乗りの除外（v0.1.3、2026-10-13、本番の記録からトロニーが発見）**: Grok と Cursor は `~/.claude/settings.json` の hook も既定で読むため、同じ一回の実行が `hook claude` にも届き、記録が2行（片方は harness=claude）になっていた。Claude Code の matcher は Bash だけなので、`hook claude` に Bash 以外の道具名（Grok は run_terminal_command、Cursor は Shell）が来た時は相乗りと見なし、記録も RTK も呼ばずに通す。書き換えはそのハーネス自身の hook が一度だけ行う。Grok 側の `[compat.claude] hooks = false` は触らない（Aiterm と Approval Box の hook が同じ道で来ている可能性があるため）。
 - 記録項目: 時刻、Bot ID、ハーネス、マシン、cwd、リポジトリ、元コマンド、全部流しか部分か、所要秒、終了コード、出力から拾った件数（passed/failed）。
 - 置き場: `~/.local/share/testgate/log.jsonl`（RTKと同じ流儀。マシンごと）。コンテナ分は `/home/bell` で永続。
 - 所要秒はPreToolUse単独では取れない。PostToolUse hookで `tool_use_id` を突き合わせるか、関所がコマンド自体を `testgate run -- <cmd>` で包んで計時する。包む方が全ハーネスで揃う。

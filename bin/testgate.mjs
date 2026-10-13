@@ -18,6 +18,7 @@ const tail = process.argv.slice(3)
 
 if (sub === 'hook' && HARNESSES.includes(harness)) {
   const raw = readFileSync(0, 'utf8')
+  if (isCompatCaller(harness, raw)) process.exit(0)
   await observe(harness, raw)
   if (harness === 'grok') relayGrok(raw)
   else relayToRtk(harness, raw, rest)
@@ -45,6 +46,18 @@ if (sub === 'hook' && HARNESSES.includes(harness)) {
 } else {
   console.error('usage: testgate hook <claude|codex|cursor|grok> | testgate run [--cwd DIR] -- <command...> | testgate inspect <command>')
   process.exit(2)
+}
+
+// Grok と Cursor は ~/.claude/settings.json の hook も既定で読むので、同じ一回の実行が `hook claude` にも届く
+// （実物 2026-10-13、トロニーの確認。Grok は tool_name=run_terminal_command、Cursor は tool_name=Shell で来る）。
+// Claude Code の matcher は Bash だけなので、Bash 以外の道具名で `hook claude` が呼ばれたら他ハーネスの相乗りと見なし、
+// 記録も RTK も呼ばずに通す。書き換えはそのハーネス自身の hook（hook grok / hook cursor）が一度だけ行う。
+export function isCompatCaller(harness, raw) {
+  if (harness !== 'claude') return false
+  let event
+  try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return false }
+  const tool = event?.tool_name
+  return typeof tool === 'string' && tool !== 'Bash'
 }
 
 export function analyze(command) {
