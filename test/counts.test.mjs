@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { genericCounts } from '../bin/testgate.mjs'
+import { genericCounts } from '../lib/counts.mjs'
 
 test('RTK が消した件数は取得不能として扱う', () => {
   assert.equal(genericCounts('[RTK:PASSTHROUGH] vitest output not recognized').countsUnavailable, true)
