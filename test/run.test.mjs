@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { resolveWin, quoteCmd, winSpawnArgs, execCapture, envGet } from '../lib/run.mjs'
 
-const files = new Set(['C:\\Program Files\\nodejs\\node.exe', 'C:\\Program Files\\nodejs\\npm.cmd', 'C:\\Program Files\\dotnet\\dotnet.exe', 'C:\\tools\\gradlew.bat'])
+const files = new Set(['C:\\Program Files\\nodejs\\node.exe', 'C:\\Program Files\\nodejs\\npm', 'C:\\Program Files\\nodejs\\npm.cmd', 'C:\\Program Files\\dotnet\\dotnet.exe', 'C:\\tools\\gradlew.bat'])
 const env = { Path: 'C:\\Windows;C:\\Program Files\\nodejs;C:\\Program Files\\dotnet', PATHEXT: '.COM;.EXE;.BAT;.CMD', ComSpec: 'C:\\Windows\\system32\\cmd.exe' }
 const deps = { exists: p => files.has(p), pathMod: path.win32 }
 
@@ -15,6 +15,7 @@ test('envGet は大文字小文字を区別しない（Path / PATH）', () => {
 test('resolveWin: PATH と PATHEXT で実行ファイルを見つけ、.cmd/.bat だけ batch', () => {
   assert.deepEqual(resolveWin('dotnet', env, deps), { file: 'C:\\Program Files\\dotnet\\dotnet.exe', batch: false })
   assert.deepEqual(resolveWin('npm', env, deps), { file: 'C:\\Program Files\\nodejs\\npm.cmd', batch: true })
+  assert.deepEqual(resolveWin('C:\\Program Files\\nodejs\\npm', env, deps), { file: 'C:\\Program Files\\nodejs\\npm.cmd', batch: true }) // 拡張子無しの POSIX 用 npm より npm.cmd を先に取る（fox で spawn ENOENT になった）
   assert.deepEqual(resolveWin('C:\\Program Files\\nodejs\\node.exe', env, deps), { file: 'C:\\Program Files\\nodejs\\node.exe', batch: false })
   assert.deepEqual(resolveWin('C:\\tools\\gradlew', env, deps), { file: 'C:\\tools\\gradlew.bat', batch: true })
   assert.deepEqual(resolveWin('nothere', env, deps), { file: 'nothere', batch: false })
