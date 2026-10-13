@@ -13,7 +13,8 @@ const [, , sub, harness, ...rest] = process.argv
 if (sub === 'hook' && HARNESSES.includes(harness)) {
   const raw = readFileSync(0, 'utf8')
   await observe(harness, raw)
-  relayToRtk(harness, raw, rest)
+  if (harness === 'grok') relayGrok(raw)
+  else relayToRtk(harness, raw, rest)
 } else if (sub === 'inspect') {
   // 開発用: testgate inspect "<command>" → 判定結果を表示
   const r = analyze(rest.join(' '))
@@ -50,6 +51,26 @@ async function observe(harness, raw) {
   const r = analyze(command)
   if (!r?.runner) return
   await appendLog({ harness, tool, cwd: cwd ?? process.cwd(), runner: r.runner, lang: r.lang, compound: r.compound, command, phase: 0 })
+}
+
+// Grok には RTK 自身の hook が無い。BellTeam の integrations/rtk/grok-hook.mjs と同じ動き:
+// run_terminal_command の command を `rtk rewrite` に通し、書き換えがあれば updatedInput だけを返す。許可判定は変えない。
+function relayGrok(raw) {
+  let event
+  try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { process.exit(0) }
+  const input = event?.toolInput
+  if (event?.toolName !== 'run_terminal_command' || typeof input?.command !== 'string') process.exit(0)
+  const rtk = process.env.RTK_BIN || 'rtk'
+  const res = spawnSync(rtk, ['rewrite', input.command], { encoding: 'utf8', cwd: event.cwd || process.cwd(), timeout: 4000 })
+  if (res.error) { process.stderr.write(`testgate: rtk unavailable: ${res.error.message}\n`); process.exit(0) }
+  if (res.stderr) process.stderr.write(res.stderr)
+  if ([0, 3].includes(res.status) && res.stdout.trim()) {
+    process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', updatedInput: { ...input, command: res.stdout.trim() } } }))
+  } else if (![1, 2].includes(res.status)) {
+    process.stderr.write(`testgate: rtk rewrite failed: exit ${res.status}\n`)
+    process.exit(1)
+  }
+  process.exit(0)
 }
 
 function relayToRtk(harness, raw, extra) {

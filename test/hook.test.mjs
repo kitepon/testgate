@@ -49,3 +49,17 @@ test('rtk が無い時は何も書き換えずに通す', () => {
   assert.equal(r.status, 0)
   assert.equal(r.stdout, '')
 })
+
+test('grok: BellTeam の grok-hook.mjs と同じ出力', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const ref = '/srv/bellteam/bots/bot-47fad91c/work/BellTeam/integrations/rtk/grok-hook.mjs'
+  if (!existsSync(ref)) return
+  for (const command of ['pytest -q', 'ls -la', 'echo hi']) {
+    const raw = JSON.stringify({ toolName: 'run_terminal_command', toolInput: { command, foo: 1 }, cwd: '/tmp' })
+    const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+    const ours = spawnSync('node', [bin, 'hook', 'grok'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
+    const theirs = spawnSync('node', [ref], { input: raw, encoding: 'utf8', env: { ...process.env, RTK_BIN: 'rtk' } })
+    assert.equal(ours.stdout, theirs.stdout, `grok ${command}`)
+    assert.equal(ours.status, theirs.status)
+    assert.equal(existsSync(log), command.startsWith('pytest'))
+  }
+})
