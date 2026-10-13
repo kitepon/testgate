@@ -126,6 +126,27 @@ test('コメントの中の型名は言及に数えない', async () => {
   assert.ok(!r.argv.join(' ').includes('GreeterTests'))
 })
 
+test('文字リテラル \'"\' の後ろの言及を落とさない', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'tests/Main.Tests/GreeterTests.cs'),
+    readFileSync(path.join(dir, 'tests/Main.Tests/GreeterTests.cs'), 'utf8') + "\nclass Q { object F(char c) { if (c == '\"') return new Money(); return null; } }\n")
+  const r = await sel(dir, ['src/Core/Money.cs'])
+  assert.ok(r.argv.join(' ').includes('GreeterTests'))
+})
+
+test('テストだけが宣言した名前が本体の同名識別子と衝突しても、本体へ逆流しない', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'tests/Main.Tests/ClashTests.cs'),
+    'namespace Fx.Tests;\npublic class Candidates { }\npublic class ClashTests { Candidates c; }\n')
+  writeFileSync(path.join(dir, 'src/Core/Pick.cs'),
+    'namespace Fx.Core;\npublic class Pick { public int Candidates = 1; }\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/PickTests.cs'),
+    'using Fx.Core;\nnamespace Fx.Tests;\npublic class PickTests { Pick p; }\n')
+  const r = await sel(dir, ['tests/Main.Tests/ClashTests.cs'])
+  assert.ok(r.argv.join(' ').includes('ClashTests'))
+  assert.ok(!r.argv.join(' ').includes('PickTests'))
+})
+
 test('独立の Indep の変更 → Indep.Tests だけ。全体がその1クラスなので filter は付かない', async () => {
   const dir = repo()
   const r = await sel(dir, ['src/Indep/Counter.cs'])

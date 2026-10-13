@@ -281,12 +281,11 @@ function stripComments(t) {
       out.push(t.slice(i, e)); i = e; continue
     }
     if (c === "'") {
-      // 文字リテラル（'"' や '\'' など）。中の " を文字列の始まりと誤読しないよう丸ごと残す
-      let e = i + 1
-      if (t[e] === '\\') e += 2
-      while (e < n && e < i + 12 && t[e] !== "'" && t[e] !== '\n') e++
-      if (t[e] === "'") e++
-      out.push(t.slice(i, e)); i = e; continue
+      let j = i + 1
+      if (t[j] === '\\') j += 2; else j++
+      let guard = 0
+      while (j < n && t[j] !== "'" && guard++ < 10) j++
+      out.push(t.slice(i, j + 1)); i = j + 1; continue
     }
     out.push(c)
     i++
@@ -573,10 +572,11 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
     const reach = (set) => { for (const x of set ?? []) if (!seen.has(x)) { seen.add(x); q.push(x) } }
     while (q.length) {
       const fi = q.pop()
-      for (const n of fi.names) reach(mentioners.get(n))
+      const testOnly = testOwned(fi)
+      // テストだけが所有するファイルの宣言は本体から参照できない。本体側の同名の識別子は別物なので、受け手をテスト側へ限る。
+      for (const n of fi.names) for (const x of mentioners.get(n) ?? []) if (!testOnly || testOwned(x)) reach([x])
       // テストだけが所有するファイルの基底（test double の実装先）からは、本体側へ逆流させない。
       // 基底の宣言もテストだけが持つ時（テスト共有の interface）は残す。
-      const testOnly = testOwned(fi)
       for (const b of fi.bases) {
         if (!declarers.has(b)) continue
         if (testOnly && ![...declarers.get(b)].every(testOwned)) continue
