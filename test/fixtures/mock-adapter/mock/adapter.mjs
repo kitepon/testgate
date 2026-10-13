@@ -4,6 +4,7 @@ export function detect(argv) { return argv[0] === 'node' && argv[1] === 'mocktes
 export async function select({ argv, changed, full }) {
   if (full) return { argv, mode: 'full', reason: 'mock: full' }
   if (!changed.length) return { argv, mode: 'none', reason: 'mock: no change' }
+  if (changed.every(f => f.endsWith('.md'))) return { argv, mode: 'none', reason: 'mock: 資料だけ' }
   if (changed.includes('a.txt')) return { argv: [...argv, '--only', 'a'], mode: 'subset', reason: 'mock: a だけ' }
   return { argv, mode: 'full', reason: 'mock: 全体' }
 }

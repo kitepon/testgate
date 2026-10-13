@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -81,4 +81,31 @@ test('テストコマンドでなければ実行せず終わる', () => {
   const dir = repo()
   const r = run(dir, {}, 'node', '-e', 'console.log(1)')
   assert.match(r.stdout, /テストコマンドではない/)
+})
+test('基準なし・未追跡の資料だけ → none ではなく一度全部流して基準を作る。基準が出来たら次は流さない', () => {
+  const dir = repo()
+  const out = mkdtempSync(join(tmpdir(), 'tg-out-'))
+  const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  writeFileSync(join(dir, 'notes.md'), 'untracked')
+  const r = run(dir, env, 'node', 'mocktest.mjs')
+  assert.equal(r.status, 0)
+  assert.match(r.stdout, /running all/)
+  assert.match(r.stdout, /変更に関わるテストも無いので一度全部流して基準を作る/)
+  assert.equal(Object.keys(JSON.parse(readFileSync(join(out, 'state.json'), 'utf8')).lastFullPass).length, 1)
+  const r2 = run(dir, env, 'node', 'mocktest.mjs')
+  assert.match(r2.stdout, /流さない/)
+})
+test('基準作りの全部流しが失敗 → 基準は作らず、次も全部流す', () => {
+  const dir = repo()
+  const out = mkdtempSync(join(tmpdir(), 'tg-out-'))
+  const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  writeFileSync(join(dir, 'mocktest.mjs'), `console.log('2 ok, 1 ng'); process.exit(1)`)
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'red'], { cwd: dir })
+  const r = run(dir, env, 'node', 'mocktest.mjs')
+  assert.equal(r.status, 1)
+  assert.match(r.stdout, /基準は作らない/)
+  assert.equal(existsSync(join(out, 'state.json')), false)
+  const r2 = run(dir, env, 'node', 'mocktest.mjs')
+  assert.equal(r2.status, 1)
+  assert.match(r2.stdout, /基準を作る/)
 })

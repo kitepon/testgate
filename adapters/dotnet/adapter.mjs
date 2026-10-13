@@ -756,8 +756,10 @@ function writeSlnf(solutionFile, picked) {
 
 // ---------- 結果の読み取り ----------
 
-const SUMMARY = /^\s*(?:Passed|Failed)!\s+- Failed:\s*(\d+), Passed:\s*(\d+), Skipped:\s*(\d+), Total:\s*(\d+), Duration:\s*(.*?)(?: - \S.*)?$/
-const FAILED_TEST = /^\s*Failed\s+(\S.*?)\s+\[(?:<\s*)?[\d.,]+\s*(?:ms|s|m|h)(?:\s+[\d.,]+\s*(?:ms|s))?\]\s*$/
+// 英語（Passed!/Failed!）と日本語（成功!/失敗!、区切りは「、」）の VSTest 合計行を読む。
+const SUMMARY = /^\s*(?:Passed|Failed|成功|失敗)!\s*-\s*(?:Failed|失敗):\s*(\d+)[,、]\s*(?:Passed|合格):\s*(\d+)[,、]\s*(?:Skipped|スキップ):\s*(\d+)[,、]\s*(?:Total|合計):\s*(\d+)[,、]\s*(?:Duration|期間):\s*(.*?)(?: - \S.*)?$/
+const SUMMARY_HEAD = /^\s*(?:Passed|Failed|成功|失敗)!\s*-\s*(?:Failed|失敗):/
+const FAILED_TEST = /^\s*(?:Failed|失敗)\s+(\S.*?)\s+\[(?:<\s*)?[\d.,]+\s*(?:ms|s|m|h)(?:\s+[\d.,]+\s*(?:ms|s))?\]\s*$/
 const XUNIT_FAIL = /^\[xUnit\.net [\d:.]+\]\s+(\S.*?) \[FAIL\]\s*$/
 const BUILD_ERROR = /^(.*?)(?:\((\d+),(\d+)\))?:\s*error ([A-Z]+\d+):\s*(.*?)(?:\s+\[([^\]]+)\])?\s*$/
 
@@ -818,7 +820,7 @@ export function parseOutput(text) {
       if (line.trim() === '' || /^\s{3,}/.test(raw)) continue
       inRtkFailed = false
     }
-    if ((m = FAILED_TEST.exec(line)) && !/^\s*Failed!/.test(line)) { pushFail(failures, m[1]); continue }
+    if ((m = FAILED_TEST.exec(line)) && !/^\s*(?:Failed|失敗)!/.test(line)) { pushFail(failures, m[1]); continue }
     if ((m = XUNIT_FAIL.exec(line))) { pushFail(failures, m[1]); continue }
     if ((m = BUILD_ERROR.exec(line))) {
       const key = m[6] ?? `${m[4]}|${m[1]}|${m[2] ?? ''}|${m[5]}`
@@ -864,10 +866,12 @@ export function stripCounts(text) {
   for (const raw of text.replace(/\r\n/g, '\n').split('\n')) {
     const line = raw.trimEnd()
     let m
-    if (/^\s*Passed!\s+- Failed:/.test(line)) continue
-    if ((m = /^\s*Failed!\s+- Failed:.*? - (\S.*)$/.exec(line))) { kept.push(`Failed! - ${m[1]}`); continue }
-    if (/^\s*Failed!\s+- Failed:/.test(line)) { kept.push('Failed!'); continue }
+    if (/^\s*(?:Passed|成功)!\s*-\s*(?:Failed|失敗):/.test(line)) continue
+    if ((m = /^\s*(?:Failed|失敗)!\s*-\s*(?:Failed|失敗):.*? - (\S.*)$/.exec(line))) { kept.push(`Failed! - ${m[1]}`); continue }
+    if (SUMMARY_HEAD.test(line)) { kept.push('Failed!'); continue }
+    if (/^\s*合格\s+\S.*\[[^\]]*\]\s*$/.test(line)) continue
     if (/^A total of \d+ test files? matched/.test(line)) continue
+    if (/^合計 \d+ 個のテスト ファイルが指定されたパターンと一致しました/.test(line)) continue
     if (/^\s*Passed\s+\S.*\[[^\]]*\]\s*$/.test(line)) continue
     if (/^ok dotnet test:/.test(line)) continue
     if (/^fail dotnet test:/.test(line)) { kept.push('fail dotnet test'); continue }

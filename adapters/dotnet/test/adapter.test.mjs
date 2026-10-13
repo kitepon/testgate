@@ -355,6 +355,27 @@ test('parseOutput: 数が読めない時は何も返さない・古い形式も�
   assert.deepEqual(adapter.parseOutput(old), { passed: 5, failed: 0, skipped: 0, durationMs: 1200 })
 })
 
+test('parseOutput/stripCounts: 日本語の VSTest 結果行（実機採取）', () => {
+  const t = [
+    '[xUnit.net 00:00:42.05]     Ns.CraftStageTests.長い加工 [FAIL]',
+    '  失敗 Ns.CraftStageTests.長い加工 [2 s]',
+    '  エラー メッセージ:',
+    '   Assert.Equal() Failure: Values differ',
+    '',
+    '失敗!   -失敗:    10、合格:  2406、スキップ:     0、合計:  2416、期間: 3 m 1 s - Host.Tests.dll (net10.0)',
+  ].join('\n')
+  const r = adapter.parseOutput(t)
+  assert.deepEqual(r, { passed: 2406, failed: 10, skipped: 0, durationMs: 181000, failures: ['Ns.CraftStageTests.長い加工'] })
+  const s = adapter.stripCounts(t)
+  assert.doesNotMatch(s, /2406|2416|合格:/)
+  assert.equal(adapter.stripCounts('合計 1 個のテスト ファイルが指定されたパターンと一致しました。\n'), '')
+  assert.match(s, /^Failed! - Host\.Tests\.dll \(net10\.0\)$/m)
+  assert.match(s, /Assert\.Equal/)
+  const ok = '成功!   -失敗:     0、合格:    12、スキップ:     1、合計:    13、期間: 850 ms - A.dll (net10.0)'
+  assert.deepEqual(adapter.parseOutput(ok), { passed: 12, failed: 0, skipped: 1, durationMs: 850 })
+  assert.equal(adapter.stripCounts(ok), '')
+})
+
 test('stripCounts: 合計行が消え、失敗の詳細は残る', () => {
   for (const n of ['dotnet-pass.txt', 'rtk-dotnet-pass.txt']) {
     const s = adapter.stripCounts(sample(n))

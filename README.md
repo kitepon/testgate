@@ -8,8 +8,9 @@ AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フ�
 
 - 包めない時（テストでない、複合、アダプタが無い、Windows の PowerShell 以外のハーネス）は段階0と同じ: 記録して `rtk hook <harness>` へ中継する。
 - `TESTGATE_PHASE=0` で段階0（記録だけ）へ戻せる。`current` を v0.1.11 へ付け替えても戻る。
+- 子プロセスの起動は shell を通さない。Windows では実行ファイルを `PATH`・`PATHEXT` で探し、`.exe` は直接起こす。`.cmd`/`.bat`（npm・npx など）だけ `cmd.exe /d /s /c` に引数を引用して渡す（`--filter` の `|` や空白を含む道が壊れない）。
 - 前置きの環境変数（`TESTGATE_FULL=1 npm test`）は包んだ後も先頭に残るので効く。PowerShell は `& 'node' ...` の形で包む（Claude の tool_name=PowerShell の時だけ）。
-- 全部通った記録が無く、変更も無い（commit 直後など）時は、一度全部流して「最後に全部通った commit」の基準を作る。この全部流しには時間上限を掛けない。上限（`TESTGATE_FULL_LIMIT_SEC`、既定 180 秒）が付くのは `TESTGATE_FULL=1` とアダプタが選んだ full だけ。アダプタが判断できなかった passthrough にも掛けない。
+- 全部通った記録が無く、変更も無い（commit 直後など）時、または変更が未追跡の資料などコードでない物だけでアダプタが「関わるテストが無い」と言う時は、一度全部流して「最後に全部通った commit」の基準を作る。失敗したら基準は作らず、通るまで同じ条件で全部流す。この全部流しには時間上限を掛けない。上限（`TESTGATE_FULL_LIMIT_SEC`、既定 180 秒）が付くのは `TESTGATE_FULL=1` とアダプタが選んだ full だけ。アダプタが判断できなかった passthrough にも掛けない。
 - `run` 側の select の待ち時間は `TESTGATE_SELECT_TIMEOUT_MS`（既定 30 秒。段階0の影の判断は 5 秒）。
 - 記録: hook が `phase:1, event:'rewrite'`（元のコマンドと包んだコマンド）、`run` が `phase:1, event:'run'`（mode、理由、所要 ms、件数、終了コード）を1行ずつ。
 

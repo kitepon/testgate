@@ -179,7 +179,7 @@ async function runGate(args) {
   if (!shown.endsWith('\n')) process.stdout.write('\n')
   if (res.timedOut) process.stdout.write(`testgate: 全部流しが ${limitMs / 1000} 秒を超えたので止めた。速くするか、分けるか、消すこと。\n`)
   else if (d.mode === 'subset') process.stdout.write(`testgate: 変更に関わる分だけ流した（${d.reason}）。全部流すには TESTGATE_FULL=1。\n`)
-  else if (d.establish) process.stdout.write(`testgate: ${d.reason}。${ok ? '通ったので、次からはこの commit との差分だけ流す。' : ''}\n`)
+  else if (d.establish) process.stdout.write(`testgate: ${d.reason}。${ok ? '通ったので、次からはこの commit との差分だけ流す。' : '失敗があるので基準は作らない。通るまでは、変更に関わるテストが無い時も全部流す。'}\n`)
   else if (d.mode === 'passthrough') process.stdout.write(`testgate: 絞れなかったのでそのまま流した（${d.reason}）。\n`)
   return res.timedOut ? 124 : res.status
 }

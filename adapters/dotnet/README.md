@@ -95,3 +95,7 @@ dotnet が PATH に無い席では、実機で流す試験1本だけ skip にな
 
 - `fixtures/dotnet-sln/` — solution。`Core` ← `Util` ← `App`、独立の `Indep`。テストは `Main.Tests`（Greeter・Money・Formatter・Report・Scheduler の5クラス）、`Util.Tests`（Clock）、`Indep.Tests`。xUnit。`FX_FAIL=1` で1件落ちる。
 - `fixtures/samples/` — 実出力。`dotnet-pass/fail/buildfail.txt`（SDK 8.0.425）と `rtk-dotnet-pass/fail/buildfail.txt`。
+
+## 日本語の VSTest 出力
+
+合計行は `成功!`/`失敗!` と `失敗:`・`合格:`・`スキップ:`・`合計:`・`期間:`（区切りは「、」）を読む。個別の `失敗 名前 [2 s]` 行も失敗名に数える。`合格 名前 [..]` 行は stripCounts が消す。実機（fox, SDK10.0.401）の採取で確かめた。他の言語の出力は未対応。
