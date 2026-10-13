@@ -18,7 +18,7 @@ function repo() {
   return dir
 }
 function run(dir, env, ...cmd) {
-  return spawnSync('node', [bin, 'run', '--cwd', dir, '--', ...cmd], { encoding: 'utf8', env: { ...process.env, TESTGATE_ADAPTERS: adapters, TESTGATE_LOG: join(dir, 'log.jsonl'), XDG_DATA_HOME: join(dir, 'data'), ...env } })
+  return spawnSync('node', [bin, 'run', '--cwd', dir, '--', ...cmd], { encoding: 'utf8', env: { ...process.env, TESTGATE_ADAPTERS: adapters, TESTGATE_LOG: join(dir, 'log.jsonl'), XDG_STATE_HOME: join(dir, 'state'), ...env } })
 }
 const rows = dir => readFileSync(join(dir, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
 

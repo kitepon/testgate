@@ -94,8 +94,29 @@ test('段階0の影の判断: アダプタがあれば選択の結果を記録�
   spawnSync('sh', ['-c', 'echo b > a.txt'], { cwd: dir })
   const raw = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'node mocktest.mjs' }, cwd: dir })
   const log = join(dir, 'log.jsonl')
-  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_ADAPTERS: adapters, TESTGATE_LOG: log, XDG_DATA_HOME: join(dir, 'data') } })
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_ADAPTERS: adapters, TESTGATE_LOG: log, XDG_STATE_HOME: join(dir, 'state') } })
   assert.equal(r.stdout, spawnSync('rtk', ['hook', 'claude'], { input: raw, encoding: 'utf8' }).stdout)
   // 判定表に node mocktest.mjs は無いので記録されない（影の判断はアダプタの detect と判定表の両方が要る）: ここでは記録が無いことを確かめる
   assert.equal(existsSync(log), false)
+})
+
+test('hook に知らない名前を渡しても 2 は返さない', () => {
+  const r = spawnSync('node', [bin, 'hook', 'nope'], { input: '{}', encoding: 'utf8' })
+  assert.equal(r.status, 1)
+  assert.match(r.stderr, /unknown harness/)
+})
+
+test('記録では前置きの環境変数の値を消し、id・session・transcript を残す', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+  const raw = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'TOKEN=abc123 npm test' }, cwd: '/tmp', tool_use_id: 'toolu_1', session_id: 'sess_1', transcript_path: '/x/t.jsonl' })
+  spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
+  const row = JSON.parse(readFileSync(log, 'utf8').trim())
+  assert.equal(row.command, 'TOKEN=*** npm test')
+  assert.equal(row.id, 'toolu_1'); assert.equal(row.session, 'sess_1'); assert.equal(row.transcript, '/x/t.jsonl')
+})
+
+test('既定の記録先は ~/.local/state/testgate', async () => {
+  const { logPath } = await import('../lib/log.mjs')
+  assert.equal(logPath({ HOME: '/h' }), '/h/.local/state/testgate/log.jsonl')
+  assert.equal(logPath({ HOME: '/h', XDG_STATE_HOME: '/s' }), '/s/testgate/log.jsonl')
 })

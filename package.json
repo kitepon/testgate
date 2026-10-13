@@ -1,6 +1,6 @@
 {
   "name": "testgate",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "テストの関所: AIハーネスのコマンド実行フックで、テスト実行を記録し、変更に関わる分だけに絞る",
   "type": "module",
   "bin": { "testgate": "bin/testgate.mjs" },

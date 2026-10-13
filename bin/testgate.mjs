@@ -37,8 +37,12 @@ if (sub === 'hook' && HARNESSES.includes(harness)) {
   // 開発用: testgate inspect "<command>" → 判定結果を表示
   const r = analyze(tail.join(' '))
   console.log(JSON.stringify(r, null, 2))
+} else if (sub === 'hook' || sub === 'post') {
+  // hook として呼ばれた時は、何があっても 2 を返さない（Claude・Codex では 2 がそのコマンドを止める）
+  process.stderr.write(`testgate: unknown harness "${harness}"; passing command through\n`)
+  process.exit(1)
 } else {
-  console.error('usage: testgate hook <claude|codex|cursor|grok> | testgate inspect <command>')
+  console.error('usage: testgate hook <claude|codex|cursor|grok> | testgate run [--cwd DIR] -- <command...> | testgate inspect <command>')
   process.exit(2)
 }
 
@@ -68,8 +72,8 @@ async function observe(harness, raw) {
   const { command, cwd, tool } = extractCommand(harness, event)
   const r = analyze(command)
   if (!r?.runner) return
-  const { id } = extractCommand(harness, event)
-  const row = { harness, tool, id: id ?? null, cwd: cwd ?? process.cwd(), runner: r.runner, lang: r.lang, compound: r.compound, command, phase: 0 }
+  const { id, session, transcript } = extractCommand(harness, event)
+  const row = { harness, tool, id, session, transcript, cwd: cwd ?? process.cwd(), runner: r.runner, lang: r.lang, compound: r.compound, command, phase: 0 }
   // 影の判断: アダプタがあれば「段階1ならどう選んだか」を記録する。コマンドは変えない。
   try {
     const adapters = await loadAdapters()
