@@ -49,6 +49,10 @@
 
 ### 段階1：関所
 
+**実行の形（2026-10-13 決定、シュエンの指摘から）**: 段階1では関所がテストコマンドを自分で実行する（`testgate run`）。生の出力を取って `parseOutput` と `stripCounts` に渡し、その後で rtk に短縮させる。rtk test は swift・xcodebuild・gradle を知らず末尾5行に切るため、短縮後からは件数が取れない。段階0（記録だけ）では短縮後しか見えないので件数は欠けるが、段階0に件数は要らない。
+
+**抜け道の扱い**: `gradle build` のように check 経由でテストも流すコマンドは、detect を true にし、select は mode='full' で argv を変えない。書き換えて build の意味を変えない。記録に「全部流れた」と残すのが目的。
+
 - 作業中のテストは「関わる分だけ」に書き換える。言語ごとのアダプタ:
   - Python: pytest-testmon（`--testmon`）。venvへの導入は関所が初回に促す。無ければ `--lf` と変更ファイル名一致で代替。
   - Jest / Vitest: `--changedSince <base>` / `--changed <base>`。
