@@ -1,0 +1,15 @@
+Failed Tests:
+  Fx.Tests.MoneyTests.Fails_on_purpose_when_enabled
+    Error Message:
+    Assert.Equal() Failure: Values differ
+    Expected: 1
+    Actual:   2
+    Stack Trace:
+    at Fx.Tests.MoneyTests.Fails_on_purpose_when_enabled() in /srv/bellteam/bots/bot-f7486852/work/testgate-adapter-dotnet/fixtures/dotnet-sln/tests/Main.Tests/MoneyTests.cs:line 14
+    at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
+    at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+    Results File: /tmp/rtk_dotnet_testresults_1a135c90648260be1/_25c0c1bf524f_2026-10-13_15_02_11.trx
+    
+
+
+fail dotnet test: 8 passed, 1 failed, 0 skipped, 0 warnings in 2 projects (610 ms)

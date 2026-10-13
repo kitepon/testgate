@@ -1,0 +1,22 @@
+  Determining projects to restore...
+  Restored /tmp/dnbf/src/Core/Core.csproj (in 44 ms).
+  Restored /tmp/dnbf/src/Indep/Indep.csproj (in 44 ms).
+  Restored /tmp/dnbf/src/Util/Util.csproj (in 46 ms).
+  Restored /tmp/dnbf/src/App/App.csproj (in 46 ms).
+  Restored /tmp/dnbf/tests/Indep.Tests/Indep.Tests.csproj (in 98 ms).
+  Restored /tmp/dnbf/tests/Util.Tests/Util.Tests.csproj (in 98 ms).
+  Restored /tmp/dnbf/tests/Main.Tests/Main.Tests.csproj (in 98 ms).
+  Core -> /tmp/dnbf/src/Core/bin/Debug/net8.0/Core.dll
+  Indep -> /tmp/dnbf/src/Indep/bin/Debug/net8.0/Indep.dll
+/tmp/dnbf/src/Util/Clock.cs(10,37): error CS0117: 'DateTime' does not contain a definition for 'UtcNowX' [/tmp/dnbf/src/Util/Util.csproj]
+  Indep.Tests -> /tmp/dnbf/tests/Indep.Tests/bin/Debug/net8.0/Indep.Tests.dll
+Test run for /tmp/dnbf/tests/Indep.Tests/bin/Debug/net8.0/Indep.Tests.dll (.NETCoreApp,Version=v8.0)
+VSTest version 17.11.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Results File: /tmp/rtk_dotnet_testresults_1a135cd61952d7b21/_25c0c1bf524f_2026-10-13_15_06_56.trx
+
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1, Duration: < 1 ms - Indep.Tests.dll (net8.0)
+
+
