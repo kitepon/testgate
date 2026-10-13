@@ -358,7 +358,7 @@ function scanCs(text) {
         const ns = [fileNs, ...stack.filter((f) => f.t === 'ns').map((f) => f.name)].filter(Boolean).join('.')
         const top = ns ? `${ns}.${name}` : name
         tops.push(top)
-        cur = { top, start: segStart, end: s.length, names: new Set(), bases: new Set(), priv: new Set() }
+        cur = { top, start: segStart, declAt: m.index, end: s.length, names: new Set(), bases: new Set(), priv: new Set() }
         spans.push(cur)
         pending.span = cur
       }
@@ -385,9 +385,18 @@ function scanCs(text) {
     if (sp) sp.names.add(x[1])
   }
   const lastEnd = spans.length ? spans[spans.length - 1].end : 0
+  // 型の手前にある、型に属さない文（top-level statements、using 指令など）は型へ帰属させず、別に返す。
+  // 型に属するのは、直前の ; { } より後ろ（属性・修飾子）だけ。
+  let pre = ''
+  for (const sp of spans) {
+    const header = s.slice(sp.start, sp.declAt)
+    const cut = Math.max(header.lastIndexOf(';'), header.lastIndexOf('}'), header.lastIndexOf('{')) + 1
+    pre += mention.slice(sp.start, sp.start + cut) + '\n'
+    sp.start += cut
+  }
   const ns = []
   for (const sp of spans) ns.push({ top: sp.top, names: sp.names, bases: sp.bases, priv: sp.priv, text: mention.slice(sp.start, sp.end) })
-  return { names, bases, tops, nodes: ns, wide: mention.slice(lastEnd), mention }
+  return { names, bases, tops, nodes: ns, wide: mention.slice(lastEnd), pre, mention }
 }
 
 function scanMarkup(text, file) {
@@ -396,7 +405,7 @@ function scanMarkup(text, file) {
   const m = /x:Class\s*=\s*"([^"]+)"/.exec(text)
   if (m) { names.add(m[1].split('.').pop()); tops.push(m[1]) }
   else names.add(path.basename(file).replace(/\..*$/, ''))
-  return { names, bases: new Set(), tops, nodes: null, wide: '' }
+  return { names, bases: new Set(), tops, nodes: null, wide: '', pre: '' }
 }
 
 // ----- 本体 -----
@@ -591,6 +600,12 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
         const wide = new Set()
         const bodies = fi.nodes.map((n) => n.text.replace(USING, (u) => { for (const x of u.matchAll(ID)) wide.add(x[0]); return ' ' }))
         for (const x of fi.wide.matchAll(ID)) wide.add(x[0])
+        // using 指令を除いた型の手前に文が残るなら、top-level statements として独立のノードにする
+        // （暗黙の Program 型の本文。型の宣言ではないので、宣言名は Program だけ）
+        const stmts = fi.pre.replace(USING, (u) => { for (const x of u.matchAll(ID)) wide.add(x[0]); return ' ' }).replace(/^[ \t]*#.*$/gm, ' ')
+        if (/[;{}]/.test(stmts)) {
+          list.push({ file: fi.file, owners: fi.owners, names: new Set(['Program']), bases: new Set(), tops: [], body: stmts, wide, hasPriv: false, stmt: true })
+        }
         fi.nodes.forEach((n, i) => {
           list.push({ file: fi.file, owners: fi.owners, names: n.names, bases: n.bases, tops: [n.top], body: bodies[i], wide, hasPriv: n.priv.size > 0 })
         })
@@ -649,7 +664,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
         if (!fi.owners.has(t)) continue
         for (const x of fi.tops) allTops.add(x)
         if (!seen.has(fi)) continue
-        if (fi.tops.length === 0 && !/\.(xaml|axaml)$/i.test(fi.file)) opaque = path.basename(fi.file)
+        if (fi.tops.length === 0 && !fi.stmt && !/\.(xaml|axaml)$/i.test(fi.file)) opaque = path.basename(fi.file)
         for (const x of fi.tops) terms.add(x)
       }
       if (opaque) unfilteredWhy.set(t, `${opaque} に型の宣言が読めない`)

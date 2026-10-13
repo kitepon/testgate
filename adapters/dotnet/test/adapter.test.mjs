@@ -181,6 +181,18 @@ test('public の入れ子型の名前は他のファイルからの言及に届�
   assert.ok(r.argv.join(' ').includes('DDDTests'))
 })
 
+test('top-level statements は直後の型へ帰属させない', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'src/Core/Sink.cs'), 'namespace Fx.Core;\npublic interface ISink { }\n')
+  writeFileSync(path.join(dir, 'src/Core/Program.cs'),
+    'using Fx.Core;\nvar g = new Greeter();\nConsole.WriteLine(g);\npublic record NullSink : ISink;\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/SinkTests.cs'), 'using Fx.Core;\nnamespace Fx.Tests;\npublic class SinkTests { ISink s; }\n')
+  // Program.cs の top-level statements が言及する Greeter の変更は、空の record NullSink（ISink）の使い手へ広がらない
+  const r = await sel(dir, ['src/Core/Greeter.cs'])
+  assert.ok(r.argv.join(' ').includes('GreeterTests'))
+  assert.ok(!r.argv.join(' ').includes('SinkTests'))
+})
+
 test('独立の Indep の変更 → Indep.Tests だけ。全体がその1クラスなので filter は付かない', async () => {
   const dir = repo()
   const r = await sel(dir, ['src/Indep/Counter.cs'])
