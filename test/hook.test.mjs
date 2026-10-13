@@ -136,6 +136,23 @@ for (const [name, event] of [
   })
 }
 
+// Windows の Claude Code は tool_name=PowerShell で来る（fox、ドリリーの実物 2026-10-13）。Bash と同じく正規の入力として RTK へ渡し、テストは記録する
+test('hook claude: PowerShell は正規の入力として RTK に渡す', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const raw = JSON.stringify({ tool_name: 'PowerShell', tool_input: { command: 'git status' }, cwd: '/tmp', tool_use_id: 'toolu_ps' })
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8' })
+  assert.equal(r.status, 0)
+  assert.equal(r.stdout, spawnSync('rtk', ['hook', 'claude'], { input: raw, encoding: 'utf8' }).stdout)
+  assert.match(r.stdout, /rtk git status/)
+})
+
+test('hook claude: PowerShell の dotnet test は記録する', () => {
+  const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+  const raw = JSON.stringify({ tool_name: 'PowerShell', tool_input: { command: 'dotnet test Host.Tests' }, cwd: '/tmp', tool_use_id: 'toolu_ps2', session_id: 'sess_ps' })
+  spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
+  const row = JSON.parse(readFileSync(log, 'utf8').trim())
+  assert.equal(row.tool, 'PowerShell'); assert.equal(row.runner, 'dotnet test'); assert.equal(row.id, 'toolu_ps2')
+})
+
 test('hook claude: tool_name が無い入力は従来どおり RTK に渡す', { skip: !hasRtk && 'rtk が無い' }, () => {
   const raw = JSON.stringify({ tool_input: { command: 'git status' }, cwd: '/tmp' })
   const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8' })

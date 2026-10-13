@@ -50,14 +50,16 @@ if (sub === 'hook' && HARNESSES.includes(harness)) {
 
 // Grok と Cursor は ~/.claude/settings.json の hook も既定で読むので、同じ一回の実行が `hook claude` にも届く
 // （実物 2026-10-13、トロニーの確認。Grok は tool_name=run_terminal_command、Cursor は tool_name=Shell で来る）。
-// Claude Code の matcher は Bash だけなので、Bash 以外の道具名で `hook claude` が呼ばれたら他ハーネスの相乗りと見なし、
-// 記録も RTK も呼ばずに通す。書き換えはそのハーネス自身の hook（hook grok / hook cursor）が一度だけ行う。
+// Claude Code 自身の shell 道具は Bash と、Windows の PowerShell（v0.1.4、fox の実物でドリリーが確認。RTK も PowerShell を書き換える）。
+// それ以外の道具名で `hook claude` が呼ばれたら他ハーネスの相乗りと見なし、記録も RTK も呼ばずに通す。
+// 書き換えはそのハーネス自身の hook（hook grok / hook cursor）が一度だけ行う。
 export function isCompatCaller(harness, raw) {
   if (harness !== 'claude') return false
+  const CLAUDE_SHELL_TOOLS = new Set(['Bash', 'PowerShell'])
   let event
   try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return false }
   const tool = event?.tool_name
-  return typeof tool === 'string' && tool !== 'Bash'
+  return typeof tool === 'string' && !CLAUDE_SHELL_TOOLS.has(tool)
 }
 
 export function analyze(command) {
