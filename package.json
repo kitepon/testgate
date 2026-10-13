@@ -4,7 +4,7 @@
   "description": "テストの関所: AIハーネスのコマンド実行フックで、テスト実行を記録し、変更に関わる分だけに絞る",
   "type": "module",
   "bin": { "testgate": "bin/testgate.mjs" },
-  "scripts": { "test": "node --test test/*.test.mjs" },
+  "scripts": { "test": "node --test test/*.test.mjs adapters/*/test/*.test.mjs" },
   "license": "MIT",
   "engines": { "node": ">=20" }
 }

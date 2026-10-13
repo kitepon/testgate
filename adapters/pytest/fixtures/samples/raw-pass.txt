@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.1.1, pluggy-1.6.0
+rootdir: /work/fixture
+configfile: pytest.ini
+plugins: testmon-2.2.0
+collected 4 items
+
+tests/test_calc.py ..                                                    [ 50%]
+tests/test_report.py .                                                   [ 75%]
+tests/test_solo.py .                                                     [100%]
+
+============================== 4 passed in 0.01s ===============================

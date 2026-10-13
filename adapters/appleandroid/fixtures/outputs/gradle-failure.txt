@@ -1,0 +1,46 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.10.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:clean
+> Task :core:clean
+> Task :util:clean
+> Task :core:compileJava
+> Task :app:compileJava
+> Task :app:processResources NO-SOURCE
+> Task :app:classes
+> Task :app:compileTestJava
+> Task :app:processTestResources NO-SOURCE
+> Task :app:testClasses
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :app:test
+> Task :core:compileTestJava
+> Task :core:processTestResources NO-SOURCE
+> Task :core:testClasses
+
+> Task :core:test FAILED
+
+CalcTest > mulWorks() FAILED
+    org.opentest4j.AssertionFailedError at CalcTest.java:6
+
+2 tests completed, 1 failed
+
+> Task :util:compileJava
+> Task :util:processResources NO-SOURCE
+> Task :util:classes
+> Task :util:compileTestJava
+> Task :util:processTestResources NO-SOURCE
+> Task :util:testClasses
+> Task :util:test
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':core:test'.
+> There were failing tests. See the report at: file:///srv/bellteam/bots/bot-873ac448/work/testgate-adapter-apple-android/fixtures/gradle-multi/core/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 3s
+13 actionable tasks: 13 executed

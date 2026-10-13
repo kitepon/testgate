@@ -1,0 +1,18 @@
+=== RUN   TestRun
+--- PASS: TestRun (0.00s)
+PASS
+ok  	example.com/fx/app	0.002s
+=== RUN   TestAdd
+--- PASS: TestAdd (0.00s)
+=== RUN   TestAddNeg
+--- PASS: TestAddNeg (0.00s)
+PASS
+ok  	example.com/fx/core	0.002s
+=== RUN   TestShout
+--- PASS: TestShout (0.00s)
+PASS
+ok  	example.com/fx/indep	0.002s
+=== RUN   TestDoubleSum
+--- PASS: TestDoubleSum (0.00s)
+PASS
+ok  	example.com/fx/util	0.002s

@@ -1,0 +1,9 @@
+// testgate: gradle は既定では成功したテストの件数を出さない。passed/failed/skipped の行を出させて、parseOutput が数えられるようにする。
+// adapter.mjs の select が `-I <このファイルの絶対パス>` を足す。
+allprojects {
+    tasks.withType(Test).configureEach {
+        testLogging {
+            events 'passed', 'failed', 'skipped'
+        }
+    }
+}

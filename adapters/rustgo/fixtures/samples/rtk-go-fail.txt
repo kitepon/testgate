@@ -1,0 +1,6 @@
+Go test: 4 passed, 1 failed in 4 packages
+
+core (1 passed, 1 failed)
+  [FAIL] TestAdd
+     core_test.go:7: bad
+[full output: rtk recall 363f75a8872f]

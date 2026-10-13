@@ -1,0 +1,13 @@
+.F..                                                                     [100%]
+=================================== FAILURES ===================================
+___________________________________ test_mul ___________________________________
+
+    def test_mul():
+>       assert mul(2, 3) == 6
+E       assert 5 == 6
+E        +  where 5 = mul(2, 3)
+
+tests/test_calc.py:9: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_calc.py::test_mul - assert 5 == 6
+1 failed, 3 passed in 0.02s

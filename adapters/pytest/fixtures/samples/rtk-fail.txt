@@ -1,0 +1,7 @@
+Pytest: 3 passed, 1 failed in 0.02s
+
+Failures:
+1. [FAIL] test_mul
+     tests/test_calc.py:9: in test_mul
+     assert mul(2, 3) == 6
+     E   assert 5 == 6

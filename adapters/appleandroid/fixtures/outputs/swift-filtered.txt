@@ -1,0 +1,21 @@
+[0/1] Planning build
+Building for debugging...
+[0/3] Write swift-version-3D8B27DF7E3498C2.txt
+Build complete! (0.15s)
+Test Suite 'Selected tests' started at 2026-10-13 05:55:15.780
+Test Suite 'CalcTests' started at 2026-10-13 05:55:15.781
+Test Case 'CalcTests.testAdd' started at 2026-10-13 05:55:15.781
+Test Case 'CalcTests.testAdd' passed (0.0 seconds)
+Test Case 'CalcTests.testMul' started at 2026-10-13 05:55:15.781
+/tmp/tmp.4a4FGZmFsq/Tests/CoreTests/CalcTests.swift:5: error: CalcTests.testMul : XCTAssertEqual failed: ("5") is not equal to ("6") - 
+Test Case 'CalcTests.testMul' failed (0.0 seconds)
+Test Case 'CalcTests.testSkipped' started at 2026-10-13 05:55:15.781
+/tmp/tmp.4a4FGZmFsq/Tests/CoreTests/CalcTests.swift:6: CalcTests.testSkipped : Test skipped - not on this platform
+Test Case 'CalcTests.testSkipped' skipped (0.0 seconds)
+Test Suite 'CalcTests' failed at 2026-10-13 05:55:15.781
+	 Executed 3 tests, with 1 test skipped and 1 failure (0 unexpected) in 0.0 (0.0) seconds
+Test Suite 'Selected tests' failed at 2026-10-13 05:55:15.781
+	 Executed 3 tests, with 1 test skipped and 1 failure (0 unexpected) in 0.0 (0.0) seconds
+◇ Test run started.
+↳ Testing Library Version: 6.0.3 (18c42c19cac3faf)
+✔ Test run with 0 tests passed after 0.001 seconds.

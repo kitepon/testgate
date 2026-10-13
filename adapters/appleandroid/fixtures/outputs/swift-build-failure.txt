@@ -1,0 +1,12 @@
+Building for debugging...
+[0/21] Write sources
+[6/21] Write swift-version-3D8B27DF7E3498C2.txt
+[8/25] Emitting module Core
+[9/25] Compiling Core Calc.swift
+/tmp/tmp.IgK13iIpPx/Sources/Core/Calc.swift:1:50: error: cannot find 'undefinedName' in scope
+1 | public func add(_ a: Int, _ b: Int) -> Int { a + undefinedName }
+  |                                                  `- error: cannot find 'undefinedName' in scope
+2 | public func mul(_ a: Int, _ b: Int) -> Int { a * b }
+3 | 
+[10/25] Emitting module Util
+error: fatalError

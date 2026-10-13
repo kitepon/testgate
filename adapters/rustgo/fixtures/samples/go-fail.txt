@@ -1,0 +1,8 @@
+ok  	example.com/fx/app	(cached)
+--- FAIL: TestAdd (0.00s)
+    core_test.go:7: bad
+FAIL
+FAIL	example.com/fx/core	0.002s
+ok  	example.com/fx/indep	(cached)
+ok  	example.com/fx/util	(cached)
+FAIL

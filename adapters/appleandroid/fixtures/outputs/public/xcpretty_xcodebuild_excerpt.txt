@@ -1,0 +1,668 @@
+GenerateDSYMFile /Users/supermarin/Library/Developer/Xcode/DerivedData/SampleWorkspace-furbnwegumclnwbotvisbynpuqvh/Build/Products/Debug-iphonesimulator/SACoreTestAppTests.octest.dSYM /Users/supermarin/Library/Developer/Xcode/DerivedData/SampleWorkspace-furbnwegumclnwbotvisbynpuqvh/Build/Products/Debug-iphonesimulator/SACoreTestAppTests.octest/SACoreTestAppTests
+    cd /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore
+    setenv PATH "/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/bin:/Applications/Xcode.app/Contents/Developer/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/Users/supermarin/.rvm/bin"
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/supermarin/Library/Developer/Xcode/DerivedData/SampleWorkspace-furbnwegumclnwbotvisbynpuqvh/Build/Products/Debug-iphonesimulator/SACoreTestAppTests.octest/SACoreTestAppTests -o /Users/supermarin/Library/Developer/Xcode/DerivedData/SampleWorkspace-furbnwegumclnwbotvisbynpuqvh/Build/Products/Debug-iphonesimulator/SACoreTestAppTests.octest.dSYM
+
+Test Suite 'All tests' started at 2013-12-30 22:08:48 +0000
+Test Suite '/Users/supermarin/Library/Developer/Xcode/DerivedData/SampleWorkspace-furbnwegumclnwbotvisbynpuqvh/Build/Products/Debug-iphonesimulator/SACoreTestAppTests.octest(Tests)' started at 2013-12-30 22:08:48 +0000
+Test Suite 'NSStringSAExtensionsTests' started at 2013-12-30 22:08:48 +0000
+Test Case '-[NSStringSAExtensionsTests test_SAIsStringWithAnyNonWhiteSpaceText_PERFORMS_checksIfStringIsStringWithAnyNonWhiteSpaceText]' started.
+Test Case '-[NSStringSAExtensionsTests test_SAIsStringWithAnyNonWhiteSpaceText_PERFORMS_checksIfStringIsStringWithAnyNonWhiteSpaceText]' passed (0.000 seconds).
+Test Case '-[NSStringSAExtensionsTests test_containsString_PERFORMS_checksForString]' started.
+Test Case '-[NSStringSAExtensionsTests test_containsString_PERFORMS_checksForString]' passed (0.000 seconds).
+Test Case '-[NSStringSAExtensionsTests test_trimNewlines_PERFORMS_newlineTrimming]' started.
+Test Case '-[NSStringSAExtensionsTests test_trimNewlines_PERFORMS_newlineTrimming]' passed (0.000 seconds).
+Test Case '-[NSStringSAExtensionsTests test_trimWhitespaceAndNewlines_PERFORMS_WhitespaceAndNewlineTrimming]' started.
+Test Case '-[NSStringSAExtensionsTests test_trimWhitespaceAndNewlines_PERFORMS_WhitespaceAndNewlineTrimming]' passed (0.000 seconds).
+Test Case '-[NSStringSAExtensionsTests test_trimWhitespace_PERFORMS_whitespaceTrimming]' started.
+Test Case '-[NSStringSAExtensionsTests test_trimWhitespace_PERFORMS_whitespaceTrimming]' passed (0.000 seconds).
+Test Suite 'NSStringSAExtensionsTests' finished at 2013-12-30 22:08:48 +0000.
+Executed 5 tests, with 0 failures (0 unexpected) in 0.000 (0.001) seconds
+Test Suite 'SAArrayExtensionTests' started at 2013-12-30 22:08:49 +0000
+Test Case '-[SAArrayExtensionTests testArrayByEvaluatingBlock_PERFORMS_assert_WITH_BlockReturningNil]' started.
+2013-12-30 17:08:49.052 SACoreTestApp[92319:907] *** Assertion failure in -[__NSArrayI arrayByEvaluatingBlock:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/NSExtension/NSArray+SA.m:18
+Test Case '-[SAArrayExtensionTests testArrayByEvaluatingBlock_PERFORMS_assert_WITH_BlockReturningNil]' passed (0.001 seconds).
+Test Case '-[SAArrayExtensionTests testSAArrayExtensions_PERFORMS_arrayByEvaluatingBlock]' started.
+Test Case '-[SAArrayExtensionTests testSAArrayExtensions_PERFORMS_arrayByEvaluatingBlock]' passed (0.000 seconds).
+Test Suite 'SAArrayExtensionTests' finished at 2013-12-30 22:08:49 +0000.
+Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SACreditCardFormatterTests' started at 2013-12-30 22:08:49 +0000
+Test Case '-[SACreditCardFormatterTests test_removeFormattingForCardNumber_PERFORMS_removingFormatFrom_nil_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests test_removeFormattingForCardNumber_PERFORMS_removingFormatFrom_nil_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests test_removeFormattingForCardNumber_PERFORMS_removingFormatFrom_string_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests test_removeFormattingForCardNumber_PERFORMS_removingFormatFrom_string_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests test_removeFormattingForCardNumber_PERFORMS_removingFormatFrom_valid_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests test_removeFormattingForCardNumber_PERFORMS_removingFormatFrom_valid_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_nil_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_nil_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_string_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_string_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validAmex_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validAmex_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validDiscover_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validDiscover_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validJCB_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validJCB_cardNumber]' passed (0.001 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validMaestro_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validMaestro_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validUnknown_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validUnknown_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validVisa_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_formatting_validVisa_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_ormatting_validMastercard_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumberForDisplay_PERFORMS_ormatting_validMastercard_cardNumber]' passed (0.001 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_nil_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_nil_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_string_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_string_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validAmex_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validAmex_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validDiscover_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validDiscover_cardNumber]' passed (0.001 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validJCB_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validJCB_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validMaestro_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validMaestro_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validMastercard_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validMastercard_cardNumber]' passed (0.000 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validUnknown_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validUnknown_cardNumber]' passed (0.001 seconds).
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validVisa_cardNumber]' started.
+Test Case '-[SACreditCardFormatterTests testformatCreditCardNumber_PERFORMS_formatting_validVisa_cardNumber]' passed (0.000 seconds).
+Test Suite 'SACreditCardFormatterTests' finished at 2013-12-30 22:08:49 +0000.
+Executed 21 tests, with 0 failures (0 unexpected) in 0.005 (0.006) seconds
+Test Suite 'SACurrencyFormatterUnitTests' started at 2013-12-30 22:08:49 +0000
+Test Case '-[SACurrencyFormatterUnitTests test_formatter_PERFORMS_initialization]' started.
+Test Case '-[SACurrencyFormatterUnitTests test_formatter_PERFORMS_initialization]' passed (0.000 seconds).
+Test Suite 'SACurrencyFormatterUnitTests' finished at 2013-12-30 22:08:49 +0000.
+Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'SADecimalFormatterUnitTest' started at 2013-12-30 22:08:49 +0000
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_format_without_groupingSeparator]' started.
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_format_without_groupingSeparator]' passed (0.000 seconds).
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_no_padding]' started.
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_no_padding]' passed (0.000 seconds).
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_padding]' started.
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_padding]' passed (0.000 seconds).
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_padding_on_whole_number]' started.
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_padding_on_whole_number]' passed (0.000 seconds).
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_padding_on_zero]' started.
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_padding_on_zero]' passed (0.000 seconds).
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_precision_limit]' started.
+Test Case '-[SADecimalFormatterUnitTest test_decimalStringFromNumber_PERFORMS_precision_limit]' passed (0.000 seconds).
+Test Case '-[SADecimalFormatterUnitTest test_init_PERFORMS_initialization]' started.
+Test Case '-[SADecimalFormatterUnitTest test_init_PERFORMS_initialization]' passed (0.000 seconds).
+Test Suite 'SADecimalFormatterUnitTest' finished at 2013-12-30 22:08:49 +0000.
+Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'SAFlowControllerTests' started at 2013-12-30 22:08:49 +0000
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_assertOnNonFlowStepClass]' started.
+2013-12-30 17:08:49.869 SACoreTestApp[92319:907] *** Assertion failure in +[SAFlowStepMapping stepMappingForClass:withPredicate:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/FlowController/SAFlowController.m:19
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_assertOnNonFlowStepClass]' passed (0.001 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_cancelBackToStep]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_cancelBackToStep]' passed (0.001 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowCancellation]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowCancellation]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowCompletion]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowCompletion]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowCompletionWithNoSteps]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowCompletionWithNoSteps]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowForcedCancellation]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowForcedCancellation]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowForcedCompletion]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_flowForcedCompletion]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_goThroughTestFlow]' started.
+2013-12-30 17:08:49.872 SACoreTestApp[92319:907] *** Assertion failure in -[TestFlowController-0xd253770-410134129.872244 completedStepImplementation:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/FlowController/SAFlowController.m:254
+2013-12-30 17:08:49.872 SACoreTestApp[92319:907] *** Assertion failure in -[TestFlowController-0xd253770-410134129.872244 completedStepImplementation:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/FlowController/SAFlowController.m:254
+2013-12-30 17:08:49.873 SACoreTestApp[92319:907] *** Assertion failure in -[TestFlowController-0xd253770-410134129.872244 completedStepImplementation:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/FlowController/SAFlowController.m:254
+2013-12-30 17:08:49.873 SACoreTestApp[92319:907] *** Assertion failure in -[TestFlowController-0xd253770-410134129.872244 completedStepImplementation:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/FlowController/SAFlowController.m:254
+2013-12-30 17:08:49.873 SACoreTestApp[92319:907] *** Assertion failure in -[TestFlowController-0xd253770-410134129.872244 cancelledStepImplementation:animated:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/FlowController/SAFlowController.m:289
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_goThroughTestFlow]' passed (0.002 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_hasPrecedingStep]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_hasPrecedingStep]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_predicates]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_predicates]' passed (0.000 seconds).
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_stepMappingsWithClasses]' started.
+Test Case '-[SAFlowControllerTests testSAFlowController_PERFORMS_stepMappingsWithClasses]' passed (0.000 seconds).
+Test Suite 'SAFlowControllerTests' finished at 2013-12-30 22:08:49 +0000.
+Executed 11 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'SAInvoiceSummaryTests' started at 2013-12-30 22:08:50 +0000
+Test Case '-[SAInvoiceSummaryTests test_addCompletionHandler_PERFORMS_addingCompletionHandler]' started.
+Test Case '-[SAInvoiceSummaryTests test_addCompletionHandler_PERFORMS_addingCompletionHandler]' passed (0.002 seconds).
+Test Case '-[SAInvoiceSummaryTests test_compareByDate_PERFORMS_dateComparison]' started.
+Test Case '-[SAInvoiceSummaryTests test_compareByDate_PERFORMS_dateComparison]' passed (0.000 seconds).
+Test Case '-[SAInvoiceSummaryTests test_invoiceSummaryWithDictionary_PERFORMS_factoryCreation]' started.
+Test Case '-[SAInvoiceSummaryTests test_invoiceSummaryWithDictionary_PERFORMS_factoryCreation]' passed (0.001 seconds).
+Test Case '-[SAInvoiceSummaryTests test_loadInvoiceDetailsIfNeeded_PERFORMS_invoiceLoadIfNeeded]' started.
+Test Case '-[SAInvoiceSummaryTests test_loadInvoiceDetailsIfNeeded_PERFORMS_invoiceLoadIfNeeded]' passed (0.001 seconds).
+Test Case '-[SAInvoiceSummaryTests test_reloadInvoiceDetails_PERFORMS_callToLoadInvoiceDetails]' started.
+Test Case '-[SAInvoiceSummaryTests test_reloadInvoiceDetails_PERFORMS_callToLoadInvoiceDetails]' passed (0.000 seconds).
+Test Case '-[SAInvoiceSummaryTests test_totalAmount_PERFORMS_totalAmountCheck]' started.
+Test Case '-[SAInvoiceSummaryTests test_totalAmount_PERFORMS_totalAmountCheck]' passed (0.001 seconds).
+Test Suite 'SAInvoiceSummaryTests' finished at 2013-12-30 22:08:50 +0000.
+Executed 6 tests, with 0 failures (0 unexpected) in 0.004 (0.005) seconds
+Test Suite 'SALocalizedStringTests' started at 2013-12-30 22:08:50 +0000
+Test Case '-[SALocalizedStringTests testBasicFallback]' started.
+Test Case '-[SALocalizedStringTests testBasicFallback]' passed (0.001 seconds).
+Test Case '-[SALocalizedStringTests testFormatting]' started.
+Test Case '-[SALocalizedStringTests testFormatting]' passed (0.000 seconds).
+Test Suite 'SALocalizedStringTests' finished at 2013-12-30 22:08:50 +0000.
+Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SALoginHelperTest' started at 2013-12-30 22:08:50 +0000
+Test Suite 'SALoginHelperTest' finished at 2013-12-30 22:08:50 +0000.
+Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'SALoginServiceTests' started at 2013-12-30 22:08:50 +0000
+Test Case '-[SALoginServiceTests test_handleDIResponse_PERFORMS_handlesDeviceInterrogationResponse]' started.
+2013-12-30 17:08:50.728 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:50.728 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0x170bc1d0>
+2013-12-30 17:08:50.728 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0x16500bb0>
+2013-12-30 17:08:50.729 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0x16500bb0>
+2013-12-30 17:08:50.895 SACoreTestApp[92319:907] samplesample: CardReaderManager::endTransaction
+2013-12-30 17:08:50.896 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:50.896 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SALoginServiceTests test_handleDIResponse_PERFORMS_handlesDeviceInterrogationResponse]' passed (0.171 seconds).
+Test Case '-[SALoginServiceTests test_handleDIResponse_PERFORMS_handlesDeviceInterrogationResponse_FAILS_WHEN_deviceRegisted_is_NO_And_responseError_is_not_nill]' started.
+2013-12-30 17:08:50.898 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:50.898 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb4f90c0>
+2013-12-30 17:08:50.899 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb4fa0c0>
+2013-12-30 17:08:50.899 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb4fa0c0>
+2013-12-30 17:08:50.900 SACoreTestApp[92319:907] samplesample: CardReaderManager::endTransaction
+2013-12-30 17:08:50.901 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:50.901 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SALoginServiceTests test_handleDIResponse_PERFORMS_handlesDeviceInterrogationResponse_FAILS_WHEN_deviceRegisted_is_NO_And_responseError_is_not_nill]' passed (0.005 seconds).
+Test Case '-[SALoginServiceTests test_loginService_login_PERFORMS_loginServiceDidSucceedForMerchant]' started.
+2013-12-30 17:08:50.905 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:50.905 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xd44c930>
+2013-12-30 17:08:50.905 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xd450c00>
+2013-12-30 17:08:50.906 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xd450c00>
+2013-12-30 17:08:50.911 SACoreTestApp[92319:907] samplesample: CardReaderManager::endTransaction
+2013-12-30 17:08:50.912 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:50.912 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SALoginServiceTests test_loginService_login_PERFORMS_loginServiceDidSucceedForMerchant]' passed (0.011 seconds).
+Test Case '-[SALoginServiceTests test_logout_PERFORMS_cancelAllOperations]' started.
+2013-12-30 17:08:50.915 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:50.915 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb4f4e40>
+2013-12-30 17:08:50.915 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb443240>
+2013-12-30 17:08:50.916 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb443240>
+2013-12-30 17:08:50.916 SACoreTestApp[92319:907] samplesample: CardReaderManager::endTransaction
+2013-12-30 17:08:50.917 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:50.917 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SALoginServiceTests test_logout_PERFORMS_cancelAllOperations]' passed (0.005 seconds).
+Test Case '-[SALoginServiceTests test_logout_PERFORMS_logoutRequest]' started.
+2013-12-30 17:08:50.919 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:50.920 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb43e420>
+2013-12-30 17:08:50.920 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb43cdf0>
+2013-12-30 17:08:50.920 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb43cdf0>
+2013-12-30 17:08:50.921 SACoreTestApp[92319:907] samplesample: CardReaderManager::endTransaction
+2013-12-30 17:08:50.922 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:50.922 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SALoginServiceTests test_logout_PERFORMS_logoutRequest]' passed (0.004 seconds).
+Test Case '-[SALoginServiceTests test_performDeviceInterrogation_PERFORMS_deviceInterrogation]' started.
+2013-12-30 17:08:50.924 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:50.924 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb43dd50>
+2013-12-30 17:08:50.924 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb4f5e70>
+2013-12-30 17:08:50.925 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb4f5e70>
+2013-12-30 17:08:50.926 SACoreTestApp[92319:907] samplesample: CardReaderManager::endTransaction
+2013-12-30 17:08:50.927 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:50.927 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SALoginServiceTests test_performDeviceInterrogation_PERFORMS_deviceInterrogation]' passed (0.005 seconds).
+Test Suite 'SALoginServiceTests' finished at 2013-12-30 22:08:50 +0000.
+Executed 6 tests, with 0 failures (0 unexpected) in 0.201 (0.202) seconds
+Test Suite 'SAMerchantAddressTests' started at 2013-12-30 22:08:51 +0000
+Test Case '-[SAMerchantAddressTests test_SAMerchantAddress_PERFORMS_formatAddress]' started.
+Test Case '-[SAMerchantAddressTests test_SAMerchantAddress_PERFORMS_formatAddress]' passed (0.000 seconds).
+Test Suite 'SAMerchantAddressTests' finished at 2013-12-30 22:08:51 +0000.
+Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'SAMerchantTests' started at 2013-12-30 22:08:51 +0000
+Test Case '-[SAMerchantTests test_hasMinimumNecessaryData_PERFORMS_settingAtributes_FAILS_whenRequiredAtributePassesValidation]' started.
+2013-12-30 17:08:51.493 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:51.493 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xd2595f0>
+2013-12-30 17:08:51.493 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xd264610>
+2013-12-30 17:08:51.494 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xd264610>
+2013-12-30 17:08:51.503 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:51.504 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SAMerchantTests test_hasMinimumNecessaryData_PERFORMS_settingAtributes_FAILS_whenRequiredAtributePassesValidation]' passed (0.013 seconds).
+Test Case '-[SAMerchantTests test_loginMerchantUsingCredentials_PERFORMS_gettingMerchantDetails]' started.
+2013-12-30 17:08:51.506 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:51.506 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xd269dd0>
+2013-12-30 17:08:51.506 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xd26c080>
+2013-12-30 17:08:51.507 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xd26c080>
+2013-12-30 17:08:51.507 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:51.507 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SAMerchantTests test_loginMerchantUsingCredentials_PERFORMS_gettingMerchantDetails]' passed (0.003 seconds).
+Test Case '-[SAMerchantTests test_setDetailsFromMerchantInitializeResponse_PERFORMS_settingAtributes]' started.
+2013-12-30 17:08:51.510 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:51.510 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xd257320>
+2013-12-30 17:08:51.510 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xd26fdc0>
+2013-12-30 17:08:51.511 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xd26fdc0>
+2013-12-30 17:08:51.513 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:51.513 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SAMerchantTests test_setDetailsFromMerchantInitializeResponse_PERFORMS_settingAtributes]' passed (0.005 seconds).
+Test Suite 'SAMerchantTests' finished at 2013-12-30 22:08:51 +0000.
+Executed 3 tests, with 0 failures (0 unexpected) in 0.021 (0.022) seconds
+Test Suite 'SAMessageBusTests' started at 2013-12-30 22:08:51 +0000
+Test Case '-[SAMessageBusTests test_any_PERFORMS_factoryInitialization]' started.
+Test Case '-[SAMessageBusTests test_any_PERFORMS_factoryInitialization]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_atLeastOneResponder_PERFORMS_check_ifAtLeastOneIsRespected]' started.
+2013-12-30 17:08:51.903 SACoreTestApp[92319:907] *** Assertion failure in -[SAMessageBus forwardInvocation:], /Users/supermarin/Documents/source/ios-sample-newgen/libs/SACore/SACore/MessageBus/SAMessageBus.m:193
+Test Case '-[SAMessageBusTests test_atLeastOneResponder_PERFORMS_check_ifAtLeastOneIsRespected]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_registerResponderForProtocol_PERFORMS_responderRegistration]' started.
+Test Case '-[SAMessageBusTests test_registerResponderForProtocol_PERFORMS_responderRegistration]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_registerResponder_PERFORMS_responderRegistration]' started.
+Test Case '-[SAMessageBusTests test_registerResponder_PERFORMS_responderRegistration]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_satLeastOne_PERFORMS_factoryInitialization]' started.
+Test Case '-[SAMessageBusTests test_satLeastOne_PERFORMS_factoryInitialization]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_sharedBus_PERFORMS_factoryInitialization]' started.
+Test Case '-[SAMessageBusTests test_sharedBus_PERFORMS_factoryInitialization]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_unregisterResponderForProtocol_PERFORMS_responderUnRegistration]' started.
+Test Case '-[SAMessageBusTests test_unregisterResponderForProtocol_PERFORMS_responderUnRegistration]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_unregisterResponder_PERFORMS_responderUnRegistration]' started.
+Test Case '-[SAMessageBusTests test_unregisterResponder_PERFORMS_responderUnRegistration]' passed (0.000 seconds).
+Test Case '-[SAMessageBusTests test_unregisterResponder_PERFORMS_responderUnRegistration_registeredForProtocol]' started.
+Test Case '-[SAMessageBusTests test_unregisterResponder_PERFORMS_responderUnRegistration_registeredForProtocol]' passed (0.000 seconds).
+Test Suite 'SAMessageBusTests' finished at 2013-12-30 22:08:51 +0000.
+Executed 9 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'SAOrderedDictionaryTests' started at 2013-12-30 22:08:52 +0000
+Test Case '-[SAOrderedDictionaryTests testBasicAllocation]' started.
+Test Case '-[SAOrderedDictionaryTests testBasicAllocation]' passed (0.000 seconds).
+Test Case '-[SAOrderedDictionaryTests testDictionaryClassInitializationOrdering]' started.
+2013-12-30 17:08:52.180 SACoreTestApp[92319:907] **** Stored: 5, expected: 5
+2013-12-30 17:08:52.180 SACoreTestApp[92319:907] **** Stored: 10, expected: 10
+2013-12-30 17:08:52.181 SACoreTestApp[92319:907] **** Stored: 15, expected: 15
+2013-12-30 17:08:52.181 SACoreTestApp[92319:907] **** Stored: 20, expected: 20
+2013-12-30 17:08:52.181 SACoreTestApp[92319:907] **** Stored: 25, expected: 25
+Test Case '-[SAOrderedDictionaryTests testDictionaryClassInitializationOrdering]' passed (0.001 seconds).
+Test Case '-[SAOrderedDictionaryTests testDictionaryObjectAtIndex]' started.
+Test Case '-[SAOrderedDictionaryTests testDictionaryObjectAtIndex]' passed (0.000 seconds).
+Test Case '-[SAOrderedDictionaryTests testDictionaryOrdering]' started.
+2013-12-30 17:08:52.181 SACoreTestApp[92319:907] **** Stored: 5, expected: 5
+2013-12-30 17:08:52.181 SACoreTestApp[92319:907] **** Stored: 10, expected: 10
+2013-12-30 17:08:52.182 SACoreTestApp[92319:907] **** Stored: 15, expected: 15
+2013-12-30 17:08:52.182 SACoreTestApp[92319:907] **** Stored: 20, expected: 20
+2013-12-30 17:08:52.182 SACoreTestApp[92319:907] **** Stored: 25, expected: 25
+Test Case '-[SAOrderedDictionaryTests testDictionaryOrdering]' passed (0.001 seconds).
+Test Case '-[SAOrderedDictionaryTests testDictionaryWithArrayAllocation]' started.
+Test Case '-[SAOrderedDictionaryTests testDictionaryWithArrayAllocation]' passed (0.000 seconds).
+Test Suite 'SAOrderedDictionaryTests' finished at 2013-12-30 22:08:52 +0000.
+Executed 5 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Suite 'SAPercentageTextFieldUnitTest' started at 2013-12-30 22:08:52 +0000
+Test Suite 'SAPercentageTextFieldUnitTest' finished at 2013-12-30 22:08:52 +0000.
+Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Suite 'SAPhoneFormatterUnitTests' started at 2013-12-30 22:08:52 +0000
+Test Case '-[SAPhoneFormatterUnitTests test_formatPhone_JP_PERFORMS_JP_US_phone_formatting]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_formatPhone_JP_PERFORMS_JP_US_phone_formatting]' passed (0.001 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_formatPhone_JP_PERFORMS_JP_phone_formatting]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_formatPhone_JP_PERFORMS_JP_phone_formatting]' passed (0.001 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_formatPhone_PERFORMS_phone_formatting]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_formatPhone_PERFORMS_phone_formatting]' passed (0.001 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_emptyStringPhone]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_emptyStringPhone]' passed (0.000 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_emptyStringPhone_andNoReturnObject]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_emptyStringPhone_andNoReturnObject]' passed (0.000 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_nilPhone]' started.
+2013-12-30 17:08:52.974 SACoreTestApp[92319:907] NSScanner: nil string argument
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_nilPhone]' passed (0.000 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_nilPhone_andNoReturnObject]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_nilPhone_andNoReturnObject]' passed (0.000 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_properPhone]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_getObjectValueforStringerrorDescription_PERFORMS_deformatting_WITH_properPhone]' passed (0.000 seconds).
+Test Case '-[SAPhoneFormatterUnitTests test_init_PERFORMS_initialization]' started.
+Test Case '-[SAPhoneFormatterUnitTests test_init_PERFORMS_initialization]' passed (0.000 seconds).
+Test Suite 'SAPhoneFormatterUnitTests' finished at 2013-12-30 22:08:52 +0000.
+Executed 9 tests, with 0 failures (0 unexpected) in 0.004 (0.004) seconds
+Test Suite 'SAPreferencesTest' started at 2013-12-30 22:08:53 +0000
+Test Case '-[SAPreferencesTest test_basicPerferences]' started.
+Test Case '-[SAPreferencesTest test_basicPerferences]' passed (0.001 seconds).
+Test Case '-[SAPreferencesTest test_securePreferences]' started.
+Test Case '-[SAPreferencesTest test_securePreferences]' passed (0.000 seconds).
+Test Suite 'SAPreferencesTest' finished at 2013-12-30 22:08:53 +0000.
+Executed 2 tests, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SASalesHistoryTableObjectTests' started at 2013-12-30 22:08:53 +0000
+Test Case '-[SASalesHistoryTableObjectTests test_canBeDeleted_PERFORMS_checkCanCellBeDeleted]' started.
+Test Case '-[SASalesHistoryTableObjectTests test_canBeDeleted_PERFORMS_checkCanCellBeDeleted]' passed (0.001 seconds).
+Test Case '-[SASalesHistoryTableObjectTests test_cellClass_PERFORMS_checkIfCorrectClassIsUsed]' started.
+Test Case '-[SASalesHistoryTableObjectTests test_cellClass_PERFORMS_checkIfCorrectClassIsUsed]' passed (0.001 seconds).
+Test Case '-[SASalesHistoryTableObjectTests test_leftImageName_PERFORMS_leftImageNameGetter_FAILS_WHEN_leftImageName_is_nil]' started.
+Test Case '-[SASalesHistoryTableObjectTests test_leftImageName_PERFORMS_leftImageNameGetter_FAILS_WHEN_leftImageName_is_nil]' passed (0.001 seconds).
+Test Case '-[SASalesHistoryTableObjectTests test_leftLabelText_PERFORMS_leftLabelTextGetter_FAILS_WHEN_notCorrectMethodIsCalled]' started.
+Test Case '-[SASalesHistoryTableObjectTests test_leftLabelText_PERFORMS_leftLabelTextGetter_FAILS_WHEN_notCorrectMethodIsCalled]' passed (0.002 seconds).
+Test Case '-[SASalesHistoryTableObjectTests test_rightLabelText]' started.
+Test Case '-[SASalesHistoryTableObjectTests test_rightLabelText]' passed (0.001 seconds).
+Test Case '-[SASalesHistoryTableObjectTests test_salesHistoryTableObjectWithInvoiceSummary_PERFORMS_factory]' started.
+Test Case '-[SASalesHistoryTableObjectTests test_salesHistoryTableObjectWithInvoiceSummary_PERFORMS_factory]' passed (0.001 seconds).
+Test Suite 'SASalesHistoryTableObjectTests' finished at 2013-12-30 22:08:53 +0000.
+Executed 6 tests, with 0 failures (0 unexpected) in 0.006 (0.006) seconds
+Test Suite 'SASearchInvoiceServiceTests' started at 2013-12-30 22:08:53 +0000
+Test Case '-[SASearchInvoiceServiceTests test_applicationContextSingleton]' started.
+Test Case '-[SASearchInvoiceServiceTests test_applicationContextSingleton]' passed (0.000 seconds).
+Test Case '-[SASearchInvoiceServiceTests test_cancelInvoice]' started.
+Test Case '-[SASearchInvoiceServiceTests test_cancelInvoice]' passed (0.000 seconds).
+Test Case '-[SASearchInvoiceServiceTests test_deleteInvoice]' started.
+Test Case '-[SASearchInvoiceServiceTests test_deleteInvoice]' passed (0.000 seconds).
+Test Case '-[SASearchInvoiceServiceTests test_downloadRefundDetailsForInvoice]' started.
+Test Case '-[SASearchInvoiceServiceTests test_downloadRefundDetailsForInvoice]' passed (0.000 seconds).
+Test Case '-[SASearchInvoiceServiceTests test_loadInvoiceHistoryForPage_PERFORMS_checkIf_EMF_is_called]' started.
+Test Case '-[SASearchInvoiceServiceTests test_loadInvoiceHistoryForPage_PERFORMS_checkIf_EMF_is_called]' passed (0.001 seconds).
+Test Case '-[SASearchInvoiceServiceTests test_loadInvoiceHistoryForPage_PERFORMS_loadingSalesHistoryCall]' started.
+Test Case '-[SASearchInvoiceServiceTests test_loadInvoiceHistoryForPage_PERFORMS_loadingSalesHistoryCall]' passed (0.000 seconds).
+Test Case '-[SASearchInvoiceServiceTests test_loadSalesActivityWithCompletionHandler_PERFORMS_loadingSalesHistoryCall]' started.
+Test Case '-[SASearchInvoiceServiceTests test_loadSalesActivityWithCompletionHandler_PERFORMS_loadingSalesHistoryCall]' passed (0.000 seconds).
+Test Suite 'SASearchInvoiceServiceTests' finished at 2013-12-30 22:08:53 +0000.
+Executed 7 tests, with 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Suite 'SASegmentedButtonViewTests' started at 2013-12-30 22:08:53 +0000
+Test Case '-[SASegmentedButtonViewTests test_initWithDelegate_PERFORM_initialization_FAILS_WHEN_delegateISNotSet]' started.
+Test Case '-[SASegmentedButtonViewTests test_initWithDelegate_PERFORM_initialization_FAILS_WHEN_delegateISNotSet]' passed (0.001 seconds).
+Test Suite 'SASegmentedButtonViewTests' finished at 2013-12-30 22:08:53 +0000.
+Executed 1 test, with 0 failures (0 unexpected) in 0.001 (0.001) seconds
+Test Suite 'SASellableItemTests' started at 2013-12-30 22:08:53 +0000
+Test Case '-[SASellableItemTests testSetPreferencesDictionaries]' started.
+2013-12-30 17:08:53.897 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:53.897 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb43d730>
+2013-12-30 17:08:53.897 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb4f5f40>
+2013-12-30 17:08:53.898 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb4f5f40>
+2013-12-30 17:08:53.899 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb4389b0) → Saving <NSManagedObjectContext (0xb4389b0): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.899 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb4389b0) → Save Parents? 1
+2013-12-30 17:08:53.899 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb4389b0) → Save Synchronously? 1
+2013-12-30 17:08:53.899 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb4389b0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.900 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb43d730) → Saving <NSManagedObjectContext (0xb43d730): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.900 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb43d730) → Save Parents? 1
+2013-12-30 17:08:53.900 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb43d730) → Save Synchronously? 1
+2013-12-30 17:08:53.901 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb43d730) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.901 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb43d730) → Finished saving: <NSManagedObjectContext (0xb43d730): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.905 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:53.905 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SASellableItemTests testSetPreferencesDictionaries]' passed (0.011 seconds).
+Test Case '-[SASellableItemTests testSetPropertiesFromJsonDictionary]' started.
+2013-12-30 17:08:53.908 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:53.908 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb735090>
+2013-12-30 17:08:53.909 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb7346a0>
+2013-12-30 17:08:53.909 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb7346a0>
+2013-12-30 17:08:53.910 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb734170) → Saving <NSManagedObjectContext (0xb734170): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.910 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb734170) → Save Parents? 1
+2013-12-30 17:08:53.910 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb734170) → Save Synchronously? 1
+2013-12-30 17:08:53.910 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb734170) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.911 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb735090) → Saving <NSManagedObjectContext (0xb735090): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.911 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb735090) → Save Parents? 1
+2013-12-30 17:08:53.911 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb735090) → Save Synchronously? 1
+2013-12-30 17:08:53.911 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb735090) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.912 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb735090) → Finished saving: <NSManagedObjectContext (0xb735090): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.912 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb731db0) → Saving <NSManagedObjectContext (0xb731db0): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.912 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb731db0) → Save Parents? 1
+2013-12-30 17:08:53.912 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb731db0) → Save Synchronously? 1
+2013-12-30 17:08:53.913 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb731db0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.913 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb735090) → Saving <NSManagedObjectContext (0xb735090): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.913 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb735090) → Save Parents? 1
+2013-12-30 17:08:53.913 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb735090) → Save Synchronously? 1
+2013-12-30 17:08:53.913 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb735090) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.914 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb735090) → Finished saving: <NSManagedObjectContext (0xb735090): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:53.915 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:53.915 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SASellableItemTests testSetPropertiesFromJsonDictionary]' passed (0.010 seconds).
+2013-12-30 17:08:53.916 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb438e10) → Saving <NSManagedObjectContext (0xb438e10): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+Test Suite 'SASellableItemTests' finished at 2013-12-30 22:08:53 +0000.
+Executed 2 tests, with 0 failures (0 unexpected) in 0.020 (0.021) seconds
+2013-12-30 17:08:53.916 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb438e10) → Save Parents? 1
+2013-12-30 17:08:53.916 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb438e10) → Save Synchronously? 1
+2013-12-30 17:08:53.916 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb438e10) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:53.917 SACoreTestApp[92319:6003] +[MagicalRecord(ErrorHandling) defaultErrorHandler:](0xcc467a8) Error: <SAQueuedPreferenceChange: 0xb4384e0> (entity: QueuedPreferenceChange; id: 0xb435b10 <x-coredata://1402B9E6-C8D1-4A55-B9EC-AA0A9AF77497/QueuedPreferenceChange/p3> ; data: {
+    merchant = nil;
+    preferenceName = "TaxRate_1";
+    preferenceValue = "{\"r\":\"0.1\",\"id\":1,\"n\":\"newTaxName\",\"d\":false}";
+})
+2013-12-30 17:08:53.917 SACoreTestApp[92319:6003] +[MagicalRecord(ErrorHandling) defaultErrorHandler:](0xcc467a8) Error: merchant
+2013-12-30 17:08:53.918 SACoreTestApp[92319:6003] +[MagicalRecord(ErrorHandling) defaultErrorHandler:](0xcc467a8) Error: The operation couldn’t be completed. (Cocoa error 1570.)
+2013-12-30 17:08:53.918 SACoreTestApp[92319:6003] +[MagicalRecord(ErrorHandling) defaultErrorHandler:](0xcc467a8) Error Message: The operation couldn’t be completed. (Cocoa error 1570.)
+2013-12-30 17:08:53.918 SACoreTestApp[92319:6003] +[MagicalRecord(ErrorHandling) defaultErrorHandler:](0xcc467a8) Error Domain: NSCocoaErrorDomain
+2013-12-30 17:08:53.918 SACoreTestApp[92319:6003] +[MagicalRecord(ErrorHandling) defaultErrorHandler:](0xcc467a8) Recovery Suggestion: (null)
+Test Suite 'SASynchronizationManagerTests' started at 2013-12-30 22:08:54 +0000
+Test Case '-[SASynchronizationManagerTests testApplyingQueuedPreferencesToArray]' started.
+2013-12-30 17:08:54.094 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:54.095 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb72f200>
+2013-12-30 17:08:54.095 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb7302d0>
+2013-12-30 17:08:54.095 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb7302d0>
+2013-12-30 17:08:54.097 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7469c0) → Saving <NSManagedObjectContext (0xb7469c0): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:54.097 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7469c0) → Save Parents? 1
+2013-12-30 17:08:54.097 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7469c0) → Save Synchronously? 1
+2013-12-30 17:08:54.097 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb7469c0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.098 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Saving <NSManagedObjectContext (0xb72f200): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:54.098 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Save Parents? 1
+2013-12-30 17:08:54.099 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Save Synchronously? 1
+2013-12-30 17:08:54.099 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb72f200) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.099 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb72f200) → Finished saving: <NSManagedObjectContext (0xb72f200): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:54.100 SACoreTestApp[92319:907] Starting timeout at 2013-12-30 22:08:54 +0000
+2013-12-30 17:08:54.101 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd651390) → Saving <NSManagedObjectContext (0xd651390): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.101 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd651390) → Save Parents? 1
+2013-12-30 17:08:54.101 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd651390) → Save Synchronously? 1
+2013-12-30 17:08:54.102 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd651390) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.102 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Saving <NSManagedObjectContext (0xb72f200): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.103 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Save Parents? 1
+2013-12-30 17:08:54.103 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Save Synchronously? 1
+2013-12-30 17:08:54.103 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb72f200) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.103 SACoreTestApp[92319:907] --- SADeviceInterrogationResponse (null)/DeviceInterrogation (in nans)
+
+Headers: (null)
+
+Error: Error Domain=NSURLErrorDomain Code=-999 "The operation couldn’t be completed. (NSURLErrorDomain error -999.)"
+
+Data:
+
+2013-12-30 17:08:54.103 SACoreTestApp[92319:6003] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb72f200) → Finished saving: <NSManagedObjectContext (0xb72f200): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.104 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x16507a00) → Saving <NSManagedObjectContext (0x16507a00): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.105 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x16507a00) → Save Parents? 1
+2013-12-30 17:08:54.105 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x16507a00) → Save Synchronously? 1
+2013-12-30 17:08:54.105 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x16507a00) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.105 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Saving <NSManagedObjectContext (0xb72f200): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.106 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Save Parents? 1
+2013-12-30 17:08:54.106 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb72f200) → Save Synchronously? 1
+2013-12-30 17:08:54.106 SACoreTestApp[92319:907] --- SARemoveDeviceAuthorizationResponse (null)/RemoveDeviceAuthorization (in nans)
+
+Headers: (null)
+
+Error: Error Domain=NSURLErrorDomain Code=-999 "The operation couldn’t be completed. (NSURLErrorDomain error -999.)"
+
+Data:
+
+2013-12-30 17:08:54.106 SACoreTestApp[92319:6003] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb72f200) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.107 SACoreTestApp[92319:907] --- SARemoveDeviceAuthorizationResponse (null)/RemoveDeviceAuthorization (in nans)
+
+Headers: (null)
+
+Error: Error Domain=NSURLErrorDomain Code=-999 "The operation couldn’t be completed. (NSURLErrorDomain error -999.)"
+
+Data:
+
+2013-12-30 17:08:54.107 SACoreTestApp[92319:6003] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb72f200) → Finished saving: <NSManagedObjectContext (0xb72f200): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.107 SACoreTestApp[92319:907] --- SARemoveDeviceAuthorizationResponse (null)/RemoveDeviceAuthorization (in nans)
+
+Headers: (null)
+
+Error: Error Domain=NSURLErrorDomain Code=-999 "The operation couldn’t be completed. (NSURLErrorDomain error -999.)"
+
+Data:
+
+2013-12-30 17:08:54.107 SACoreTestApp[92319:907] --- SADeviceInterrogationResponse (null)/DeviceInterrogation (in nans)
+
+Headers: (null)
+
+Error: Error Domain=NSURLErrorDomain Code=-999 "The operation couldn’t be completed. (NSURLErrorDomain error -999.)"
+
+Data:
+
+2013-12-30 17:08:54.108 SACoreTestApp[92319:907] --- SARemoveDeviceAuthorizationResponse (null)/RemoveDeviceAuthorization (in nans)
+
+Headers: (null)
+
+Error: Error Domain=NSURLErrorDomain Code=-999 "The operation couldn’t be completed. (NSURLErrorDomain error -999.)"
+
+Data:
+
+2013-12-30 17:08:54.108 SACoreTestApp[92319:907]
+--- SARemoveDeviceAuthorizationRequest (POST (null)/RemoveDeviceAuthorization)
+
+Headers: {
+    "Accept-Encoding" = "gzip,deflate";
+    "Content-Length" = 409;
+    "Content-Type" = "text/xml; charset=UTF-8";
+    SOAPAction = "urn:RemoveDeviceAuthorization";
+    "X-sample-MESSAGE-PROTOCOL" = SOAP11;
+    "X-sample-REQUEST-DATA-FORMAT" = XML;
+    "X-sample-RESPONSE-DATA-FORMAT" = XML;
+}
+
+Data: <?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:pt="http://svcs.sample.com/mobile/adapter/types/pt">
+  <soap:Header/>
+  <soap:Body>
+    <pt:RemoveDeviceAuthorizationRequest>
+      <Version>2.0</Version>
+      <deviceReferenceToken/>
+      <securityDetails>
+        <applicationNonce/>
+        <deviceNonce/>
+      </securityDetails>
+    </pt:RemoveDeviceAuthorizationRequest>
+  </soap:Body>
+</soap:Envelope>
+
+
+2013-12-30 17:08:54.110 SACoreTestApp[92319:290f] Tried to load message that we have no information about.
+2013-12-30 17:08:54.403 SACoreTestApp[92319:907] Setting testDone flag at 2013-12-30 22:08:54 +0000
+2013-12-30 17:08:54.522 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:54.522 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SASynchronizationManagerTests testApplyingQueuedPreferencesToArray]' passed (0.430 seconds).
+Test Case '-[SASynchronizationManagerTests testQueueChangeOfPreferenceNamed]' started.
+2013-12-30 17:08:54.525 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:54.525 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0x1650ea30>
+2013-12-30 17:08:54.525 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0x16512270>
+2013-12-30 17:08:54.526 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0x16512270>
+2013-12-30 17:08:54.527 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ffe0) → Saving <NSManagedObjectContext (0x1650ffe0): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:54.527 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ffe0) → Save Parents? 1
+2013-12-30 17:08:54.527 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ffe0) → Save Synchronously? 1
+2013-12-30 17:08:54.527 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x1650ffe0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.528 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Saving <NSManagedObjectContext (0x1650ea30): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:54.528 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Save Parents? 1
+2013-12-30 17:08:54.528 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Save Synchronously? 1
+2013-12-30 17:08:54.528 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x1650ea30) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.529 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0x1650ea30) → Finished saving: <NSManagedObjectContext (0x1650ea30): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:54.529 SACoreTestApp[92319:907] Starting timeout at 2013-12-30 22:08:54 +0000
+2013-12-30 17:08:54.530 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd65ce10) → Saving <NSManagedObjectContext (0xd65ce10): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.530 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd65ce10) → Save Parents? 1
+2013-12-30 17:08:54.530 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd65ce10) → Save Synchronously? 1
+2013-12-30 17:08:54.530 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd65ce10) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.531 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Saving <NSManagedObjectContext (0x1650ea30): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.531 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Save Parents? 1
+2013-12-30 17:08:54.532 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Save Synchronously? 1
+2013-12-30 17:08:54.532 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x1650ea30) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.532 SACoreTestApp[92319:6103] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0x1650ea30) → Finished saving: <NSManagedObjectContext (0x1650ea30): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.533 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd65f170) → Saving <NSManagedObjectContext (0xd65f170): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.533 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd65f170) → Save Parents? 1
+2013-12-30 17:08:54.533 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd65f170) → Save Synchronously? 1
+2013-12-30 17:08:54.533 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd65f170) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.534 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Saving <NSManagedObjectContext (0x1650ea30): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:54.534 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Save Parents? 1
+2013-12-30 17:08:54.534 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x1650ea30) → Save Synchronously? 1
+2013-12-30 17:08:54.535 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x1650ea30) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:54.535 SACoreTestApp[92319:6103] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0x1650ea30) → Finished saving: <NSManagedObjectContext (0x1650ea30): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.064 SACoreTestApp[92319:907] Setting testDone flag at 2013-12-30 22:08:55 +0000
+2013-12-30 17:08:55.064 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:55.065 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SASynchronizationManagerTests testQueueChangeOfPreferenceNamed]' passed (0.543 seconds).
+Test Case '-[SASynchronizationManagerTests testQueueChangeOfPreferencesWithDictionary]' started.
+2013-12-30 17:08:55.068 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:55.069 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xb7306a0>
+2013-12-30 17:08:55.069 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xb732330>
+2013-12-30 17:08:55.070 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xb732330>
+2013-12-30 17:08:55.070 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb732040) → Saving <NSManagedObjectContext (0xb732040): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:55.071 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb732040) → Save Parents? 1
+2013-12-30 17:08:55.071 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb732040) → Save Synchronously? 1
+2013-12-30 17:08:55.071 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb732040) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.072 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Saving <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:55.072 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Parents? 1
+2013-12-30 17:08:55.072 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Synchronously? 1
+2013-12-30 17:08:55.072 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb7306a0) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.073 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb7306a0) → Finished saving: <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:55.073 SACoreTestApp[92319:907] Starting timeout at 2013-12-30 22:08:55 +0000
+2013-12-30 17:08:55.074 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb4f4130) → Saving <NSManagedObjectContext (0xb4f4130): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.074 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb4f4130) → Save Parents? 1
+2013-12-30 17:08:55.075 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb4f4130) → Save Synchronously? 1
+2013-12-30 17:08:55.075 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb4f4130) Context UNNAMED is about to save. Obtaining permanent IDs for new 3 inserted objects
+2013-12-30 17:08:55.075 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Saving <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.076 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Parents? 1
+2013-12-30 17:08:55.076 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Synchronously? 1
+2013-12-30 17:08:55.076 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb7306a0) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 3 inserted objects
+2013-12-30 17:08:55.076 SACoreTestApp[92319:6a03] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb7306a0) → Finished saving: <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.077 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb427c20) → Saving <NSManagedObjectContext (0xb427c20): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.078 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb427c20) → Save Parents? 1
+2013-12-30 17:08:55.078 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb427c20) → Save Synchronously? 1
+2013-12-30 17:08:55.078 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb427c20) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.079 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Saving <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.079 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Parents? 1
+2013-12-30 17:08:55.079 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Synchronously? 1
+2013-12-30 17:08:55.079 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xb7306a0) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.080 SACoreTestApp[92319:6a03] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb7306a0) → Finished saving: <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.080 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb424f50) → Saving <NSManagedObjectContext (0xb424f50): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.080 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb424f50) → Save Parents? 1
+2013-12-30 17:08:55.081 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb424f50) → Save Synchronously? 1
+2013-12-30 17:08:55.081 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Saving <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.081 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Parents? 1
+2013-12-30 17:08:55.081 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xb7306a0) → Save Synchronously? 1
+2013-12-30 17:08:55.082 SACoreTestApp[92319:6a03] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xb7306a0) → Finished saving: <NSManagedObjectContext (0xb7306a0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.584 SACoreTestApp[92319:907] Setting testDone flag at 2013-12-30 22:08:55 +0000
+2013-12-30 17:08:55.714 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:55.714 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SASynchronizationManagerTests testQueueChangeOfPreferencesWithDictionary]' passed (0.649 seconds).
+Test Case '-[SASynchronizationManagerTests testSendingQueuedPreferencesToServerSuccessfully]' started.
+2013-12-30 17:08:55.718 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_contextWithStoreCoordinator:](0x1796d24) -> Created Context UNNAMED
+2013-12-30 17:08:55.718 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: <NSManagedObjectContext: 0xd2712d0>
+2013-12-30 17:08:55.718 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_newMainQueueContext](0x1796d24) Created Main Queue Context: <NSManagedObjectContext: 0xd273b00>
+2013-12-30 17:08:55.719 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: <NSManagedObjectContext: 0xd273b00>
+2013-12-30 17:08:55.719 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2719a0) → Saving <NSManagedObjectContext (0xd2719a0): *** UNNAMED ***> on *** MAIN THREAD ***
+2013-12-30 17:08:55.720 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2719a0) → Save Parents? 1
+2013-12-30 17:08:55.720 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2719a0) → Save Synchronously? 1
+2013-12-30 17:08:55.720 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd2719a0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.721 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Saving <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:55.721 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Parents? 1
+2013-12-30 17:08:55.721 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Synchronously? 1
+2013-12-30 17:08:55.721 SACoreTestApp[92319:907] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd2712d0) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.722 SACoreTestApp[92319:907] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xd2712d0) → Finished saving: <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** MAIN THREAD ***
+2013-12-30 17:08:55.722 SACoreTestApp[92319:907] Starting timeout at 2013-12-30 22:08:55 +0000
+2013-12-30 17:08:55.723 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x165154f0) → Saving <NSManagedObjectContext (0x165154f0): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.723 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x165154f0) → Save Parents? 1
+2013-12-30 17:08:55.724 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x165154f0) → Save Synchronously? 1
+2013-12-30 17:08:55.724 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x165154f0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.725 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Saving <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.725 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Parents? 1
+2013-12-30 17:08:55.725 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Synchronously? 1
+2013-12-30 17:08:55.726 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd2712d0) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.726 SACoreTestApp[92319:6103] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xd2712d0) → Finished saving: <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.727 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x165135b0) → Saving <NSManagedObjectContext (0x165135b0): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.727 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x165135b0) → Save Parents? 1
+2013-12-30 17:08:55.727 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x165135b0) → Save Synchronously? 1
+2013-12-30 17:08:55.727 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0x165135b0) Context UNNAMED is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.728 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Saving <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.728 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Parents? 1
+2013-12-30 17:08:55.728 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Synchronously? 1
+2013-12-30 17:08:55.729 SACoreTestApp[92319:6103] -[NSManagedObjectContext(MagicalRecord) MR_contextWillSave:](0xd2712d0) Context BACKGROUND SAVING (ROOT) is about to save. Obtaining permanent IDs for new 1 inserted objects
+2013-12-30 17:08:55.729 SACoreTestApp[92319:6103] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xd2712d0) → Finished saving: <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.980 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x16506470) → Saving <NSManagedObjectContext (0x16506470): *** UNNAMED ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.980 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x16506470) → Save Parents? 1
+2013-12-30 17:08:55.980 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0x16506470) → Save Synchronously? 1
+2013-12-30 17:08:55.981 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Saving <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:55.981 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Parents? 1
+2013-12-30 17:08:55.982 SACoreTestApp[92319:6a03] -[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:](0xd2712d0) → Save Synchronously? 1
+2013-12-30 17:08:55.982 SACoreTestApp[92319:6a03] __70-[NSManagedObjectContext(MagicalSaves) MR_saveWithOptions:completion:]_block_invoke27(0xd2712d0) → Finished saving: <NSManagedObjectContext (0xd2712d0): *** BACKGROUND SAVING (ROOT) ***> on *** BACKGROUND THREAD ***
+2013-12-30 17:08:56.188 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setDefaultContext:](0x1796d24) Set Default Context: (null)
+2013-12-30 17:08:56.188 SACoreTestApp[92319:6103] *** Assertion failure in +[NSManagedObjectContext MR_defaultContext], /Users/supermarin/Documents/source/ios-sample-newgen/contrib/MagicalRecord/MagicalRecord/Categories/NSManagedObjectContext/NSManagedObjectContext+MagicalRecord.m:60
+2013-12-30 17:08:56.189 SACoreTestApp[92319:907] +[NSManagedObjectContext(MagicalRecord) MR_setRootSavingContext:](0x1796d24) Set Root Saving Context: (null)
+Test Case '-[SASynchronizationManagerTests testSendingQueuedPreferencesToServerSuccessfully]' passed (0.474 seconds).
+Test Suite 'SASynchronizationManagerTests' finished at 2013-12-30 22:08:56 +0000.
+Executed 4 tests, with 0 failures (0 unexpected) in 2.096 (2.097) seconds
+2013-12-30 17:08:56.197 SACoreTestApp[92319:6003] *** Assertion failure in +[NSManagedObjectContext MR_defaultContext], /Users/supermarin/Documents/source/ios-sample-newgen/contrib/MagicalRecord/MagicalRecord/Categories/NSManagedObjectContext/NSManagedObjectContext+MagicalRecord.m:60
+2013-12-30 17:08:56.197 SACoreTestApp[92319:6103] *** Terminating app due to uncaught exception 'NSInternalInconsistencyException', reason: 'Default Context is nil! Did you forget to initialize the Core Data Stack?'
+*** First throw call stack:
+(0x1f5e012 0x406fe7e 0x1f5de78 0x3d2e665 0xc3b3aaa 0xc3a875f 0xc5bb6e1 0xc4d9d1d 0x533e53f 0x5350014 0x5340418 0x53402a6 0x5341280 0x5341450 0x589ddab 0x58a1cce)
+libc++abi.dylib: terminate called throwing an exception
+** TEST SUCCEEDED **
+
+
+real	0m36.457s
+user	1m20.528s
+sys	0m21.091s

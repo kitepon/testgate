@@ -1,0 +1,8 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.5, pytest-9.1.1, pluggy-1.6.0
+rootdir: /work/fixture
+configfile: pytest.ini
+plugins: testmon-2.2.0
+collected 4 items / 4 deselected / 0 selected
+
+============================ 4 deselected in 0.01s =============================

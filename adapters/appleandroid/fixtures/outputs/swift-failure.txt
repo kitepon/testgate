@@ -1,0 +1,67 @@
+Building for debugging...
+[0/21] Write sources
+[6/21] Write swift-version-3D8B27DF7E3498C2.txt
+[8/25] Emitting module Util
+[9/25] Compiling Util Strings.swift
+[10/26] Wrapping AST for Util for debugging
+[12/28] Compiling Core Calc.swift
+[13/28] Emitting module Core
+[14/29] Emitting module UtilTests
+[15/29] Compiling UtilTests StringsTests.swift
+[17/30] Wrapping AST for Core for debugging
+[18/30] Wrapping AST for UtilTests for debugging
+[20/34] Emitting module App
+[21/34] Compiling App Greeter.swift
+[22/35] Wrapping AST for App for debugging
+[24/37] Compiling CoreTests CalcTests.swift
+[25/37] Emitting module CoreTests
+[26/38] Wrapping AST for CoreTests for debugging
+[28/38] Compiling AppTests GreeterTests.swift
+[29/38] Emitting module AppTests
+[30/39] /tmp/tmp.4a4FGZmFsq/.build/x86_64-unknown-linux-gnu/debug/swift-multiPackageDiscoveredTests.derived/all-discovered-tests.swift
+[31/39] Write sources
+[32/39] Wrapping AST for AppTests for debugging
+[34/44] Compiling swift_multiPackageDiscoveredTests UtilTests.swift
+[35/44] Compiling swift_multiPackageDiscoveredTests all-discovered-tests.swift
+[36/44] Emitting module swift_multiPackageDiscoveredTests
+[37/44] Compiling swift_multiPackageDiscoveredTests AppTests.swift
+[38/44] Compiling swift_multiPackageDiscoveredTests CoreTests.swift
+[39/45] /tmp/tmp.4a4FGZmFsq/.build/x86_64-unknown-linux-gnu/debug/swift-multiPackageTests.derived/runner.swift
+[40/45] Write sources
+[41/45] Wrapping AST for swift-multiPackageDiscoveredTests for debugging
+[43/47] Emitting module swift_multiPackageTests
+[44/47] Compiling swift_multiPackageTests runner.swift
+[45/48] Wrapping AST for swift-multiPackageTests for debugging
+[46/48] Write Objects.LinkFileList
+[47/48] Linking swift-multiPackageTests.xctest
+Build complete! (5.23s)
+Test Suite 'All tests' started at 2026-10-13 05:55:14.841
+Test Suite 'debug.xctest' started at 2026-10-13 05:55:14.842
+Test Suite 'CalcTests' started at 2026-10-13 05:55:14.842
+Test Case 'CalcTests.testAdd' started at 2026-10-13 05:55:14.842
+Test Case 'CalcTests.testAdd' passed (0.0 seconds)
+Test Case 'CalcTests.testMul' started at 2026-10-13 05:55:14.842
+/tmp/tmp.4a4FGZmFsq/Tests/CoreTests/CalcTests.swift:5: error: CalcTests.testMul : XCTAssertEqual failed: ("5") is not equal to ("6") - 
+Test Case 'CalcTests.testMul' failed (0.1 seconds)
+Test Case 'CalcTests.testSkipped' started at 2026-10-13 05:55:14.942
+/tmp/tmp.4a4FGZmFsq/Tests/CoreTests/CalcTests.swift:6: CalcTests.testSkipped : Test skipped - not on this platform
+Test Case 'CalcTests.testSkipped' skipped (0.0 seconds)
+Test Suite 'CalcTests' failed at 2026-10-13 05:55:14.943
+	 Executed 3 tests, with 1 test skipped and 1 failure (0 unexpected) in 0.101 (0.101) seconds
+Test Suite 'GreeterTests' started at 2026-10-13 05:55:14.943
+Test Case 'GreeterTests.testTotal' started at 2026-10-13 05:55:14.943
+Test Case 'GreeterTests.testTotal' passed (0.1 seconds)
+Test Suite 'GreeterTests' passed at 2026-10-13 05:55:15.043
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.1 (0.1) seconds
+Test Suite 'debug.xctest' failed at 2026-10-13 05:55:15.043
+	 Executed 4 tests, with 1 test skipped and 1 failure (0 unexpected) in 0.201 (0.201) seconds
+Test Suite 'All tests' failed at 2026-10-13 05:55:15.043
+	 Executed 4 tests, with 1 test skipped and 1 failure (0 unexpected) in 0.201 (0.201) seconds
+◇ Test run started.
+↳ Testing Library Version: 6.0.3 (18c42c19cac3faf)
+◇ Test shouts() started.
+◇ Test shoutsEmpty() started.
+✔ Test shouts() passed after 0.001 seconds.
+✘ Test shoutsEmpty() recorded an issue at StringsTests.swift:4:28: Expectation failed: (shout("") → "!") == "?"
+✘ Test shoutsEmpty() failed after 0.001 seconds with 1 issue.
+✘ Test run with 2 tests failed after 0.001 seconds with 1 issue.

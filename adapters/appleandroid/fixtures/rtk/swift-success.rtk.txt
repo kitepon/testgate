@@ -1,0 +1,7 @@
+OUTPUT (last 5 lines):
+  ◇ Test shouts() started.
+  ◇ Test shoutsEmpty() started.
+  ✔ Test shoutsEmpty() passed after 0.001 seconds.
+  ✔ Test shouts() passed after 0.001 seconds.
+  ✔ Test run with 2 tests passed after 0.001 seconds.
+

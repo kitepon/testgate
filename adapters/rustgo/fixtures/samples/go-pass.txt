@@ -1,0 +1,4 @@
+ok  	example.com/fx/app	(cached)
+ok  	example.com/fx/core	(cached)
+ok  	example.com/fx/indep	(cached)
+ok  	example.com/fx/util	(cached)

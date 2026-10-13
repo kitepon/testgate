@@ -1,0 +1,8 @@
+OUTPUT (last 5 lines):
+  ◇ Test shoutsEmpty() started.
+  ✔ Test shouts() passed after 0.001 seconds.
+  ✘ Test shoutsEmpty() recorded an issue at StringsTests.swift:4:28: Expectation failed: (shout("") → "!") == "?"
+  ✘ Test shoutsEmpty() failed after 0.001 seconds with 1 issue.
+  ✘ Test run with 2 tests failed after 0.001 seconds with 1 issue.
+
+[full output: rtk recall 07a68e5e4f70]
