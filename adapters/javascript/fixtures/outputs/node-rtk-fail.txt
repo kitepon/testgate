@@ -1,0 +1,8 @@
+OUTPUT (last 5 lines):
+      actual: 101,
+      expected: 100,
+      operator: 'strictEqual',
+      diff: 'simple'
+    }
+
+[full output: rtk recall 9a37f5b28f4a]

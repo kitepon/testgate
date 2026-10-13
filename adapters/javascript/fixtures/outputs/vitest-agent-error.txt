@@ -1,0 +1,97 @@
+
+ RUN  v5.0.4 /work/vitest-repo
+
+ ❯ test/tax.test.js (2 tests | 1 failed) 5ms
+   ❯ taxFor (2)
+     × 税額を地域の税率で計算する 4ms
+ ❯ test/price.test.js (3 tests | 2 failed | 1 skipped) 8ms
+   ❯ totalPrice (3)
+     × 小計に税を足して合計を出す 7ms
+     × 空のカートは0になる 0ms
+ ❯ test/slug.test.js (0 test)
+
+ Test Files  3 failed (3)
+      Tests  3 failed | 1 passed | 1 skipped (5)
+   Start at  06:02:36
+   Duration  103ms (tests 36%, import 31%, worker 19%, transform 14%, environment 1%)
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/slug.test.js [ test/slug.test.js ]
+Error: Failed to parse source for import analysis because the content contains invalid JS syntax. If you are using JSX, make sure to name the file with the .jsx or .tsx extension.
+  Plugin: vite:import-analysis
+  File: /work/vitest-repo/src/slug.js:11:0
+  9  |  }
+  10 |  
+  11 |  }} 壊れた行
+     |  ^
+  12 |  
+ ❯ TransformPluginContext._formatLog ../../../runtimes/node_modules/vite/dist/node/chunks/node.js:8766:39
+ ❯ TransformPluginContext.error ../../../runtimes/node_modules/vite/dist/node/chunks/node.js:8763:14
+ ❯ TransformPluginContext.transform ../../../runtimes/node_modules/vite/dist/node/chunks/node.js:26596:10
+ ❯ EnvironmentPluginContainer.transform ../../../runtimes/node_modules/vite/dist/node/chunks/node.js:8545:14
+ ❯ loadAndTransform ../../../runtimes/node_modules/vite/dist/node/chunks/node.js:20184:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/price.test.js > totalPrice > 小計に税を足して合計を出す
+AssertionError: expected 276 to be 275 // Object.is equality
+
+- Expected
++ Received
+
+- 275
++ 276
+
+ ❯ test/price.test.js:11:30
+      9| describe('totalPrice', () => {
+     10|   test('小計に税を足して合計を出す', () => {
+     11|     expect(totalPrice(cart)).toBe(275)
+       |                              ^
+     12|   })
+     13|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  test/price.test.js > totalPrice > 空のカートは0になる
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/price.test.js:15:28
+     13|
+     14|   test('空のカートは0になる', () => {
+     15|     expect(totalPrice([])).toBe(0)
+       |                            ^
+     16|   })
+     17|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  test/tax.test.js > taxFor > 税額を地域の税率で計算する
+AssertionError: expected 101 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 101
+
+ ❯ test/tax.test.js:6:26
+      4| describe('taxFor', () => {
+      5|   test('税額を地域の税率で計算する', () => {
+      6|     expect(taxFor(1000)).toBe(100)
+       |                          ^
+      7|     expect(taxFor(1000, 'de')).toBe(190)
+      8|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+

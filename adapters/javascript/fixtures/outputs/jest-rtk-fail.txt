@@ -1,0 +1,66 @@
+PASS (3) FAIL (3) skipped (1)
+
+1. taxFor 税額を地域の税率で計算する
+   Error: expect(received).toBe(expected) // Object.is equality
+   
+   Expected: 100
+   Received: 101
+       at Object.toBe (/work/jest-repo/test/tax.test.js:5:26)
+       at Promise.finally.completed (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1834:28)
+       at new Promise (<anonymous>)
+       at callAsyncCircusFn (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1774:10)
+       at _callCircusTest (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1167:40)
+       at _runTestInContext (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1103:3)
+       at runTestWithContext (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:996:5)
+       at _runTestsForDescribeBlockOnce (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1008:11)
+       at _runTestsForDescribeBlock (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:824:5)
+       at _runTestsForDescribeBlockOnce (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1003:11)
+       at _runTestsForDescribeBlock (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:824:5)
+       at run (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:789:3)
+       at runAndTransformResultsToJestFormat (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:2300:21)
+       at jestAdapter (/runtimes/node_modules/jest-circus/build/runner.js:111:19)
+       at runTestInternal (/runtimes/node_modules/jest-runner/build/index.js:247:16)
+       at runTest (/runtimes/node_modules/jest-runner/build/index.js:315:7)
+2. totalPrice 小計に税を足して合計を出す
+   Error: expect(received).toBe(expected) // Object.is equality
+   
+   Expected: 275
+   Received: 276
+       at Object.toBe (/work/jest-repo/test/price.test.js:10:30)
+       at Promise.finally.completed (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1834:28)
+       at new Promise (<anonymous>)
+       at callAsyncCircusFn (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1774:10)
+       at _callCircusTest (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1167:40)
+       at _runTestInContext (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1103:3)
+       at runTestWithContext (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:996:5)
+       at _runTestsForDescribeBlockOnce (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1008:11)
+       at _runTestsForDescribeBlock (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:824:5)
+       at _runTestsForDescribeBlockOnce (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1003:11)
+       at _runTestsForDescribeBlock (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:824:5)
+       at run (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:789:3)
+       at runAndTransformResultsToJestFormat (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:2300:21)
+       at jestAdapter (/runtimes/node_modules/jest-circus/build/runner.js:111:19)
+       at runTestInternal (/runtimes/node_modules/jest-runner/build/index.js:247:16)
+       at runTest (/runtimes/node_modules/jest-runner/build/index.js:315:7)
+3. totalPrice 空のカートは0になる
+   Error: expect(received).toBe(expected) // Object.is equality
+   
+   Expected: 0
+   Received: 1
+       at Object.toBe (/work/jest-repo/test/price.test.js:14:28)
+       at Promise.finally.completed (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1834:28)
+       at new Promise (<anonymous>)
+       at callAsyncCircusFn (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1774:10)
+       at _callCircusTest (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1167:40)
+       at _runTestInContext (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1103:3)
+       at runTestWithContext (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:996:5)
+       at _runTestsForDescribeBlockOnce (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1008:11)
+       at _runTestsForDescribeBlock (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:824:5)
+       at _runTestsForDescribeBlockOnce (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:1003:11)
+       at _runTestsForDescribeBlock (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:824:5)
+       at run (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:789:3)
+       at runAndTransformResultsToJestFormat (/runtimes/node_modules/jest-circus/build/jestAdapterInit.js:2300:21)
+       at jestAdapter (/runtimes/node_modules/jest-circus/build/runner.js:111:19)
+       at runTestInternal (/runtimes/node_modules/jest-runner/build/index.js:247:16)
+       at runTest (/runtimes/node_modules/jest-runner/build/index.js:315:7)
+[full output: rtk recall 295f4cb1c80a]

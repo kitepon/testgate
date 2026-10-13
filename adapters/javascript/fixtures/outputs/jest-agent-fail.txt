@@ -1,0 +1,59 @@
+FAIL test/tax.test.js
+  ● taxFor › 税額を地域の税率で計算する
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 100
+    Received: 101
+
+      3 | describe('taxFor', () => {
+      4 |   test('税額を地域の税率で計算する', () => {
+    > 5 |     expect(taxFor(1000)).toBe(100)
+        |                          ^
+      6 |     expect(taxFor(1000, 'de')).toBe(190)
+      7 |   })
+      8 |
+
+      at Object.toBe (test/tax.test.js:5:26)
+
+FAIL test/price.test.js
+  ● totalPrice › 小計に税を足して合計を出す
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 275
+    Received: 276
+
+       8 | describe('totalPrice', () => {
+       9 |   test('小計に税を足して合計を出す', () => {
+    > 10 |     expect(totalPrice(cart)).toBe(275)
+         |                              ^
+      11 |   })
+      12 |
+      13 |   test('空のカートは0になる', () => {
+
+      at Object.toBe (test/price.test.js:10:30)
+
+  ● totalPrice › 空のカートは0になる
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |
+      13 |   test('空のカートは0になる', () => {
+    > 14 |     expect(totalPrice([])).toBe(0)
+         |                            ^
+      15 |   })
+      16 |
+      17 |   test.skip('通貨換算は未実装', () => {})
+
+      at Object.toBe (test/price.test.js:14:28)
+
+
+Test Suites: 2 failed, 1 passed, 3 total
+Tests:       3 failed, 1 skipped, 3 passed, 7 total
+Snapshots:   0 total
+Time:        0.217 s, estimated 1 s
+Ran all test suites.

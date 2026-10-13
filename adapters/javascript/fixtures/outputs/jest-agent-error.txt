@@ -1,0 +1,134 @@
+FAIL test/tax.test.js
+  ● taxFor › 税額を地域の税率で計算する
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 100
+    Received: 101
+
+      3 | describe('taxFor', () => {
+      4 |   test('税額を地域の税率で計算する', () => {
+    > 5 |     expect(taxFor(1000)).toBe(100)
+        |                          ^
+      6 |     expect(taxFor(1000, 'de')).toBe(190)
+      7 |   })
+      8 |
+
+      at Object.toBe (test/tax.test.js:5:26)
+
+FAIL test/price.test.js
+  ● totalPrice › 小計に税を足して合計を出す
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 275
+    Received: 276
+
+       8 | describe('totalPrice', () => {
+       9 |   test('小計に税を足して合計を出す', () => {
+    > 10 |     expect(totalPrice(cart)).toBe(275)
+         |                              ^
+      11 |   })
+      12 |
+      13 |   test('空のカートは0になる', () => {
+
+      at Object.toBe (test/price.test.js:10:30)
+
+  ● totalPrice › 空のカートは0になる
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 1
+
+      12 |
+      13 |   test('空のカートは0になる', () => {
+    > 14 |     expect(totalPrice([])).toBe(0)
+         |                            ^
+      15 |   })
+      16 |
+      17 |   test.skip('通貨換算は未実装', () => {})
+
+      at Object.toBe (test/price.test.js:14:28)
+
+FAIL test/slug.test.js
+  ● Test suite failed to run
+
+    Jest encountered an unexpected token
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use TypeScript, see https://jestjs.io/docs/getting-started#using-typescript
+     • To have some of your "node_modules" files transformed, you can specify a custom "transformIgnorePatterns" in your config.
+     • If you need a custom transformation, specify a "transform" option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the "moduleNameMapper" config option.
+
+    You'll find more details and examples of these config options in the docs:
+    https://jestjs.io/docs/configuration
+    For information about custom transformations, see:
+    https://jestjs.io/docs/code-transformation
+
+    Details:
+
+    SyntaxError: /work/jest-repo/src/slug.js: Unexpected token (13:0)
+
+      11 | module.exports = { slugify }
+      12 |
+    > 13 | }} 壊れた行
+         | ^
+      14 |
+
+    > 1 | const { slugify } = require('../src/slug')
+        |                     ^
+      2 |
+      3 | test('記号と空白をハイフンにまとめる', () => {
+      4 |   expect(slugify('Hello,  World!')).toBe('hello-world')
+
+      at constructor (../../../runtimes/node_modules/@babel/parser/src/parse-error.ts:96:45)
+      at Parser.toParseError [as raise] (../../../runtimes/node_modules/@babel/parser/src/tokenizer/index.ts:1504:19)
+      at Parser.raise [as unexpected] (../../../runtimes/node_modules/@babel/parser/src/tokenizer/index.ts:1544:16)
+      at Parser.unexpected [as parseExprAtom] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:1385:22)
+      at Parser.parseExprAtom [as parseExprSubscripts] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:742:23)
+      at Parser.parseExprSubscripts [as parseUpdate] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:721:21)
+      at Parser.parseUpdate [as parseMaybeUnary] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:683:23)
+      at Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:417:14)
+      at Parser.parseMaybeUnaryOrPrivate [as parseExprOps] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:429:23)
+      at Parser.parseExprOps [as parseMaybeConditional] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:384:23)
+      at Parser.parseMaybeConditional [as parseMaybeAssign] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:301:21)
+      at Parser.parseMaybeAssign [as parseExpressionBase] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:226:23)
+      at parseExpressionBase (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:217:39)
+      at Parser.callback [as allowInAnd] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:3222:16)
+      at Parser.allowInAnd [as parseExpression] (../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts:217:17)
+      at Parser.parseExpression [as parseStatementContent] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:688:23)
+      at Parser.parseStatementContent [as parseStatementLike] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:482:17)
+      at Parser.parseStatementLike [as parseModuleItem] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:419:17)
+      at Parser.parseModuleItem [as parseBlockOrModuleBlockBody] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:1443:16)
+      at Parser.parseBlockOrModuleBlockBody [as parseBlockBody] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:1417:10)
+      at Parser.parseBlockBody [as parseProgram] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:229:10)
+      at Parser.parseProgram [as parseTopLevel] (../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts:203:25)
+      at Parser.parseTopLevel [as parse] (../../../runtimes/node_modules/@babel/parser/src/parser/index.ts:83:25)
+      at parse (../../../runtimes/node_modules/@babel/parser/src/index.ts:86:38)
+      at parser (../../../runtimes/node_modules/@babel/core/src/parser/index.ts:29:19)
+          at parser.next (<anonymous>)
+      at normalizeFile (../../../runtimes/node_modules/@babel/core/src/transformation/normalize-file.ts:49:24)
+          at normalizeFile.next (<anonymous>)
+      at run (../../../runtimes/node_modules/@babel/core/src/transformation/index.ts:41:36)
+          at run.next (<anonymous>)
+      at transform (../../../runtimes/node_modules/@babel/core/src/transform.ts:29:20)
+          at transform.next (<anonymous>)
+      at evaluateSync (../../../runtimes/node_modules/gensync/index.js:251:28)
+      at sync (../../../runtimes/node_modules/gensync/index.js:89:14)
+      at fn (../../../runtimes/node_modules/@babel/core/src/errors/rewrite-stack-trace.ts:99:14)
+      at transformSync (../../../runtimes/node_modules/@babel/core/src/transform.ts:66:52)
+      at Object.require (test/slug.test.js:1:21)
+
+Test Suites: 3 failed, 3 total
+Tests:       3 failed, 1 skipped, 1 passed, 5 total
+Snapshots:   0 total
+Time:        0.241 s, estimated 1 s
+Ran all test suites.

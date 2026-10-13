@@ -1,0 +1,97 @@
+✔ ひな形に名前を差し込む (0.896216ms)
+✖ 小計に税を足して合計を出す (0.867603ms)
+✖ 空のカートは0になる (0.140872ms)
+﹣ 通貨換算は未実装 (0.115485ms) # 未実装
+/work/node-repo/src/slug.cjs:13
+}} 壊れた行
+^
+
+SyntaxError: Unexpected token '}'
+    at wrapSafe (node:internal/modules/cjs/loader:1900:18)
+    at Module._compile (node:internal/modules/cjs/loader:1942:20)
+    at Object..js (node:internal/modules/cjs/loader:2108:10)
+    at Module.load (node:internal/modules/cjs/loader:1690:32)
+    at Module._load (node:internal/modules/cjs/loader:1480:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:376:15)
+    at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:248:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+    at async node:internal/modules/esm/loader:650:26
+
+Node.js v26.11.1
+✖ test/slug.test.mjs (22.764092ms)
+✖ 税額を地域の税率で計算する (0.799065ms)
+✔ 知らない地域は例外になる (0.281643ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 2
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 44.493211
+
+✖ failing tests:
+
+test at test/price.test.mjs:6:1
+✖ 小計に税を足して合計を出す (0.867603ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  276 !== 275
+  
+      at TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:7:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 276,
+    expected: 275,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/price.test.mjs:10:1
+✖ 空のカートは0になる (0.140872ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:11:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/slug.test.mjs:1:1
+✖ test/slug.test.mjs (22.764092ms)
+  'test failed'
+
+test at test/tax.test.mjs:5:1
+✖ 税額を地域の税率で計算する (0.799065ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  101 !== 100
+  
+      at TestContext.<anonymous> (file:///work/node-repo/test/tax.test.mjs:6:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 101,
+    expected: 100,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

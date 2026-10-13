@@ -1,0 +1,129 @@
+TAP version 13
+# Subtest: ひな形に名前を差し込む
+ok 1 - ひな形に名前を差し込む
+  ---
+  duration_ms: 0.895505
+  type: 'test'
+  ...
+# Subtest: 小計に税を足して合計を出す
+not ok 2 - 小計に税を足して合計を出す
+  ---
+  duration_ms: 0.852204
+  type: 'test'
+  location: '/work/node-repo/test/price.test.mjs:6:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    276 !== 275
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 275
+  actual: 276
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:7:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: 空のカートは0になる
+not ok 3 - 空のカートは0になる
+  ---
+  duration_ms: 0.154367
+  type: 'test'
+  location: '/work/node-repo/test/price.test.mjs:10:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:11:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: 通貨換算は未実装
+ok 4 - 通貨換算は未実装 # SKIP 未実装
+  ---
+  duration_ms: 0.136714
+  type: 'test'
+  ...
+# /work/node-repo/src/slug.cjs:13
+# }} 壊れた行
+# ^
+# SyntaxError: Unexpected token '}'
+#     at wrapSafe (node:internal/modules/cjs/loader:1900:18)
+#     at Module._compile (node:internal/modules/cjs/loader:1942:20)
+#     at Object..js (node:internal/modules/cjs/loader:2108:10)
+#     at Module.load (node:internal/modules/cjs/loader:1690:32)
+#     at Module._load (node:internal/modules/cjs/loader:1480:12)
+#     at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+#     at loadCJSModuleWithModuleLoad (node:internal/modules/esm/translators:376:15)
+#     at ModuleWrap.<anonymous> (node:internal/modules/esm/translators:248:9)
+#     at ModuleJob.run (node:internal/modules/esm/module_job:569:25)
+#     at async node:internal/modules/esm/loader:650:26
+# Node.js v26.11.1
+# Subtest: test/slug.test.mjs
+not ok 3 - test/slug.test.mjs
+  ---
+  duration_ms: 26.011719
+  type: 'test'
+  location: '/work/node-repo/test/slug.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: 税額を地域の税率で計算する
+not ok 6 - 税額を地域の税率で計算する
+  ---
+  duration_ms: 0.803233
+  type: 'test'
+  location: '/work/node-repo/test/tax.test.mjs:5:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    101 !== 100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 100
+  actual: 101
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///work/node-repo/test/tax.test.mjs:6:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: 知らない地域は例外になる
+ok 7 - 知らない地域は例外になる
+  ---
+  duration_ms: 0.253912
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 2
+# fail 4
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 46.969193

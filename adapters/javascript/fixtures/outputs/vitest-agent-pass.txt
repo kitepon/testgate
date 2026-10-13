@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /work/vitest-repo
+
+
+ Test Files  3 passed (3)
+      Tests  6 passed | 1 skipped (7)
+   Start at  06:02:30
+   Duration  97ms (transform 65%, import 21%, worker 7%, tests 6%)
+

@@ -1,0 +1,76 @@
+
+ RUN  v5.0.4 /work/vitest-repo
+
+ ❯ test/tax.test.js (2 tests | 1 failed) 5ms
+   ❯ taxFor (2)
+     × 税額を地域の税率で計算する 4ms
+ ❯ test/price.test.js (3 tests | 2 failed | 1 skipped) 5ms
+   ❯ totalPrice (3)
+     × 小計に税を足して合計を出す 4ms
+     × 空のカートは0になる 0ms
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 3 passed | 1 skipped (7)
+   Start at  06:02:33
+   Duration  92ms (transform 38%, import 29%, tests 21%, worker 11%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/price.test.js > totalPrice > 小計に税を足して合計を出す
+AssertionError: expected 276 to be 275 // Object.is equality
+
+- Expected
++ Received
+
+- 275
++ 276
+
+ ❯ test/price.test.js:11:30
+      9| describe('totalPrice', () => {
+     10|   test('小計に税を足して合計を出す', () => {
+     11|     expect(totalPrice(cart)).toBe(275)
+       |                              ^
+     12|   })
+     13|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  test/price.test.js > totalPrice > 空のカートは0になる
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/price.test.js:15:28
+     13|
+     14|   test('空のカートは0になる', () => {
+     15|     expect(totalPrice([])).toBe(0)
+       |                            ^
+     16|   })
+     17|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  test/tax.test.js > taxFor > 税額を地域の税率で計算する
+AssertionError: expected 101 to be 100 // Object.is equality
+
+- Expected
++ Received
+
+- 100
++ 101
+
+ ❯ test/tax.test.js:6:26
+      4| describe('taxFor', () => {
+      5|   test('税額を地域の税率で計算する', () => {
+      6|     expect(taxFor(1000)).toBe(100)
+       |                          ^
+      7|     expect(taxFor(1000, 'de')).toBe(190)
+      8|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+

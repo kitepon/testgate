@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: ひな形に名前を差し込む
+ok 1 - ひな形に名前を差し込む
+  ---
+  duration_ms: 0.969001
+  type: 'test'
+  ...
+# Subtest: 小計に税を足して合計を出す
+ok 2 - 小計に税を足して合計を出す
+  ---
+  duration_ms: 0.53809
+  type: 'test'
+  ...
+# Subtest: 空のカートは0になる
+ok 3 - 空のカートは0になる
+  ---
+  duration_ms: 0.0914
+  type: 'test'
+  ...
+# Subtest: 通貨換算は未実装
+ok 4 - 通貨換算は未実装 # SKIP 未実装
+  ---
+  duration_ms: 3.650986
+  type: 'test'
+  ...
+# Subtest: 記号と空白をハイフンにまとめる
+ok 5 - 記号と空白をハイフンにまとめる
+  ---
+  duration_ms: 0.481816
+  type: 'test'
+  ...
+# Subtest: ウムラウトを置き換える
+ok 6 - ウムラウトを置き換える
+  ---
+  duration_ms: 0.091641
+  type: 'test'
+  ...
+# Subtest: 税額を地域の税率で計算する
+ok 7 - 税額を地域の税率で計算する
+  ---
+  duration_ms: 0.469343
+  type: 'test'
+  ...
+# Subtest: 知らない地域は例外になる
+ok 8 - 知らない地域は例外になる
+  ---
+  duration_ms: 0.242371
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 44.326531

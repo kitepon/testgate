@@ -1,0 +1,114 @@
+TAP version 13
+# Subtest: ひな形に名前を差し込む
+ok 1 - ひな形に名前を差し込む
+  ---
+  duration_ms: 0.884134
+  type: 'test'
+  ...
+# Subtest: 小計に税を足して合計を出す
+not ok 2 - 小計に税を足して合計を出す
+  ---
+  duration_ms: 0.944355
+  type: 'test'
+  location: '/work/node-repo/test/price.test.mjs:6:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    276 !== 275
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 275
+  actual: 276
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:7:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: 空のカートは0になる
+not ok 3 - 空のカートは0になる
+  ---
+  duration_ms: 0.136564
+  type: 'test'
+  location: '/work/node-repo/test/price.test.mjs:10:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    1 !== 0
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 0
+  actual: 1
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:11:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+  ...
+# Subtest: 通貨換算は未実装
+ok 4 - 通貨換算は未実装 # SKIP 未実装
+  ---
+  duration_ms: 0.135482
+  type: 'test'
+  ...
+# Subtest: 記号と空白をハイフンにまとめる
+ok 5 - 記号と空白をハイフンにまとめる
+  ---
+  duration_ms: 0.490582
+  type: 'test'
+  ...
+# Subtest: ウムラウトを置き換える
+ok 6 - ウムラウトを置き換える
+  ---
+  duration_ms: 0.088835
+  type: 'test'
+  ...
+# Subtest: 税額を地域の税率で計算する
+not ok 7 - 税額を地域の税率で計算する
+  ---
+  duration_ms: 0.835082
+  type: 'test'
+  location: '/work/node-repo/test/tax.test.mjs:5:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    101 !== 100
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 100
+  actual: 101
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///work/node-repo/test/tax.test.mjs:6:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.start (node:internal/test_runner/test:1262:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+  ...
+# Subtest: 知らない地域は例外になる
+ok 8 - 知らない地域は例外になる
+  ---
+  duration_ms: 0.255695
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 4
+# fail 3
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 44.585423

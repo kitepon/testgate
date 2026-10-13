@@ -1,0 +1,60 @@
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mtest/[22m[1mtax.test.js[22m
+[1m[31m  [1m● [22m[1mtaxFor › 税額を地域の税率で計算する[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m100[39m
+    Received: [31m101[39m
+
+[2m    [0m [90m 3 |[39m describe([32m'taxFor'[39m[33m,[39m () [33m=>[39m {[22m
+[2m     [90m 4 |[39m   test([32m'税額を地域の税率で計算する'[39m[33m,[39m () [33m=>[39m {[22m
+[2m    [31m[1m>[22m[2m[39m[90m 5 |[39m     expect(taxFor([35m1000[39m))[33m.[39mtoBe([35m100[39m)[22m
+[2m     [90m   |[39m                          [31m[1m^[22m[2m[39m[22m
+[2m     [90m 6 |[39m     expect(taxFor([35m1000[39m[33m,[39m [32m'de'[39m))[33m.[39mtoBe([35m190[39m)[22m
+[2m     [90m 7 |[39m   })[22m
+[2m     [90m 8 |[39m[0m[22m
+
+[2m      [2mat Object.toBe ([22m[2m[0m[36mtest/tax.test.js[39m[0m[2m:5:26)[22m[2m[22m
+
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mtest/[22m[1mprice.test.js[22m
+[1m[31m  [1m● [22m[1mtotalPrice › 小計に税を足して合計を出す[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m275[39m
+    Received: [31m276[39m
+
+[2m    [0m [90m  8 |[39m describe([32m'totalPrice'[39m[33m,[39m () [33m=>[39m {[22m
+[2m     [90m  9 |[39m   test([32m'小計に税を足して合計を出す'[39m[33m,[39m () [33m=>[39m {[22m
+[2m    [31m[1m>[22m[2m[39m[90m 10 |[39m     expect(totalPrice(cart))[33m.[39mtoBe([35m275[39m)[22m
+[2m     [90m    |[39m                              [31m[1m^[22m[2m[39m[22m
+[2m     [90m 11 |[39m   })[22m
+[2m     [90m 12 |[39m[22m
+[2m     [90m 13 |[39m   test([32m'空のカートは0になる'[39m[33m,[39m () [33m=>[39m {[0m[22m
+
+[2m      [2mat Object.toBe ([22m[2m[0m[36mtest/price.test.js[39m[0m[2m:10:30)[22m[2m[22m
+
+[1m[31m  [1m● [22m[1mtotalPrice › 空のカートは0になる[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m0[39m
+    Received: [31m1[39m
+
+[2m    [0m [90m 12 |[39m[22m
+[2m     [90m 13 |[39m   test([32m'空のカートは0になる'[39m[33m,[39m () [33m=>[39m {[22m
+[2m    [31m[1m>[22m[2m[39m[90m 14 |[39m     expect(totalPrice([]))[33m.[39mtoBe([35m0[39m)[22m
+[2m     [90m    |[39m                            [31m[1m^[22m[2m[39m[22m
+[2m     [90m 15 |[39m   })[22m
+[2m     [90m 16 |[39m[22m
+[2m     [90m 17 |[39m   test[33m.[39mskip([32m'通貨換算は未実装'[39m[33m,[39m () [33m=>[39m {})[0m[22m
+
+[2m      [2mat Object.toBe ([22m[2m[0m[36mtest/price.test.js[39m[0m[2m:14:28)[22m[2m[22m
+
+[0m[7m[1m[32m PASS [39m[22m[27m[0m [2mtest/[22m[1mslug.test.js[22m
+
+[1mTest Suites: [22m[1m[31m2 failed[39m[22m, [1m[32m1 passed[39m[22m, 3 total
+[1mTests:       [22m[1m[31m3 failed[39m[22m, [1m[33m1 skipped[39m[22m, [1m[32m3 passed[39m[22m, 7 total
+[1mSnapshots:   [22m0 total
+[1mTime:[22m        0.158 s, estimated 1 s
+[2mRan all test suites[22m[2m.[22m

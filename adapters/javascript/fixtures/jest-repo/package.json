@@ -1,0 +1,10 @@
+{
+  "name": "fixture-jest-repo",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}

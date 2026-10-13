@@ -1,0 +1,134 @@
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mtest/[22m[1mtax.test.js[22m
+[1m[31m  [1m● [22m[1mtaxFor › 税額を地域の税率で計算する[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m100[39m
+    Received: [31m101[39m
+
+[2m    [0m [90m 3 |[39m describe([32m'taxFor'[39m[33m,[39m () [33m=>[39m {[22m
+[2m     [90m 4 |[39m   test([32m'税額を地域の税率で計算する'[39m[33m,[39m () [33m=>[39m {[22m
+[2m    [31m[1m>[22m[2m[39m[90m 5 |[39m     expect(taxFor([35m1000[39m))[33m.[39mtoBe([35m100[39m)[22m
+[2m     [90m   |[39m                          [31m[1m^[22m[2m[39m[22m
+[2m     [90m 6 |[39m     expect(taxFor([35m1000[39m[33m,[39m [32m'de'[39m))[33m.[39mtoBe([35m190[39m)[22m
+[2m     [90m 7 |[39m   })[22m
+[2m     [90m 8 |[39m[0m[22m
+
+[2m      [2mat Object.toBe ([22m[2m[0m[36mtest/tax.test.js[39m[0m[2m:5:26)[22m[2m[22m
+
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mtest/[22m[1mprice.test.js[22m
+[1m[31m  [1m● [22m[1mtotalPrice › 小計に税を足して合計を出す[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m275[39m
+    Received: [31m276[39m
+
+[2m    [0m [90m  8 |[39m describe([32m'totalPrice'[39m[33m,[39m () [33m=>[39m {[22m
+[2m     [90m  9 |[39m   test([32m'小計に税を足して合計を出す'[39m[33m,[39m () [33m=>[39m {[22m
+[2m    [31m[1m>[22m[2m[39m[90m 10 |[39m     expect(totalPrice(cart))[33m.[39mtoBe([35m275[39m)[22m
+[2m     [90m    |[39m                              [31m[1m^[22m[2m[39m[22m
+[2m     [90m 11 |[39m   })[22m
+[2m     [90m 12 |[39m[22m
+[2m     [90m 13 |[39m   test([32m'空のカートは0になる'[39m[33m,[39m () [33m=>[39m {[0m[22m
+
+[2m      [2mat Object.toBe ([22m[2m[0m[36mtest/price.test.js[39m[0m[2m:10:30)[22m[2m[22m
+
+[1m[31m  [1m● [22m[1mtotalPrice › 空のカートは0になる[39m[22m
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m0[39m
+    Received: [31m1[39m
+
+[2m    [0m [90m 12 |[39m[22m
+[2m     [90m 13 |[39m   test([32m'空のカートは0になる'[39m[33m,[39m () [33m=>[39m {[22m
+[2m    [31m[1m>[22m[2m[39m[90m 14 |[39m     expect(totalPrice([]))[33m.[39mtoBe([35m0[39m)[22m
+[2m     [90m    |[39m                            [31m[1m^[22m[2m[39m[22m
+[2m     [90m 15 |[39m   })[22m
+[2m     [90m 16 |[39m[22m
+[2m     [90m 17 |[39m   test[33m.[39mskip([32m'通貨換算は未実装'[39m[33m,[39m () [33m=>[39m {})[0m[22m
+
+[2m      [2mat Object.toBe ([22m[2m[0m[36mtest/price.test.js[39m[0m[2m:14:28)[22m[2m[22m
+
+[0m[7m[1m[31m FAIL [39m[22m[27m[0m [2mtest/[22m[1mslug.test.js[22m
+  [1m● [22mTest suite failed to run
+
+    [1m[31mJest encountered an unexpected token[39m[22m
+
+    Jest failed to parse a file. This happens e.g. when your code or its dependencies use non-standard JavaScript syntax, or when Jest is not configured to support such syntax.
+
+    Out of the box Jest supports Babel, which will be used to transform your files into valid JS based on your Babel configuration.
+
+    By default "node_modules" folder is ignored by transformers.
+
+    Here's what you can do:
+     • If you are trying to use TypeScript, see [4mhttps://jestjs.io/docs/getting-started#using-typescript[24m
+     • To have some of your "node_modules" files transformed, you can specify a custom [1m"transformIgnorePatterns"[22m in your config.
+     • If you need a custom transformation, specify a [1m"transform"[22m option in your config.
+     • If you simply want to mock your non-JS modules (e.g. binary assets) you can stub them out with the [1m"moduleNameMapper"[22m config option.
+
+    You'll find more details and examples of these config options in the docs:
+    [36mhttps://jestjs.io/docs/configuration[39m
+    For information about custom transformations, see:
+    [36mhttps://jestjs.io/docs/code-transformation[39m
+
+    [1m[31mDetails:[39m[22m
+
+    SyntaxError: /work/jest-repo/src/slug.js: Unexpected token (13:0)
+
+    [0m [90m 11 |[39m module[33m.[39mexports [33m=[39m { slugify }
+     [90m 12 |[39m
+    [31m[1m>[22m[39m[90m 13 |[39m }} 壊れた行
+     [90m    |[39m [31m[1m^[22m[39m
+     [90m 14 |[39m[0m
+
+    [0m[31m[1m>[22m[39m[90m 1 |[39m [36mconst[39m { slugify } [33m=[39m require([32m'../src/slug'[39m)
+     [90m   |[39m                     [31m[1m^[22m[39m
+     [90m 2 |[39m
+     [90m 3 |[39m test([32m'記号と空白をハイフンにまとめる'[39m[33m,[39m () [33m=>[39m {
+     [90m 4 |[39m   expect(slugify([32m'Hello,  World!'[39m))[33m.[39mtoBe([32m'hello-world'[39m)[0m
+
+      [2mat constructor ([22m../../../runtimes/node_modules/@babel/parser/src/parse-error.ts[2m:96:45)[22m
+      [2mat Parser.toParseError [as raise] ([22m../../../runtimes/node_modules/@babel/parser/src/tokenizer/index.ts[2m:1504:19)[22m
+      [2mat Parser.raise [as unexpected] ([22m../../../runtimes/node_modules/@babel/parser/src/tokenizer/index.ts[2m:1544:16)[22m
+      [2mat Parser.unexpected [as parseExprAtom] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:1385:22)[22m
+      [2mat Parser.parseExprAtom [as parseExprSubscripts] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:742:23)[22m
+      [2mat Parser.parseExprSubscripts [as parseUpdate] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:721:21)[22m
+      [2mat Parser.parseUpdate [as parseMaybeUnary] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:683:23)[22m
+      [2mat Parser.parseMaybeUnary [as parseMaybeUnaryOrPrivate] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:417:14)[22m
+      [2mat Parser.parseMaybeUnaryOrPrivate [as parseExprOps] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:429:23)[22m
+      [2mat Parser.parseExprOps [as parseMaybeConditional] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:384:23)[22m
+      [2mat Parser.parseMaybeConditional [as parseMaybeAssign] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:301:21)[22m
+      [2mat Parser.parseMaybeAssign [as parseExpressionBase] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:226:23)[22m
+      [2mat parseExpressionBase ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:217:39)[22m
+      [2mat Parser.callback [as allowInAnd] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:3222:16)[22m
+      [2mat Parser.allowInAnd [as parseExpression] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/expression.ts[2m:217:17)[22m
+      [2mat Parser.parseExpression [as parseStatementContent] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:688:23)[22m
+      [2mat Parser.parseStatementContent [as parseStatementLike] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:482:17)[22m
+      [2mat Parser.parseStatementLike [as parseModuleItem] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:419:17)[22m
+      [2mat Parser.parseModuleItem [as parseBlockOrModuleBlockBody] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:1443:16)[22m
+      [2mat Parser.parseBlockOrModuleBlockBody [as parseBlockBody] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:1417:10)[22m
+      [2mat Parser.parseBlockBody [as parseProgram] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:229:10)[22m
+      [2mat Parser.parseProgram [as parseTopLevel] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/statement.ts[2m:203:25)[22m
+      [2mat Parser.parseTopLevel [as parse] ([22m../../../runtimes/node_modules/@babel/parser/src/parser/index.ts[2m:83:25)[22m
+      [2mat parse ([22m../../../runtimes/node_modules/@babel/parser/src/index.ts[2m:86:38)[22m
+      [2mat parser ([22m../../../runtimes/node_modules/@babel/core/src/parser/index.ts[2m:29:19)[22m
+          at parser.next (<anonymous>)
+      [2mat normalizeFile ([22m../../../runtimes/node_modules/@babel/core/src/transformation/normalize-file.ts[2m:49:24)[22m
+          at normalizeFile.next (<anonymous>)
+      [2mat run ([22m../../../runtimes/node_modules/@babel/core/src/transformation/index.ts[2m:41:36)[22m
+          at run.next (<anonymous>)
+      [2mat transform ([22m../../../runtimes/node_modules/@babel/core/src/transform.ts[2m:29:20)[22m
+          at transform.next (<anonymous>)
+      [2mat evaluateSync ([22m../../../runtimes/node_modules/gensync/index.js[2m:251:28)[22m
+      [2mat sync ([22m../../../runtimes/node_modules/gensync/index.js[2m:89:14)[22m
+      [2mat fn ([22m../../../runtimes/node_modules/@babel/core/src/errors/rewrite-stack-trace.ts[2m:99:14)[22m
+      [2mat transformSync ([22m../../../runtimes/node_modules/@babel/core/src/transform.ts[2m:66:52)[22m
+      [2mat Object.require ([22m[0m[36mtest/slug.test.js[39m[0m[2m:1:21)[22m
+
+[1mTest Suites: [22m[1m[31m3 failed[39m[22m, 3 total
+[1mTests:       [22m[1m[31m3 failed[39m[22m, [1m[33m1 skipped[39m[22m, [1m[32m1 passed[39m[22m, 5 total
+[1mSnapshots:   [22m0 total
+[1mTime:[22m        0.24 s, estimated 1 s
+[2mRan all test suites[22m[2m.[22m

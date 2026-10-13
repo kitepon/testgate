@@ -1,6 +1,6 @@
-# testgate アダプタ契約（v0.4、2026-10-13）
+# testgate アダプタ契約（v0.5、2026-10-13）
 
-改版履歴: v0.4 — parseOutput に任意の errors 欄を追加（収集・ビルドの失敗。failed にも数える）。full で選択機能を止めるオプションを足す形（例: --testmon-noselect）を明記（マナの実装から）。v0.3 — 関所がアダプタへ渡す物の約束（単純コマンドのみ、glob は展開前、base が null の時の changed の意味）、パッケージスクリプト経由の呼び出しの扱い、名指し実行と全体に効くファイルの扱いを追加（エーテルの質問から）。v0.2 — mode の意味を明確化、人が範囲を絞った時の passthrough、複数ランナーを一つのモジュールで扱う形、初回など「全部流れる subset」の扱いを追加（ジエン・マナの質問から）。
+改版履歴: v0.5 — 「人が範囲を絞っている」の例からディレクトリを外し、ディレクトリ・glob・引数なしは選択の対象と統一（エーテルの指摘）。import 解決の失敗の扱いと、ランナー自身が選ぶ場合の subset を明記。v0.4 — parseOutput に任意の errors 欄を追加（収集・ビルドの失敗。failed にも数える）。full で選択機能を止めるオプションを足す形（例: --testmon-noselect）を明記（マナの実装から）。v0.3 — 関所がアダプタへ渡す物の約束（単純コマンドのみ、glob は展開前、base が null の時の changed の意味）、パッケージスクリプト経由の呼び出しの扱い、名指し実行と全体に効くファイルの扱いを追加（エーテルの質問から）。v0.2 — mode の意味を明確化、人が範囲を絞った時の passthrough、複数ランナーを一つのモジュールで扱う形、初回など「全部流れる subset」の扱いを追加（ジエン・マナの質問から）。
 
 関所本体（マクスウェル所有）と言語アダプタ（マナ・エーテル・ジエン・シュエン所有）の境目。アダプタはこの契約だけを満たせばよく、ハーネスのhook形式やRTKとの受け渡しは知らなくてよい。設計の全体は `docs/testgate-design.md`。
 
@@ -53,10 +53,11 @@ export function stripCounts(text) → string
 
 - **パッケージスクリプト経由の呼び出し**（`npm test`、`npm run test`、`npm t`、`pnpm test`、`yarn test` など）は、そのスクリプトが呼ぶランナーのアダプタが拾う。`package.json` の `scripts.test` が一つのランナーを単純に呼んでいる時だけ `select` する。スクリプトに `&&` やパイプが混ざる時、`pretest`/`posttest` がある時は `passthrough`。
 - **名指し実行は passthrough。** glob もディレクトリも含まない、ファイルを名指しした実行（`node --test test/a.test.mjs`、`pytest tests/test_a.py`）は、もう絞ってある実行として触らない。glob・ディレクトリ・引数なしが選択の対象。
-- **全体に効くファイル**（`package.json`、ロックファイル、ランナーの設定ファイル、`Cargo.lock`、`go.work`、`conftest.py` など）が `changed` にあれば `full`。既製の選択機能がその変更を追跡しない時は、選択を止めるオプションを足した argv を返してよい（例: pytest-testmon の `--testmon-noselect`。依存の表は更新しつつ全部流す）。変更ファイルの import 解決に失敗した時も `full`（取りこぼしより流し過ぎを選ぶ）。
+- **全体に効くファイル**（`package.json`、ロックファイル、ランナーの設定ファイル、`Cargo.lock`、`go.work`、`conftest.py` など）が `changed` にあれば `full`。既製の選択機能がその変更を追跡しない時は、選択を止めるオプションを足した argv を返してよい（例: pytest-testmon の `--testmon-noselect`。依存の表は更新しつつ全部流す）。変更ファイルの import 解決に失敗した時は `full` が既定（取りこぼしより流し過ぎを選ぶ）。ただし、実際の読み込みと突き合わせて取りこぼさないことを示せるなら、より狭い扱いにしてよい（例: javascript は、文字列でない `import()` を持つテストを「静的にたどれない変更がある時だけ」足す）。
+- 既製の選択機能がランナー側で選ぶ場合（Jest `--changedSince`、Vitest `--changed`、pytest-testmon）、関わるテストが結果的に一つも無くても `subset` でよい。流す前には分からないため。
 - `changed` が空でないのに関わるテストが一つも無い時（docs だけなど）は `none`。
 
-- **人が範囲を絞っている時は触らない。** argv に明示のテスト指定（ファイルやディレクトリのパス、`-k`、`-p`/`--package`、`-run`、`-only-testing` など）が既にあれば `passthrough`。ただし「全部」を意味する指定（`--workspace`、`./...`）は選択で置き換えてよい。
+- **人が範囲を絞っている時は触らない。** argv に明示のテスト指定（ファイルの名指し、`-k`、`-p`/`--package`、`-run`、`-only-testing`、Jest/Vitest の位置引数のパターンなど）が既にあれば `passthrough`。ディレクトリ・glob・引数なしは選択の対象（ランナーがディレクトリを「その下の全部」として扱う物に限る）。ただし「全部」を意味する指定（`--workspace`、`./...`）は選択で置き換えてよい。
 - 一つのモジュールで複数ランナーを扱ってよい（例: `id = 'rustgo'`, `runners = ['cargo test', 'go test']`）。`id` は小文字英字のみ。`reason` の先頭にどのランナーかを書く。
 - `detect` は、テストを走らせない呼び方（`--version`、`-h`/`--help`、`--collect-only`、`--list` など）に false を返す。
 

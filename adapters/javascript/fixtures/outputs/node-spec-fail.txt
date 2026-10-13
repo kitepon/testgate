@@ -1,0 +1,77 @@
+✔ ひな形に名前を差し込む (0.876219ms)
+✖ 小計に税を足して合計を出す (0.803744ms)
+✖ 空のカートは0になる (0.139339ms)
+﹣ 通貨換算は未実装 (0.170938ms) # 未実装
+✔ 記号と空白をハイフンにまとめる (0.491273ms)
+✔ ウムラウトを置き換える (0.092151ms)
+✖ 税額を地域の税率で計算する (0.792002ms)
+✔ 知らない地域は例外になる (0.248782ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 4
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 44.030752
+
+✖ failing tests:
+
+test at test/price.test.mjs:6:1
+✖ 小計に税を足して合計を出す (0.803744ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  276 !== 275
+  
+      at TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:7:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 276,
+    expected: 275,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/price.test.mjs:10:1
+✖ 空のカートは0になる (0.139339ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///work/node-repo/test/price.test.mjs:11:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/tax.test.mjs:5:1
+✖ 税額を地域の税率で計算する (0.792002ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  101 !== 100
+  
+      at TestContext.<anonymous> (file:///work/node-repo/test/tax.test.mjs:6:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 101,
+    expected: 100,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
