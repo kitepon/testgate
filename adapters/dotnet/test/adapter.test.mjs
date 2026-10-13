@@ -131,7 +131,7 @@ test('文字リテラル \'"\' の後ろの言及を落とさない', async () =
   writeFileSync(path.join(dir, 'tests/Main.Tests/GreeterTests.cs'),
     readFileSync(path.join(dir, 'tests/Main.Tests/GreeterTests.cs'), 'utf8') + "\nclass Q { object F(char c) { if (c == '\"') return new Money(); return null; } }\n")
   const r = await sel(dir, ['src/Core/Money.cs'])
-  assert.ok(r.argv.join(' ').includes('GreeterTests'))
+  assert.ok(r.argv.join(' ').includes('Fx.Tests.Q'))
 })
 
 test('テストだけが宣言した名前が本体の同名識別子と衝突しても、本体へ逆流しない', async () => {
@@ -145,6 +145,19 @@ test('テストだけが宣言した名前が本体の同名識別子と衝突�
   const r = await sel(dir, ['tests/Main.Tests/ClashTests.cs'])
   assert.ok(r.argv.join(' ').includes('ClashTests'))
   assert.ok(!r.argv.join(' ').includes('PickTests'))
+})
+
+test('同じファイルの別の型の言及へは広がらない（波及は型単位）', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'src/Core/Sel.cs'), 'namespace Fx.Core;\npublic class Sel { }\n')
+  writeFileSync(path.join(dir, 'src/Core/Host.cs'), 'namespace Fx.Core;\npublic class Host { Sel s; }\npublic class Phys { }\n')
+  writeFileSync(path.join(dir, 'src/Core/Rt.cs'), 'namespace Fx.Core;\npublic class Rt { Phys p; }\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/HostTests.cs'), 'using Fx.Core;\nnamespace Fx.Tests;\npublic class HostTests { Host h; }\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/RtTests.cs'), 'using Fx.Core;\nnamespace Fx.Tests;\npublic class RtTests { Rt r; }\n')
+  const r = await sel(dir, ['src/Core/Sel.cs'])
+  assert.equal(r.mode, 'subset')
+  assert.ok(r.argv[4].includes('HostTests'))
+  assert.ok(!r.argv[4].includes('RtTests'), 'Phys を言及する Rt へは広がらない')
 })
 
 test('独立の Indep の変更 → Indep.Tests だけ。全体がその1クラスなので filter は付かない', async () => {
@@ -262,7 +275,8 @@ test('宣言の読み取り: 文字列・コメント・record・file-scoped nam
     ].join('\n'),
   )
   const r = await sel(dir, ['src/Core/Greeter.cs'])
-  assert.equal(r.argv[4], FQ('Fx.Odd.OddTests', 'Fx.Odd.Pair', 'Fx.Tests.GreeterTests'))
+  // Pair は Greeter を言及しないので、型単位では入らない
+  assert.equal(r.argv[4], FQ('Fx.Odd.OddTests', 'Fx.Tests.GreeterTests'))
 })
 
 test('parseOutput: 成功・失敗・ビルド失敗（生）', () => {

@@ -243,56 +243,6 @@ function skipString(t, i) {
   return n
 }
 
-function cleanCs(t) {
-  const n = t.length
-  const out = []
-  let i = 0
-  while (i < n) {
-    const c = t[i], d = t[i + 1]
-    if (c === '/' && d === '/') { while (i < n && t[i] !== '\n') i++; continue }
-    if (c === '/' && d === '*') { const e = t.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; out.push(' '); continue }
-    if (c === '"' || ((c === '$' || c === '@') && (d === '"' || ((d === '$' || d === '@') && t[i + 2] === '"')))) {
-      i = skipString(t, i); out.push('""'); continue
-    }
-    if (c === "'") {
-      let j = i + 1
-      if (t[j] === '\\') j += 2; else j++
-      let guard = 0
-      while (j < n && t[j] !== "'" && guard++ < 10) j++
-      i = j + 1; out.push("''"); continue
-    }
-    out.push(c)
-    i++
-  }
-  return out.join('')
-}
-
-// 言及の読み取り用: コメントだけ落とす。文字列は補間式（$"{new Foo()}"）の中にコードがあるので残す。
-function stripComments(t) {
-  const n = t.length
-  const out = []
-  let i = 0
-  while (i < n) {
-    const c = t[i], d = t[i + 1]
-    if (c === '/' && d === '/') { while (i < n && t[i] !== '\n') i++; continue }
-    if (c === '/' && d === '*') { const e = t.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; out.push(' '); continue }
-    if (c === '"' || ((c === '$' || c === '@') && (d === '"' || ((d === '$' || d === '@') && t[i + 2] === '"')))) {
-      const e = skipString(t, i)
-      out.push(t.slice(i, e)); i = e; continue
-    }
-    if (c === "'") {
-      let j = i + 1
-      if (t[j] === '\\') j += 2; else j++
-      let guard = 0
-      while (j < n && t[j] !== "'" && guard++ < 10) j++
-      out.push(t.slice(i, j + 1)); i = j + 1; continue
-    }
-    out.push(c)
-    i++
-  }
-  return out.join('')
-}
-
 const NOT_NAMES = new Set(['is', 'as', 'in', 'out', 'with', 'where', 'new', 'and', 'or', 'not', 'when', 'switch', 'from', 'select', 'Equals'])
 const DECL = /\bnamespace\s+([\w.]+)\s*([;{])|\b(class|struct|interface|enum|record(?:\s+(?:class|struct))?)\s+@?([A-Za-z_]\w*)|[{};]/g
 
@@ -324,20 +274,66 @@ function parseBases(s, pos) {
     .filter((b) => /^[A-Za-z_]\w*$/.test(b))
 }
 
+// 構造の読み取り用 s（コメント・文字列の中身を空白にする）と、言及の読み取り用 mention
+// （コメントだけ空白にし、文字列は補間式のコードを残す）を、同じ長さで返す。
+function maskCs(t) {
+  const n = t.length
+  const a = []
+  const b = []
+  const blank = (x) => x.replace(/[^\n]/g, ' ')
+  let i = 0
+  while (i < n) {
+    const c = t[i], d = t[i + 1]
+    if (c === '/' && d === '/') {
+      let j = i
+      while (j < n && t[j] !== '\n') j++
+      const sp = ' '.repeat(j - i); a.push(sp); b.push(sp); i = j; continue
+    }
+    if (c === '/' && d === '*') {
+      const e = t.indexOf('*/', i + 2)
+      const j = e < 0 ? n : e + 2
+      const sp = blank(t.slice(i, j)); a.push(sp); b.push(sp); i = j; continue
+    }
+    if (c === '"' || ((c === '$' || c === '@') && (d === '"' || ((d === '$' || d === '@') && t[i + 2] === '"')))) {
+      const j = skipString(t, i)
+      const seg = t.slice(i, j)
+      b.push(seg)
+      a.push('"' + blank(seg.slice(1, -1)) + (seg.length > 1 ? '"' : ''))
+      i = j; continue
+    }
+    if (c === "'") {
+      let j = i + 1
+      if (t[j] === '\\') j += 2; else j++
+      let guard = 0
+      while (j < n && t[j] !== "'" && guard++ < 10) j++
+      const seg = t.slice(i, j + 1)
+      b.push(seg)
+      a.push("'" + ' '.repeat(Math.max(0, seg.length - 2)) + (seg.length > 1 ? "'" : ''))
+      i = j + 1; continue
+    }
+    a.push(c); b.push(c); i++
+  }
+  return { s: a.join(''), mention: b.join('') }
+}
+
 function scanCs(text) {
-  const s = cleanCs(text)
+  const { s, mention } = maskCs(text)
   const names = new Set()
   const bases = new Set()
   const tops = []
+  const spans = [] // 最上位の型ごと: { top, start, end, names, bases }
   const stack = []
   let fileNs = ''
   let pending = null
+  let cur = null
+  let segStart = 0
   DECL.lastIndex = 0
   let m
   while ((m = DECL.exec(s))) {
     if (m[1] !== undefined) {
       if (m[2] === ';') fileNs = m[1]
       else pending = { t: 'ns', name: m[1] }
+      if (cur === null) segStart = m.index + m[0].length
       if (m[2] === '{') { stack.push(pending); pending = null }
       continue
     }
@@ -345,22 +341,43 @@ function scanCs(text) {
       const name = m[4]
       if (NOT_NAMES.has(name)) continue
       names.add(name)
-      for (const b of parseBases(s, DECL.lastIndex)) bases.add(b)
+      const bs = parseBases(s, DECL.lastIndex)
+      for (const b of bs) bases.add(b)
       const nested = stack.some((f) => f.t === 'type')
-      pending = { t: 'type', name }
+      pending = { t: 'type', name, span: null }
       if (!nested) {
         const ns = [fileNs, ...stack.filter((f) => f.t === 'ns').map((f) => f.name)].filter(Boolean).join('.')
-        tops.push(ns ? `${ns}.${name}` : name)
+        const top = ns ? `${ns}.${name}` : name
+        tops.push(top)
+        cur = { top, start: segStart, end: s.length, names: new Set(), bases: new Set() }
+        spans.push(cur)
+        pending.span = cur
+      }
+      if (cur) {
+        cur.names.add(name)
+        for (const b of bs) cur.bases.add(b)
       }
       continue
     }
     const c = m[0]
     if (c === '{') { stack.push(pending ?? { t: 'b' }); pending = null }
-    else if (c === '}') stack.pop()
-    else if (c === ';') pending = null
+    else if (c === '}') {
+      const f = stack.pop()
+      if (f && f.span) { f.span.end = m.index + 1; segStart = f.span.end; cur = null }
+    } else if (c === ';') {
+      if (pending && pending.span) { pending.span.end = m.index + 1; segStart = pending.span.end; cur = null }
+      pending = null
+    }
   }
-  for (const x of s.matchAll(/\b([A-Za-z_]\w*)\s*(?:<[^<>()]*>)?\s*\(\s*(?:\[[^\]]*\]\s*)?this\s+[\w.<>?[\],\s]+?\s+\w+/g)) names.add(x[1])
-  return { names, bases, tops }
+  for (const x of s.matchAll(/\b([A-Za-z_]\w*)\s*(?:<[^<>()]*>)?\s*\(\s*(?:\[[^\]]*\]\s*)?this\s+[\w.<>?[\],\s]+?\s+\w+/g)) {
+    names.add(x[1])
+    const sp = spans.find((q) => x.index >= q.start && x.index < q.end)
+    if (sp) sp.names.add(x[1])
+  }
+  const lastEnd = spans.length ? spans[spans.length - 1].end : 0
+  const ns = []
+  for (const sp of spans) ns.push({ top: sp.top, names: sp.names, bases: sp.bases, text: mention.slice(sp.start, sp.end) })
+  return { names, bases, tops, nodes: ns, wide: mention.slice(lastEnd), mention }
 }
 
 function scanMarkup(text, file) {
@@ -369,7 +386,7 @@ function scanMarkup(text, file) {
   const m = /x:Class\s*=\s*"([^"]+)"/.exec(text)
   if (m) { names.add(m[1].split('.').pop()); tops.push(m[1]) }
   else names.add(path.basename(file).replace(/\..*$/, ''))
-  return { names, bases: new Set(), tops }
+  return { names, bases: new Set(), tops, nodes: null, wide: '' }
 }
 
 // ----- 本体 -----
@@ -537,7 +554,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
           bytes += text.length
           if (bytes > MAX_SOURCE_BYTES) throw unavailable('ソースが大きすぎて読み切れない')
           const sc = /\.cs$/i.test(f) ? scanCs(text) : scanMarkup(text, f)
-          fi = { file: f, owners: new Set(), text: /\.cs$/i.test(f) ? stripComments(text) : text, ...sc }
+          fi = { file: f, owners: new Set(), text: sc.mention ?? text, ...sc }
           fileInfo.set(K(f), fi)
         }
         fi.owners.add(p)
@@ -552,30 +569,56 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
       }
       tick()
     }
-    const all = [...fileInfo.values()]
-    const declarers = new Map()
-    for (const fi of all) for (const n of fi.names) { if (!declarers.has(n)) declarers.set(n, new Set()); declarers.get(n).add(fi) }
-    const mentioners = new Map()
-    for (const fi of all) {
-      for (const m of fi.text.matchAll(/[A-Za-z_]\w*/g)) {
-        if (!declarers.has(m[0])) continue
-        if (!mentioners.has(m[0])) mentioners.set(m[0], new Set())
-        mentioners.get(m[0]).add(fi)
+    // 波及は型（最上位の宣言）単位。型が読めないファイルはファイル全体で1つのノードにする。
+    const USING = /\busing\s+(?:static\s+)?(?:[\w.]+\s*=\s*)?[\w.<>?,\s[\]]+;/g
+    const ID = /[A-Za-z_]\w*/g
+    const all = []
+    const nodesOf = new Map() // file record → nodes
+    for (const fi of fileInfo.values()) {
+      const list = []
+      if (fi.nodes && fi.nodes.length > 0) {
+        // using 指令と最後の型より後ろは、ファイル全体へ効く言及として全ノードへ足す
+        const wide = new Set()
+        const bodies = fi.nodes.map((n) => n.text.replace(USING, (u) => { for (const x of u.matchAll(ID)) wide.add(x[0]); return ' ' }))
+        for (const x of fi.wide.matchAll(ID)) wide.add(x[0])
+        fi.nodes.forEach((n, i) => {
+          list.push({ file: fi.file, owners: fi.owners, names: n.names, bases: n.bases, tops: [n.top], body: bodies[i], wide })
+        })
+      } else {
+        list.push({ file: fi.file, owners: fi.owners, names: fi.names, bases: fi.bases, tops: fi.tops, body: fi.text, wide: new Set() })
       }
       fi.text = ''
+      nodesOf.set(fi, list)
+      all.push(...list)
+    }
+    const declarers = new Map()
+    for (const nd of all) for (const n of nd.names) { if (!declarers.has(n)) declarers.set(n, new Set()); declarers.get(n).add(nd) }
+    const mentioners = new Map()
+    for (const nd of all) {
+      const ids = new Set(nd.wide)
+      for (const m of nd.body.matchAll(ID)) ids.add(m[0])
+      for (const id of ids) {
+        if (!declarers.has(id)) continue
+        if (!mentioners.has(id)) mentioners.set(id, new Set())
+        mentioners.get(id).add(nd)
+      }
+      nd.body = ''
     }
     tick()
-    const testOwned = (fi) => fi.owners.size > 0 && [...fi.owners].every((p) => p.isTest)
+    const testOwned = (nd) => nd.owners.size > 0 && [...nd.owners].every((p) => p.isTest)
     const seen = new Set()
     const q = []
-    for (const f of starts) { const fi = fileInfo.get(K(f)); if (fi && !seen.has(fi)) { seen.add(fi); q.push(fi) } }
+    for (const f of starts) {
+      const rec = fileInfo.get(K(f))
+      for (const nd of rec ? nodesOf.get(rec) : []) if (!seen.has(nd)) { seen.add(nd); q.push(nd) }
+    }
     const reach = (set) => { for (const x of set ?? []) if (!seen.has(x)) { seen.add(x); q.push(x) } }
     while (q.length) {
       const fi = q.pop()
       const testOnly = testOwned(fi)
-      // テストだけが所有するファイルの宣言は本体から参照できない。本体側の同名の識別子は別物なので、受け手をテスト側へ限る。
+      // テストだけが所有するノードの宣言は本体から参照できない。本体側の同名の識別子は別物なので、受け手をテスト側へ限る。
       for (const n of fi.names) for (const x of mentioners.get(n) ?? []) if (!testOnly || testOwned(x)) reach([x])
-      // テストだけが所有するファイルの基底（test double の実装先）からは、本体側へ逆流させない。
+      // テストだけが所有するノードの基底（test double の実装先）からは、本体側へ逆流させない。
       // 基底の宣言もテストだけが持つ時（テスト共有の interface）は残す。
       for (const b of fi.bases) {
         if (!declarers.has(b)) continue
