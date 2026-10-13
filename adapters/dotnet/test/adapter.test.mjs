@@ -160,6 +160,27 @@ test('同じファイルの別の型の言及へは広がらない（波及は�
   assert.ok(!r.argv[4].includes('RtTests'), 'Phys を言及する Rt へは広がらない')
 })
 
+test('private の入れ子型は、別ファイルの同名の入れ子型と取り違えない', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'tests/Main.Tests/AAATests.cs'),
+    'using Fx.Core;\nnamespace Fx.Tests;\npublic class AAATests { private sealed class Fake { } Greeter g; }\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/BBBTests.cs'),
+    'namespace Fx.Tests;\npublic class BBBTests { private sealed class Fake { } Fake f; }\n')
+  const r = await sel(dir, ['tests/Main.Tests/AAATests.cs'])
+  assert.ok(r.argv.join(' ').includes('AAATests'))
+  assert.ok(!r.argv.join(' ').includes('BBBTests'))
+})
+
+test('public の入れ子型の名前は他のファイルからの言及に届く', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'tests/Main.Tests/CCCTests.cs'),
+    'namespace Fx.Tests;\npublic class CCCTests { public sealed class Shared { } }\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/DDDTests.cs'),
+    'namespace Fx.Tests;\npublic class DDDTests { CCCTests.Shared s; }\n')
+  const r = await sel(dir, ['tests/Main.Tests/CCCTests.cs'])
+  assert.ok(r.argv.join(' ').includes('DDDTests'))
+})
+
 test('独立の Indep の変更 → Indep.Tests だけ。全体がその1クラスなので filter は付かない', async () => {
   const dir = repo()
   const r = await sel(dir, ['src/Indep/Counter.cs'])

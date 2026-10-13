@@ -340,21 +340,31 @@ function scanCs(text) {
     if (m[4] !== undefined) {
       const name = m[4]
       if (NOT_NAMES.has(name)) continue
-      names.add(name)
       const bs = parseBases(s, DECL.lastIndex)
       for (const b of bs) bases.add(b)
-      const nested = stack.some((f) => f.t === 'type')
-      pending = { t: 'type', name, span: null }
+      const parent = [...stack].reverse().find((f) => f.t === 'type')
+      const nested = parent !== undefined
+      // 入れ子の private 型（既定も private）の名前は、外側の最上位の型の外から参照できない。
+      // 別ファイルの同名の入れ子型と取り違えないよう、他のファイルの言及先に数えない。
+      let priv = false
+      if (nested) {
+        const mods = (/((?:\b(?:public|private|protected|internal|static|sealed|abstract|partial|readonly|ref|unsafe|new|file|unmanaged)\s+)*)$/.exec(s.slice(Math.max(0, m.index - 120), m.index)) ?? ['', ''])[1]
+        const explicit = /\b(?:public|internal|protected)\b/.test(mods)
+        priv = parent.priv || (parent.kind !== 'interface' && !explicit)
+      }
+      pending = { t: 'type', name, span: null, kind: m[3], priv }
+      if (!priv) names.add(name)
       if (!nested) {
         const ns = [fileNs, ...stack.filter((f) => f.t === 'ns').map((f) => f.name)].filter(Boolean).join('.')
         const top = ns ? `${ns}.${name}` : name
         tops.push(top)
-        cur = { top, start: segStart, end: s.length, names: new Set(), bases: new Set() }
+        cur = { top, start: segStart, end: s.length, names: new Set(), bases: new Set(), priv: new Set() }
         spans.push(cur)
         pending.span = cur
       }
       if (cur) {
-        cur.names.add(name)
+        if (!priv) cur.names.add(name)
+        else cur.priv.add(name)
         for (const b of bs) cur.bases.add(b)
       }
       continue
@@ -376,7 +386,7 @@ function scanCs(text) {
   }
   const lastEnd = spans.length ? spans[spans.length - 1].end : 0
   const ns = []
-  for (const sp of spans) ns.push({ top: sp.top, names: sp.names, bases: sp.bases, text: mention.slice(sp.start, sp.end) })
+  for (const sp of spans) ns.push({ top: sp.top, names: sp.names, bases: sp.bases, priv: sp.priv, text: mention.slice(sp.start, sp.end) })
   return { names, bases, tops, nodes: ns, wide: mention.slice(lastEnd), mention }
 }
 
@@ -582,7 +592,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
         const bodies = fi.nodes.map((n) => n.text.replace(USING, (u) => { for (const x of u.matchAll(ID)) wide.add(x[0]); return ' ' }))
         for (const x of fi.wide.matchAll(ID)) wide.add(x[0])
         fi.nodes.forEach((n, i) => {
-          list.push({ file: fi.file, owners: fi.owners, names: n.names, bases: n.bases, tops: [n.top], body: bodies[i], wide })
+          list.push({ file: fi.file, owners: fi.owners, names: n.names, bases: n.bases, tops: [n.top], body: bodies[i], wide, hasPriv: n.priv.size > 0 })
         })
       } else {
         list.push({ file: fi.file, owners: fi.owners, names: fi.names, bases: fi.bases, tops: fi.tops, body: fi.text, wide: new Set() })
@@ -605,6 +615,9 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
       nd.body = ''
     }
     tick()
+    const siblings = new Map() // 最上位の型の完全名 → ノード（private の入れ子型を持つ partial だけ）
+    for (const nd of all) if (nd.hasPriv) { const k = nd.tops[0]; if (!siblings.has(k)) siblings.set(k, new Set()); siblings.get(k).add(nd) }
+    for (const nd of all) if (nd.tops.length === 1 && siblings.has(nd.tops[0])) siblings.get(nd.tops[0]).add(nd)
     const testOwned = (nd) => nd.owners.size > 0 && [...nd.owners].every((p) => p.isTest)
     const seen = new Set()
     const q = []
@@ -616,6 +629,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
     while (q.length) {
       const fi = q.pop()
       const testOnly = testOwned(fi)
+      if (fi.tops.length === 1 && siblings.has(fi.tops[0])) reach(siblings.get(fi.tops[0]))
       // テストだけが所有するノードの宣言は本体から参照できない。本体側の同名の識別子は別物なので、受け手をテスト側へ限る。
       for (const n of fi.names) for (const x of mentioners.get(n) ?? []) if (!testOnly || testOwned(x)) reach([x])
       // テストだけが所有するノードの基底（test double の実装先）からは、本体側へ逆流させない。
