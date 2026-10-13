@@ -193,6 +193,18 @@ test('top-level statements は直後の型へ帰属させない', async () => {
   assert.ok(!r.argv.join(' ').includes('SinkTests'))
 })
 
+test('暗黙の Program: メソッド名の Program() は言及に数えず、型としての利用は数える', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'src/Core/Program.cs'), 'using Fx.Core;\nvar g = new Greeter();\nConsole.WriteLine(g);\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/MethodTests.cs'),
+    'namespace Fx.Tests;\npublic class MethodTests { private static int Program() => 1; int x = Program(); }\n')
+  writeFileSync(path.join(dir, 'tests/Main.Tests/TypeUseTests.cs'),
+    'namespace Fx.Tests;\npublic class TypeUseTests { object o = typeof(Program); }\n')
+  const r = await sel(dir, ['src/Core/Program.cs'])
+  assert.ok(r.argv.join(' ').includes('TypeUseTests'))
+  assert.ok(!r.argv.join(' ').includes('MethodTests'))
+})
+
 test('独立の Indep の変更 → Indep.Tests だけ。全体がその1クラスなので filter は付かない', async () => {
   const dir = repo()
   const r = await sel(dir, ['src/Indep/Counter.cs'])

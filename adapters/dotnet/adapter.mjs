@@ -610,7 +610,9 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
           list.push({ file: fi.file, owners: fi.owners, names: n.names, bases: n.bases, tops: [n.top], body: bodies[i], wide, hasPriv: n.priv.size > 0 })
         })
       } else {
-        list.push({ file: fi.file, owners: fi.owners, names: fi.names, bases: fi.bases, tops: fi.tops, body: fi.text, wide: new Set() })
+        // 型が1つも読めない .cs は top-level statements だけのことがある。暗黙の Program への言及は届かせる
+        const names = /\.cs$/i.test(fi.file) && fi.tops.length === 0 ? new Set([...fi.names, 'Program']) : fi.names
+        list.push({ file: fi.file, owners: fi.owners, names, bases: fi.bases, tops: fi.tops, body: fi.text, wide: new Set(), implicitProgram: names !== fi.names })
       }
       fi.text = ''
       nodesOf.set(fi, list)
@@ -618,12 +620,16 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
     }
     const declarers = new Map()
     for (const nd of all) for (const n of nd.names) { if (!declarers.has(n)) declarers.set(n, new Set()); declarers.get(n).add(nd) }
+    const implicitOnly = declarers.has('Program') && [...declarers.get('Program')].every((x) => x.stmt || x.implicitProgram)
+    const PROGRAM_TYPE_USE = /<\s*Program\s*[>,]|\bProgram\s*\.|\bnew\s+Program\b|typeof\s*\(\s*Program\b|[:,(]\s*Program\s*[,)>{;]|\bProgram\s+\w+\s*[;=,)]/
     const mentioners = new Map()
     for (const nd of all) {
       const ids = new Set(nd.wide)
       for (const m of nd.body.matchAll(ID)) ids.add(m[0])
       for (const id of ids) {
         if (!declarers.has(id)) continue
+        // 暗黙の Program（top-level statements）だけが宣言者の時、メソッド名・変数名の Program は型への言及ではない
+        if (id === 'Program' && implicitOnly && !PROGRAM_TYPE_USE.test(nd.body)) continue
         if (!mentioners.has(id)) mentioners.set(id, new Set())
         mentioners.get(id).add(nd)
       }
