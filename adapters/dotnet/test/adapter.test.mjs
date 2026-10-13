@@ -109,6 +109,23 @@ test('実装クラスの変更は、基底の interface を使う側にも届く
   assert.deepEqual(slnf.solution.projects, ['tests\\Main.Tests\\Main.Tests.csproj', 'tests\\Util.Tests\\Util.Tests.csproj'])
 })
 
+test('テスト内の test double（FakeClock : IClock）の変更は、本体の IClock 側へ逆流しない', async () => {
+  const dir = repo()
+  const r = await sel(dir, ['tests/Main.Tests/SchedulerTests.cs'])
+  assert.equal(r.mode, 'subset')
+  assert.ok(r.argv[4].includes('Fx.Tests.SchedulerTests'))
+  assert.ok(!r.argv[4].includes('ClockTests'))
+  assert.ok(!r.argv.some((a) => /\.slnf$/.test(a)), 'Util.Tests まで広げない')
+})
+
+test('コメントの中の型名は言及に数えない', async () => {
+  const dir = repo()
+  writeFileSync(path.join(dir, 'tests/Main.Tests/GreeterTests.cs'),
+    readFileSync(path.join(dir, 'tests/Main.Tests/GreeterTests.cs'), 'utf8') + '\n// Money を使わない\n')
+  const r = await sel(dir, ['src/Core/Money.cs'])
+  assert.ok(!r.argv.join(' ').includes('GreeterTests'))
+})
+
 test('独立の Indep の変更 → Indep.Tests だけ。全体がその1クラスなので filter は付かない', async () => {
   const dir = repo()
   const r = await sel(dir, ['src/Indep/Counter.cs'])

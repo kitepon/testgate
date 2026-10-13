@@ -267,6 +267,33 @@ function cleanCs(t) {
   return out.join('')
 }
 
+// 言及の読み取り用: コメントだけ落とす。文字列は補間式（$"{new Foo()}"）の中にコードがあるので残す。
+function stripComments(t) {
+  const n = t.length
+  const out = []
+  let i = 0
+  while (i < n) {
+    const c = t[i], d = t[i + 1]
+    if (c === '/' && d === '/') { while (i < n && t[i] !== '\n') i++; continue }
+    if (c === '/' && d === '*') { const e = t.indexOf('*/', i + 2); i = e < 0 ? n : e + 2; out.push(' '); continue }
+    if (c === '"' || ((c === '$' || c === '@') && (d === '"' || ((d === '$' || d === '@') && t[i + 2] === '"')))) {
+      const e = skipString(t, i)
+      out.push(t.slice(i, e)); i = e; continue
+    }
+    if (c === "'") {
+      // 文字リテラル（'"' や '\'' など）。中の " を文字列の始まりと誤読しないよう丸ごと残す
+      let e = i + 1
+      if (t[e] === '\\') e += 2
+      while (e < n && e < i + 12 && t[e] !== "'" && t[e] !== '\n') e++
+      if (t[e] === "'") e++
+      out.push(t.slice(i, e)); i = e; continue
+    }
+    out.push(c)
+    i++
+  }
+  return out.join('')
+}
+
 const NOT_NAMES = new Set(['is', 'as', 'in', 'out', 'with', 'where', 'new', 'and', 'or', 'not', 'when', 'switch', 'from', 'select', 'Equals'])
 const DECL = /\bnamespace\s+([\w.]+)\s*([;{])|\b(class|struct|interface|enum|record(?:\s+(?:class|struct))?)\s+@?([A-Za-z_]\w*)|[{};]/g
 
@@ -511,7 +538,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
           bytes += text.length
           if (bytes > MAX_SOURCE_BYTES) throw unavailable('ソースが大きすぎて読み切れない')
           const sc = /\.cs$/i.test(f) ? scanCs(text) : scanMarkup(text, f)
-          fi = { file: f, owners: new Set(), text, ...sc }
+          fi = { file: f, owners: new Set(), text: /\.cs$/i.test(f) ? stripComments(text) : text, ...sc }
           fileInfo.set(K(f), fi)
         }
         fi.owners.add(p)
@@ -539,6 +566,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
       fi.text = ''
     }
     tick()
+    const testOwned = (fi) => fi.owners.size > 0 && [...fi.owners].every((p) => p.isTest)
     const seen = new Set()
     const q = []
     for (const f of starts) { const fi = fileInfo.get(K(f)); if (fi && !seen.has(fi)) { seen.add(fi); q.push(fi) } }
@@ -546,7 +574,14 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
     while (q.length) {
       const fi = q.pop()
       for (const n of fi.names) reach(mentioners.get(n))
-      for (const b of fi.bases) if (declarers.has(b)) reach(mentioners.get(b))
+      // テストだけが所有するファイルの基底（test double の実装先）からは、本体側へ逆流させない。
+      // 基底の宣言もテストだけが持つ時（テスト共有の interface）は残す。
+      const testOnly = testOwned(fi)
+      for (const b of fi.bases) {
+        if (!declarers.has(b)) continue
+        if (testOnly && ![...declarers.get(b)].every(testOwned)) continue
+        reach(mentioners.get(b))
+      }
     }
     for (const t of picked0) {
       if (unfilteredWhy.has(t)) continue
