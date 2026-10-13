@@ -63,3 +63,39 @@ test('grok: BellTeam の grok-hook.mjs と同じ出力', { skip: !hasRtk && 'rtk
     assert.equal(existsSync(log), command.startsWith('pytest'))
   }
 })
+
+test('BOM 付きの入力でも判定できる', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+  const raw = '﻿' + JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'pytest' }, cwd: '/tmp' })
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
+  assert.equal(r.status, spawnSync('rtk', ['hook', 'claude'], { input: raw, encoding: 'utf8' }).status)
+  assert.equal(existsSync(log), true)
+})
+
+test('rtk hook が時間内に返らない時は、書き換えずに通して exit 1 で知らせる（2 は使わない）', () => {
+  const fake = fileURLToPath(new URL('./fixtures/bin/rtk', import.meta.url))
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'ls' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: fake, TESTGATE_RTK_TIMEOUT_MS: '300', TESTGATE_LOG: join(mkdtempSync(join(tmpdir(), 'tg-')), 'l') } })
+  assert.equal(r.status, 1)
+  assert.equal(r.stdout, '')
+  assert.match(r.stderr, /rtk hook failed/)
+})
+
+test('ログの書き込みに失敗しても hook は通る', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'pytest' } }), encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: '/proc/nonexistent/log.jsonl' } })
+  assert.equal(r.status, 0)
+  assert.match(r.stderr, /log failed/)
+})
+
+test('段階0の影の判断: アダプタがあれば選択の結果を記録し、出力は RTK と同じ', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const adapters = fileURLToPath(new URL('./fixtures/mock-adapter', import.meta.url))
+  const dir = mkdtempSync(join(tmpdir(), 'tg-shadow-'))
+  const g = (...a) => spawnSync('git', a, { cwd: dir })
+  g('init', '-q'); spawnSync('sh', ['-c', 'echo a > a.txt && echo m > mocktest.mjs'], { cwd: dir }); g('add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'i')
+  spawnSync('sh', ['-c', 'echo b > a.txt'], { cwd: dir })
+  const raw = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'node mocktest.mjs' }, cwd: dir })
+  const log = join(dir, 'log.jsonl')
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_ADAPTERS: adapters, TESTGATE_LOG: log, XDG_DATA_HOME: join(dir, 'data') } })
+  assert.equal(r.stdout, spawnSync('rtk', ['hook', 'claude'], { input: raw, encoding: 'utf8' }).stdout)
+  // 判定表に node mocktest.mjs は無いので記録されない（影の判断はアダプタの detect と判定表の両方が要る）: ここでは記録が無いことを確かめる
+  assert.equal(existsSync(log), false)
+})

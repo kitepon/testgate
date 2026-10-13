@@ -1,0 +1,3 @@
+#!/bin/sh
+# 偽の rtk: hook で 30 秒眠る（timeout の試験用）。rewrite は exit 1（書換なし）
+case "$1" in hook) sleep 30 ;; rewrite) exit 1 ;; *) echo "fake rtk" ;; esac
