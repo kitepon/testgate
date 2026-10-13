@@ -8,6 +8,8 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const bin = fileURLToPath(new URL('../bin/testgate.mjs', import.meta.url))
+// この試験は段階0の中継（RTK と同一）を見る。段階1の包み直しは hook-phase1.test.mjs
+process.env.TESTGATE_PHASE = '0'
 const hasRtk = spawnSync('rtk', ['--version']).status === 0
 
 function run(harness, event, env) {

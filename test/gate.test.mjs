@@ -22,12 +22,28 @@ function run(dir, env, ...cmd) {
 }
 const rows = dir => readFileSync(join(dir, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
 
-test('変更なし → 流さない', () => {
+test('変更なし・基準なし → 一度全部流して基準を作り、次は流さない', () => {
   const dir = repo()
-  const r = run(dir, {}, 'node', 'mocktest.mjs')
+  // 記録と状態はリポジトリの外に置く（中に置くと未追跡ファイルとして「変更」に数えられる）
+  const out = mkdtempSync(join(tmpdir(), 'tg-out-'))
+  const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  const rows = () => readFileSync(join(out, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
+  const r = run(dir, env, 'node', 'mocktest.mjs')
   assert.equal(r.status, 0)
-  assert.match(r.stdout, /流さない/)
-  assert.equal(rows(dir).at(-1).event, 'none')
+  assert.match(r.stdout, /running all/)
+  assert.match(r.stdout, /基準を作る/)
+  assert.equal(Object.keys(JSON.parse(readFileSync(join(out, 'state.json'), 'utf8')).lastFullPass).length, 1)
+  const r2 = run(dir, env, 'node', 'mocktest.mjs')
+  assert.match(r2.stdout, /流さない/)
+  assert.equal(rows().at(-1).event, 'none')
+})
+test('基準作りの全部流しには時間上限を掛けない', () => {
+  const dir = repo()
+  writeFileSync(join(dir, 'mocktest.mjs'), `setTimeout(() => console.log('3 ok, 0 ng'), 1500)`)
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'slow'], { cwd: dir })
+  const r = run(dir, { TESTGATE_FULL_LIMIT_SEC: '1' }, 'node', 'mocktest.mjs')
+  assert.equal(r.status, 0)
+  assert.doesNotMatch(r.stdout, /秒を超えた/)
 })
 test('a.txt を変更 → subset で実行、合計行は落ち、件数は記録に残る', () => {
   const dir = repo()
