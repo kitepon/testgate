@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// testgate hook <harness>: 段階0。stdin の hook 入力を読み、テスト実行なら記録し、
-// そのまま同じ stdin で `rtk hook <harness>` を呼んで出力と終了コードを中継する。振る舞いは RTK 単体と同じ。
+// testgate hook <harness>: stdin の hook 入力を読む。
+// 段階1（既定、TESTGATE_PHASE=0 で段階0へ戻る）: アダプタが扱えるテストコマンドなら `testgate run -- <元のコマンド>` に包み直して返す。
+// それ以外（テストでない、複合、アダプタが無い、包めない形）は段階0と同じ: 記録して、同じ stdin で `rtk hook <harness>` を呼び、出力と終了コードを中継する。
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { extractCommand, HARNESSES } from '../lib/harness.mjs'
@@ -12,6 +13,7 @@ import { loadAdapters } from '../lib/adapters.mjs'
 import { decide } from '../lib/gate.mjs'
 import { execCapture, trimForModel } from '../lib/run.mjs'
 import { recordFullPass, repoRoot } from '../lib/git.mjs'
+import { buildRunCommand, hookOutput } from '../lib/rewrite.mjs'
 
 const [, , sub, harness, ...rest] = process.argv
 const tail = process.argv.slice(3)
@@ -19,6 +21,8 @@ const tail = process.argv.slice(3)
 if (sub === 'hook' && HARNESSES.includes(harness)) {
   const raw = readFileSync(0, 'utf8')
   if (isCompatCaller(harness, raw)) process.exit(0)
+  const rewritten = await gatePhase1(harness, raw)
+  if (rewritten) { process.stdout.write(rewritten); process.exit(0) }
   await observe(harness, raw)
   if (harness === 'grok') relayGrok(raw)
   else relayToRtk(harness, raw, rest)
@@ -82,6 +86,35 @@ function splitSegments(command) {
   return command.split(/\s*(?:&&|\|\||;|\|)\s*/).filter(Boolean)
 }
 
+// 段階1: アダプタが扱えるテストコマンドを関所の run に包み直す。包めない時は null（段階0の道へ）。
+// Windows は Claude の PowerShell（fox でドリリー・エクシアが確かめた道）だけ包む。他ハーネスの Windows は実物で確かめるまで通す。
+async function gatePhase1(harness, raw) {
+  if (process.env.TESTGATE_PHASE === '0') return null
+  let event
+  try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return null }
+  const { command, cwd, tool, id, session, transcript } = extractCommand(harness, event)
+  const r = analyze(command)
+  if (!r?.runner || r.compound) return null
+  const words = splitWords(command).words
+  let shell = 'posix'
+  if (tool === 'PowerShell') shell = 'pwsh'
+  else if (process.platform === 'win32') return null
+  try {
+    const adapters = await loadAdapters()
+    const adapter = findAdapter(adapters, r.argv, { cwd: cwd ?? process.cwd(), env: process.env })
+    if (!adapter) return null
+    const ran = buildRunCommand({ words, argv: r.argv, cwd, shell })
+    if (!ran) return null
+    const out = hookOutput(harness, event, ran)
+    if (!out) return null
+    await appendLog({ harness, tool, id, session, transcript, cwd: cwd ?? process.cwd(), runner: r.runner, lang: r.lang, compound: false, command, phase: 1, event: 'rewrite', adapter: adapter.id, ran })
+    return out
+  } catch (error) {
+    process.stderr.write(`testgate: phase1 rewrite failed: ${error.message}; passing command through\n`)
+    return null
+  }
+}
+
 async function observe(harness, raw) {
   let event
   try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return }
@@ -127,14 +160,15 @@ async function runGate(args) {
   const argv = args.slice(i + 1)
   if (!argv.length) { console.error('usage: testgate run [--cwd DIR] -- <command...>'); return 2 }
   const adapters = await loadAdapters()
-  const d = await decide({ argv, cwd, env: process.env, adapters, compound: false })
+  const d = await decide({ argv, cwd, env: process.env, adapters, compound: false, selectTimeoutMs: Number(process.env.TESTGATE_SELECT_TIMEOUT_MS || 30000) })
   const adapter = d ? adapters.find(a => a.id === d.adapter) : null
   if (!d || d.mode === 'none') {
     if (d) await appendLog({ phase: 1, event: 'none', cwd, command: argv.join(' '), adapter: d.adapter, reason: d.reason, changedCount: d.changedCount })
     console.log(d ? `testgate: 変更に関わるテストが無いので流さない（${d.reason}）` : 'testgate: テストコマンドではない')
     return 0
   }
-  const limitMs = (d.mode === 'full' || d.mode === 'passthrough') ? (Number(process.env.TESTGATE_FULL_LIMIT_SEC || 180) * 1000) : 0
+  // 時間上限は、意図した全部流し（TESTGATE_FULL=1、アダプタが選んだ full）だけ。基準作りの full と、アダプタが判断できなかった passthrough には掛けない
+  const limitMs = (d.mode === 'full' && !d.establish) ? (Number(process.env.TESTGATE_FULL_LIMIT_SEC || 180) * 1000) : 0
   const res = await execCapture(d.argv, { cwd, env: process.env, timeoutMs: limitMs })
   const parsed = safe(() => adapter?.parseOutput?.(res.output)) ?? {}
   const shown = safe(() => adapter?.stripCounts?.(res.output)) ?? res.output
@@ -145,6 +179,8 @@ async function runGate(args) {
   if (!shown.endsWith('\n')) process.stdout.write('\n')
   if (res.timedOut) process.stdout.write(`testgate: 全部流しが ${limitMs / 1000} 秒を超えたので止めた。速くするか、分けるか、消すこと。\n`)
   else if (d.mode === 'subset') process.stdout.write(`testgate: 変更に関わる分だけ流した（${d.reason}）。全部流すには TESTGATE_FULL=1。\n`)
+  else if (d.establish) process.stdout.write(`testgate: ${d.reason}。${ok ? '通ったので、次からはこの commit との差分だけ流す。' : ''}\n`)
+  else if (d.mode === 'passthrough') process.stdout.write(`testgate: 絞れなかったのでそのまま流した（${d.reason}）。\n`)
   return res.timedOut ? 124 : res.status
 }
 
