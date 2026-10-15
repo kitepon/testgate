@@ -14,6 +14,22 @@ AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フ�
 - `run` 側の select の待ち時間は `TESTGATE_SELECT_TIMEOUT_MS`（既定 30 秒。段階0の影の判断は 5 秒）。
 - 記録: hook が `phase:1, event:'rewrite'`（元のコマンドと包んだコマンド）、`run` が `phase:1, event:'run'`（mode、理由、所要 ms、件数、終了コード）を1行ずつ。
 
+## 段階2（v0.3.0 から）: 刈り込みの候補 `testgate prune`
+
+ミューテーションテスト（Stryker）で「消してよい試験の候補」を出す。消すのは担当。候補には「殺す変異」と「同じ変異を殺す残す試験の名前」を付ける。
+
+```
+testgate prune [--cwd DIR] [--sample N] [--seed S] [--out FILE] [--tests GLOB]... [--exclude GLOB]... [--mutate GLOB]... [--jobs N]
+```
+
+- 対象は JavaScript / TypeScript（node --test は専用の走者で試験1本単位、Jest・Vitest は Stryker 標準の走者。Jest・Vitest は未検証）。Python・Rust・Go・.NET は後の版。swift・gradle は対象外。
+- `package.json` の `test` script から、node の引数（`--import` など）・試験ファイル・build の要否を読む。ファイル指定無しの `node --test` は流さない。tsconfig と `build` script があれば src の `.ts` を変異して build し、無ければ `src` `lib` `bin` の `.js/.mjs/.cjs` を変異する。
+- `--sample N`（既定 200、0 で全部）: 変異を seed 付きの乱択で N 件に絞る。1変異ごとに全試験を流すので、時間は「試験1回の時間 × N」。
+- 候補の決め方: 「自分しか殺さない変異」を持つ試験は必ず残し、残りは未検出の変異を一番多く殺す順に残す（貪欲な最小被覆）。残らない試験が「冗長」、変異を1つも殺さなかった試験が「検出0」。skip の試験は出さない。検出0 は標本に入らなかった所を守っている事があるので、冗長より弱い根拠。
+- 道具（Stryker 一式 約120MB）は本体に入れず、初回に `~/.local/share/testgate/prune-tools/`（`$TESTGATE_PRUNE_TOOLS` か `$XDG_DATA_HOME` で変更）へ npm で導入する。記録は `~/.local/state/testgate/prune/<名前>/<日時>/`（candidates.txt / candidates.json / mutation.json / stryker.log）。`log.jsonl` にも `event: "prune"` を1行残す。
+- 変異は環境変数で届くが、試験が子プロセスへ自前の env を渡す時は届かない。そこで sandbox の製品コードの先頭に「env が無ければリポジトリ直下の `.active-mutant` を読む」ヘッダを注入し、試験の起動時にその file へ変異番号を書く。この file は走者1つで使うので、Stryker の並列は 1、並列は試験ファイル単位（`--jobs`、既定は node --test の既定）で取る。
+- 試験が終わっても子プロセス（hook など）が居残って node --test が終わらない事がある。走者は初回に分かった試験が全部報告されたら1秒待って process group を止め、結果を返す。
+
 ## 段階0（v0.1.x、`TESTGATE_PHASE=0`）
 
 `testgate hook <harness>` は、stdin の hook 入力をそのまま `rtk hook <harness>` へ渡し、出力と終了コードを中継する。違いは、テスト実行だったら `~/.local/share/testgate/log.jsonl` に一行記録すること。RTK が無ければ何も書き換えずに通す。
