@@ -70,6 +70,20 @@ test('tsconfig と build script がある時は src/**/*.ts を変異し、dist 
   assert.deepEqual(proj.inject, { dir: 'out' })
 })
 
+test('試験が src の .ts を直接読む（--experimental-strip-types）時は build せず、src の .ts を変異して注入する（yui の形）', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'tg-prune-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'y', scripts: { build: 'vite build', test: "node --test --experimental-strip-types 'scripts/**/*.test.mjs' 'src/**/*.test.ts'" } }))
+  writeFileSync(join(dir, 'tsconfig.json'), JSON.stringify({ compilerOptions: { outDir: 'dist' } }))
+  mkdirSync(join(dir, 'src', 'lib'), { recursive: true }); writeFileSync(join(dir, 'src', 'lib', 'a.ts'), 'export const a = 1\n'); writeFileSync(join(dir, 'src', 'lib', 'a.test.ts'), ''); writeFileSync(join(dir, 'src', 'lib', 'a.d.ts'), '')
+  const proj = inspectJsProject(dir)
+  assert.equal(proj.error, undefined)
+  assert.equal(proj.build, null)
+  assert.deepEqual(proj.testArgs, ['--experimental-strip-types']) // --test の後ろの旗は testArgs（node はどちらでも受ける）
+  assert.deepEqual(proj.sources, ['src/lib/a.ts'])
+  assert.deepEqual(proj.inject.globs, ['src/**/*.ts'])
+})
+
 test('ランナーが分からない・試験ファイルが無い時は error を返す', t => {
   const dir = mkdtempSync(join(tmpdir(), 'tg-prune-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
