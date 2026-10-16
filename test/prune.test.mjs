@@ -27,6 +27,28 @@ test('reporter の指定は外し、--test の後の option は残す', () => {
   assert.deepEqual(p.files, ['test/*.test.mjs'])
 })
 
+test('test script の npm run の入れ子を展開し、tsx --test は node --test + --import tsx として読む', () => {
+  const p = parseNodeTestScript('npm run test:unit && npm run test:contracts', { 'test:unit': 'vitest run', 'test:contracts': 'node --test tests/*.test.mjs' })
+  assert.equal(p.runner, 'node --test') // vitest の段は runner を上書きしない（node --test の段を拾う）
+  assert.deepEqual(p.files, ['tests/*.test.mjs'])
+  const t = parseNodeTestScript('tsx --test src/a.test.ts src/b.test.ts')
+  assert.equal(t.runner, 'node --test'); assert.deepEqual(t.nodeArgs, ['--import', 'tsx']); assert.deepEqual(t.files, ['src/a.test.ts', 'src/b.test.ts'])
+  assert.deepEqual(parseNodeTestScript('npx tsx --test x.test.ts').nodeArgs, ['--import', 'tsx'])
+  const loop = parseNodeTestScript('npm run a', { a: 'npm run a' }) // 自己参照は3段で止まる
+  assert.equal(loop.runner, null)
+})
+
+test('package.json が無い・test script が無いリポジトリも --runner と --tests で流せる', t => {
+  const dir = mkdtempSync(join(tmpdir(), 'tg-prune-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  mkdirSync(join(dir, 'tools', 'tests'), { recursive: true }); writeFileSync(join(dir, 'tools', 'x.mjs'), 'export const x = 1\n'); writeFileSync(join(dir, 'tools', 'tests', 'x.test.mjs'), '')
+  assert.match(inspectJsProject(dir).error, /package.json が無い/)
+  const proj = inspectJsProject(dir, { runner: 'node --test', tests: ['tools/tests/*.test.mjs'], mutate: ['tools/*.mjs'] })
+  assert.equal(proj.error, undefined); assert.equal(proj.runner, 'node --test'); assert.deepEqual(proj.files, ['tools/tests/*.test.mjs']); assert.deepEqual(proj.sources, ['tools/x.mjs'])
+  assert.equal(parsePruneArgs(['--runner', 'node-test']).runner, 'node-test')
+  assert.match(parsePruneArgs(['--runner', 'mocha']).error, /--runner は/)
+})
+
 test('build 無しの JS リポジトリは src/lib/bin を変異対象にし、試験と雑音を外す', () => {
   const proj = inspectJsProject(fixtureRepo)
   assert.equal(proj.error, undefined)

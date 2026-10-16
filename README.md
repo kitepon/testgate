@@ -19,11 +19,11 @@ AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フ�
 ミューテーションテスト（Stryker）で「消してよい試験の候補」を出す。消すのは担当。候補には「殺す変異」と「同じ変異を殺す残す試験の名前」を付ける。
 
 ```
-testgate prune [--cwd DIR] [--sample N] [--seed S] [--out FILE] [--tests GLOB]... [--exclude GLOB]... [--mutate GLOB]... [--jobs N] [--no-preflight]
+testgate prune [--cwd DIR] [--sample N] [--seed S] [--out FILE] [--tests GLOB]... [--exclude GLOB]... [--mutate GLOB]... [--jobs N] [--no-preflight] [--runner node-test|jest|vitest]
 ```
 
 - 対象は JavaScript / TypeScript（node --test は専用の走者で試験1本単位、Jest・Vitest は Stryker 標準の走者。Jest・Vitest は未検証）。Python・Rust・Go・.NET は後の版。swift・gradle は対象外。
-- `package.json` の `test` script から、node の引数（`--import` など）・試験ファイル・build の要否を読む。ファイル指定無しの `node --test` は流さない。tsconfig と `build` script があれば src の `.ts` を変異して build し、無ければ `src` `lib` `bin` の `.js/.mjs/.cjs` を変異する。
+- `package.json` の `test` script から、node の引数（`--import` など）・試験ファイル・build の要否を読む。`npm run X` は scripts の X へ展開し（3段まで）、`tsx --test` は node --test に `--import tsx` を付けた物として読む。vitest と node --test が混ざる script は node --test の段を使う。ファイル指定無しの `node --test` は流さない。package.json や test script が無い時は `--runner node-test --tests GLOB` で指定する（v0.3.4 から）。tsconfig と `build` script があれば src の `.ts` を変異して build し、無ければ `src` `lib` `bin` の `.js/.mjs/.cjs` を変異する。
 - `--sample N`（既定 200、0 で全部）: 変異を seed 付きの乱択で N 件に絞る。1変異ごとに全試験を流すので、時間は「試験1回の時間 × N」。
 - 候補の決め方: 「自分しか殺さない変異」を持つ試験は必ず残し、残りは未検出の変異を一番多く殺す順に残す（貪欲な最小被覆）。残らない試験が「冗長」、変異を1つも殺さなかった試験が「検出0」。skip の試験は出さない。検出0 は標本に入らなかった所を守っている事があるので、冗長より弱い根拠。
 - 道具（Stryker 一式 約120MB）は本体に入れず、初回に `~/.local/share/testgate/prune-tools/`（`$TESTGATE_PRUNE_TOOLS` か `$XDG_DATA_HOME` で変更）へ npm で導入する。記録は `~/.local/state/testgate/prune/<名前>/<日時>/`（candidates.txt / candidates.json / mutation.json / stryker.log）。`log.jsonl` にも `event: "prune"` を1行残す。
