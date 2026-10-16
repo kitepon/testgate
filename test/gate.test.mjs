@@ -1,16 +1,16 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { tmp } from './tmp.mjs'
 
 const bin = fileURLToPath(new URL('../bin/testgate.mjs', import.meta.url))
 const adapters = fileURLToPath(new URL('./fixtures/mock-adapter', import.meta.url))
 
 function repo() {
-  const dir = mkdtempSync(join(tmpdir(), 'tg-repo-'))
+  const dir = tmp('tg-repo-')
   writeFileSync(join(dir, 'mocktest.mjs'), `const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only')+1] : null\nconsole.log('running', only ?? 'all')\nconsole.log(only ? '1 ok, 0 ng' : '3 ok, 0 ng')\n`)
   writeFileSync(join(dir, 'a.txt'), 'a'); writeFileSync(join(dir, 'b.txt'), 'b')
   const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' })
@@ -25,7 +25,7 @@ const rows = dir => readFileSync(join(dir, 'log.jsonl'), 'utf8').trim().split('\
 test('変更なし・基準なし → 一度全部流して基準を作り、次は流さない', () => {
   const dir = repo()
   // 記録と状態はリポジトリの外に置く（中に置くと未追跡ファイルとして「変更」に数えられる）
-  const out = mkdtempSync(join(tmpdir(), 'tg-out-'))
+  const out = tmp('tg-out-')
   const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
   const rows = () => readFileSync(join(out, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
   const r = run(dir, env, 'node', 'mocktest.mjs')
@@ -84,7 +84,7 @@ test('テストコマンドでなければ実行せず終わる', () => {
 })
 test('基準なし・未追跡の資料だけ → none ではなく一度全部流して基準を作る。基準が出来たら次は流さない', () => {
   const dir = repo()
-  const out = mkdtempSync(join(tmpdir(), 'tg-out-'))
+  const out = tmp('tg-out-')
   const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
   writeFileSync(join(dir, 'notes.md'), 'untracked')
   const r = run(dir, env, 'node', 'mocktest.mjs')
@@ -97,7 +97,7 @@ test('基準なし・未追跡の資料だけ → none ではなく一度全部�
 })
 test('基準作りの全部流しが失敗 → 基準は作らず、次も全部流す', () => {
   const dir = repo()
-  const out = mkdtempSync(join(tmpdir(), 'tg-out-'))
+  const out = tmp('tg-out-')
   const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
   writeFileSync(join(dir, 'mocktest.mjs'), `console.log('2 ok, 1 ng'); process.exit(1)`)
   spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'red'], { cwd: dir })

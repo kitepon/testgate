@@ -1,11 +1,12 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as adapter from '../adapter.mjs'
+import { tmp } from '../../../test/tmp.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const fx = path.join(here, '..', 'fixtures')
@@ -15,7 +16,7 @@ const skipDotnet = HAS_DOTNET ? false : 'dotnet が無い'
 
 // fixtures を tmp へ写して git init。bin/obj は持ち込まない。
 function repo(name = 'dotnet-sln') {
-  const dir = mkdtempSync(path.join(tmpdir(), 'tg-dotnet-'))
+  const dir = tmp('tg-dotnet-')
   cpSync(path.join(fx, name), dir, { recursive: true, filter: (s) => !/[\\/](bin|obj)([\\/]|$)/.test(s) })
   execFileSync('git', ['init', '-q'], { cwd: dir })
   return dir
@@ -107,6 +108,21 @@ test('実装クラスの変更は、基底の interface を使う側にも届く
   assert.ok(!r.argv[4].includes('GreeterTests') && !r.argv[4].includes('CounterTests'))
   const slnf = JSON.parse(readFileSync(r.argv[2], 'utf8'))
   assert.deepEqual(slnf.solution.projects, ['tests\\Main.Tests\\Main.Tests.csproj', 'tests\\Util.Tests\\Util.Tests.csproj'])
+})
+
+test('slnf: 1日より古い物は次に書く時に掃かれ、新しい物は残る', async () => {
+  const sdir = path.join(tmpdir(), 'testgate-dotnet')
+  mkdirSync(sdir, { recursive: true })
+  const old = path.join(sdir, 'test-old-0000000000.slnf'); const fresh = path.join(sdir, 'test-fresh-00000000.slnf')
+  writeFileSync(old, '{}'); writeFileSync(fresh, '{}')
+  const t = (Date.now() - 25 * 3600 * 1000) / 1000
+  utimesSync(old, t, t)
+  const dir = repo()
+  const r = await sel(dir, ['src/Util/Clock.cs'])
+  assert.match(r.argv[2], /\.slnf$/)
+  assert.equal(existsSync(old), false, '古い slnf が残っている')
+  assert.equal(existsSync(fresh), true, '新しい slnf まで消えている')
+  rmSync(fresh, { force: true }); rmSync(r.argv[2], { force: true })
 })
 
 test('テスト内の test double（FakeClock : IClock）の変更は、本体の IClock 側へ逆流しない', async () => {

@@ -2,10 +2,10 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, existsSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { tmp } from './tmp.mjs'
 
 const bin = fileURLToPath(new URL('../bin/testgate.mjs', import.meta.url))
 // この試験は段階0の中継（RTK と同一）を見る。段階1の包み直しは hook-phase1.test.mjs
@@ -29,7 +29,7 @@ const cases = [
 
 for (const [harness, event, runner] of cases) {
   test(`中継 ${harness}: ${event.tool_input?.command ?? event.command}`, { skip: !hasRtk && 'rtk が無い' }, () => {
-    const dir = mkdtempSync(join(tmpdir(), 'testgate-'))
+    const dir = tmp('testgate-')
     const log = join(dir, 'log.jsonl')
     const { ours, theirs } = run(harness, event, { TESTGATE_LOG: log, BELLTEAM_BOT_ID: 'bot-test' })
     assert.equal(ours.stdout, theirs.stdout, 'stdout が RTK と一致する')
@@ -47,7 +47,7 @@ for (const [harness, event, runner] of cases) {
 }
 
 test('rtk が無い時は何も書き換えずに通す', () => {
-  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'pytest' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: '/nonexistent/rtk', TESTGATE_LOG: join(mkdtempSync(join(tmpdir(), 'tg-')), 'l') } })
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'pytest' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: '/nonexistent/rtk', TESTGATE_LOG: join(tmp('tg-'), 'l') } })
   assert.equal(r.status, 0)
   assert.equal(r.stdout, '')
 })
@@ -57,7 +57,7 @@ test('grok: BellTeam の grok-hook.mjs と同じ出力', { skip: !hasRtk && 'rtk
   if (!existsSync(ref)) return
   for (const command of ['pytest -q', 'ls -la', 'echo hi']) {
     const raw = JSON.stringify({ toolName: 'run_terminal_command', toolInput: { command, foo: 1 }, cwd: '/tmp' })
-    const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+    const log = join(tmp('tg-'), 'l')
     const ours = spawnSync('node', [bin, 'hook', 'grok'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
     const theirs = spawnSync('node', [ref], { input: raw, encoding: 'utf8', env: { ...process.env, RTK_BIN: 'rtk' } })
     assert.equal(ours.stdout, theirs.stdout, `grok ${command}`)
@@ -67,7 +67,7 @@ test('grok: BellTeam の grok-hook.mjs と同じ出力', { skip: !hasRtk && 'rtk
 })
 
 test('BOM 付きの入力でも判定できる', { skip: !hasRtk && 'rtk が無い' }, () => {
-  const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+  const log = join(tmp('tg-'), 'l')
   const raw = '﻿' + JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'pytest' }, cwd: '/tmp' })
   const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
   assert.equal(r.status, spawnSync('rtk', ['hook', 'claude'], { input: raw, encoding: 'utf8' }).status)
@@ -76,7 +76,7 @@ test('BOM 付きの入力でも判定できる', { skip: !hasRtk && 'rtk が無�
 
 test('rtk hook が時間内に返らない時は、書き換えずに通して exit 1 で知らせる（2 は使わない）', () => {
   const fake = fileURLToPath(new URL('./fixtures/bin/rtk', import.meta.url))
-  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'ls' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: fake, TESTGATE_RTK_TIMEOUT_MS: '300', TESTGATE_LOG: join(mkdtempSync(join(tmpdir(), 'tg-')), 'l') } })
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'ls' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: fake, TESTGATE_RTK_TIMEOUT_MS: '300', TESTGATE_LOG: join(tmp('tg-'), 'l') } })
   assert.equal(r.status, 1)
   assert.equal(r.stdout, '')
   assert.match(r.stderr, /rtk hook failed/)
@@ -90,7 +90,7 @@ test('ログの書き込みに失敗しても hook は通る', { skip: !hasRtk &
 
 test('段階0の影の判断: アダプタがあれば選択の結果を記録し、出力は RTK と同じ', { skip: !hasRtk && 'rtk が無い' }, () => {
   const adapters = fileURLToPath(new URL('./fixtures/mock-adapter', import.meta.url))
-  const dir = mkdtempSync(join(tmpdir(), 'tg-shadow-'))
+  const dir = tmp('tg-shadow-')
   const g = (...a) => spawnSync('git', a, { cwd: dir })
   g('init', '-q'); spawnSync('sh', ['-c', 'echo a > a.txt && echo m > mocktest.mjs'], { cwd: dir }); g('add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'i')
   spawnSync('sh', ['-c', 'echo b > a.txt'], { cwd: dir })
@@ -109,7 +109,7 @@ test('hook に知らない名前を渡しても 2 は返さない', () => {
 })
 
 test('記録では前置きの環境変数の値を消し、id・session・transcript を残す', { skip: !hasRtk && 'rtk が無い' }, () => {
-  const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+  const log = join(tmp('tg-'), 'l')
   const raw = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'TOKEN=abc123 npm test' }, cwd: '/tmp', tool_use_id: 'toolu_1', session_id: 'sess_1', transcript_path: '/x/t.jsonl' })
   spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
   const row = JSON.parse(readFileSync(log, 'utf8').trim())
@@ -129,7 +129,7 @@ for (const [name, event] of [
   ['cursor 相乗り', { tool_name: 'Shell', tool_input: { command: 'node --test a.test.mjs' }, tool_use_id: '350753db', session_id: 's', cwd: '/tmp' }],
 ]) {
   test(`hook claude に Bash 以外の道具名が来たら黙って通す（${name}）`, () => {
-    const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+    const log = join(tmp('tg-'), 'l')
     const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify(event), encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
     assert.equal(r.status, 0)
     assert.equal(r.stdout, '')
@@ -148,7 +148,7 @@ test('hook claude: PowerShell は正規の入力として RTK に渡す', { skip
 })
 
 test('hook claude: PowerShell の dotnet test は記録する', () => {
-  const log = join(mkdtempSync(join(tmpdir(), 'tg-')), 'l')
+  const log = join(tmp('tg-'), 'l')
   const raw = JSON.stringify({ tool_name: 'PowerShell', tool_input: { command: 'dotnet test Host.Tests' }, cwd: '/tmp', tool_use_id: 'toolu_ps2', session_id: 'sess_ps' })
   spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: log } })
   const row = JSON.parse(readFileSync(log, 'utf8').trim())

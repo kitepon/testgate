@@ -2,7 +2,7 @@
 // 変更ファイル → 所属プロジェクト → ProjectReference の逆引き → 影響するテストプロジェクト、
 // さらにプロジェクト内は「型名の言及」の逆引きで --filter（テストクラス単位）まで絞る。
 // 選択のために外部コマンドは呼ばない（solution と csproj と .cs を読むだけ）。
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -749,9 +749,23 @@ function writeSlnf(solutionFile, picked) {
   const json = JSON.stringify(body, null, 2)
   const dir = path.join(tmpdir(), 'testgate-dotnet')
   mkdirSync(dir, { recursive: true })
+  sweepSlnf(dir)
   const f = path.join(dir, createHash('sha1').update(json).digest('hex').slice(0, 16) + '.slnf')
   writeFileSync(f, json)
   return f
+}
+
+// 1日より古い .slnf を掃く。名前は内容のハッシュなので本番では選択の組合せ分しか増えないが、
+// 試験は毎回別の tmp パスを使うので放っておくと際限なく積もる（2026-10-16 の /tmp inode 枯渇の関連物）。
+const SLNF_TTL_MS = 24 * 3600 * 1000
+function sweepSlnf(dir, now = Date.now()) {
+  let names
+  try { names = readdirSync(dir) } catch { return }
+  for (const n of names) {
+    if (!/\.slnf$/.test(n)) continue
+    const f = path.join(dir, n)
+    try { if (now - statSync(f).mtimeMs > SLNF_TTL_MS) rmSync(f, { force: true }) } catch {}
+  }
 }
 
 // ---------- 結果の読み取り ----------

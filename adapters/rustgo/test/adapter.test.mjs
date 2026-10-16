@@ -1,11 +1,11 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { cpSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as adapter from '../adapter.mjs'
+import { tmp } from '../../../test/tmp.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const fx = path.join(here, '..', 'fixtures')
@@ -17,7 +17,7 @@ const skipCargo = HAS_CARGO ? false : 'cargo が無い'
 const skipGo = HAS_GO ? false : 'go が無い'
 
 function repo(name) {
-  const dir = mkdtempSync(path.join(tmpdir(), 'tg-rustgo-'))
+  const dir = tmp('tg-rustgo-')
   cpSync(path.join(fx, name), dir, { recursive: true })
   execFileSync('git', ['init', '-q'], { cwd: dir })
   return dir
@@ -240,7 +240,7 @@ test('go: 消えたpackage → それをimportしていた側を選ぶ', { skip:
 })
 
 test('go: go.work の複数モジュール。別モジュールの依存側も選ぶ', { skip: skipGo }, async () => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'tg-gowork-'))
+  const dir = tmp('tg-gowork-')
   execFileSync('git', ['init', '-q'], { cwd: dir })
   const w = (f, s) => { mkdirSync(path.dirname(path.join(dir, f)), { recursive: true }); writeFileSync(path.join(dir, f), s) }
   w('go.work', 'go 1.21\n\nuse (\n\t./liba\n\t./libb\n\t./libc\n)\n')

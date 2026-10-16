@@ -1,14 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, writeFileSync, mkdirSync } from 'node:fs'
-import { tmpdir } from 'node:os'
+import { writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { changedFiles } from '../lib/git.mjs'
 import { extractCommand } from '../lib/harness.mjs'
+import { tmp } from './tmp.mjs'
 
 test('未追跡が 1MB を超えても変更一覧が欠けない', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'tg-big-'))
+  const dir = tmp('tg-big-')
   spawnSync('git', ['init', '-q'], { cwd: dir })
   writeFileSync(join(dir, 'tracked.txt'), 'x')
   spawnSync('git', ['add', '-A'], { cwd: dir }); spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'i'], { cwd: dir })
@@ -21,7 +21,7 @@ test('未追跡が 1MB を超えても変更一覧が欠けない', () => {
 })
 
 test('git が無い所では null、失敗は error 付きで返り、空配列にはしない', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'tg-nogit-'))
+  const dir = tmp('tg-nogit-')
   assert.equal(changedFiles(dir, null), null)
 })
 
