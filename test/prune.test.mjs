@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { parseNodeTestScript, inspectJsProject } from '../lib/prune/project.mjs'
-import { analyzeReport, formatCandidates } from '../lib/prune/candidates.mjs'
-import { buildStrykerConfig, parsePruneArgs } from '../lib/prune/index.mjs'
+import { analyzeReport, formatCandidates, mergeReports } from '../lib/prune/candidates.mjs'
+import { buildStrykerConfig, parsePruneArgs, mergeRuns } from '../lib/prune/index.mjs'
 import { injectFiles, listTargets } from '../lib/prune/inject-active-mutant.mjs'
 import { toolsDir } from '../lib/prune/tools.mjs'
 
@@ -73,6 +73,40 @@ test('候補: 自分しか殺さない変異を持つ試験は残し、残りは
   assert.match(text, /同じ変異を殺す残す試験: test\/a.test.mjs > B/)
 })
 
+test('合算: 2回分の変異は位置で束ね、killedBy は和集合。検出0 だった試験が2回目で変異を独占すれば残す側へ', t => {
+  const r1 = JSON.parse(readFileSync(join(here, 'fixtures', 'prune', 'report.json'), 'utf8'))
+  const r2 = JSON.parse(JSON.stringify(r1))
+  // 2回目: 変異0 は A だけが殺した、変異3（1回目は生存）は D が殺した、別ファイルの変異5 は D だけが殺した
+  r2.files['src/x.mjs'].mutants = [
+    { ...r1.files['src/x.mjs'].mutants[0], id: '0', killedBy: ['test/a.test.mjs#A'] },
+    { ...r1.files['src/x.mjs'].mutants[3], id: '1', status: 'Killed', killedBy: ['test/a.test.mjs#D'] },
+  ]
+  r2.files['src/y.mjs'] = { mutants: [{ id: '2', mutatorName: 'BooleanLiteral', replacement: 'false', status: 'Killed', killedBy: ['test/a.test.mjs#D'], location: { start: { line: 1, column: 1 }, end: { line: 1, column: 5 } } }] }
+  const m = mergeReports([r1, r2])
+  assert.equal(m.runs, 2)
+  assert.equal(m.files['src/x.mjs'].mutants.length, 5)
+  assert.deepEqual(m.files['src/x.mjs'].mutants[0].killedBy, ['test/a.test.mjs#A', 'test/a.test.mjs#B'])
+  assert.equal(m.files['src/x.mjs'].mutants[3].status, 'Killed')
+  assert.equal(m.testFiles['test/a.test.mjs'].tests.length, 4)
+  const a = analyzeReport(m)
+  assert.equal(a.runs, 2)
+  assert.equal(a.tested, 6)
+  assert.deepEqual(a.stat, { killed: 6, survived: 0, errors: 0 })
+  assert.deepEqual(a.candidates.map(c => c.test.name), ['test/a.test.mjs > A']) // D は変異5 を独占して残る
+  assert.match(formatCandidates(a), /^2 回分を合算: 変異 6 件を流した/)
+  // mergeRuns: 名前のフォルダに 2 回分の mutation.json がある時だけ合算を返す
+  const dir = mkdtempSync(join(tmpdir(), 'tg-merge-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  mkdirSync(join(dir, '20260101-000000')); writeFileSync(join(dir, '20260101-000000', 'mutation.json'), JSON.stringify(r1))
+  assert.equal(mergeRuns(dir), null)
+  mkdirSync(join(dir, '20260201-000000')); writeFileSync(join(dir, '20260201-000000', 'mutation.json'), JSON.stringify(r2))
+  mkdirSync(join(dir, '20260301-000000')) // mutation.json が無い（失敗した回）は飛ばす
+  const mr = mergeRuns(dir)
+  assert.equal(mr.runs.length, 2)
+  assert.equal(mr.analysis.tested, 6)
+  assert.equal(mergeRuns(join(dir, 'none')), null)
+})
+
 test('Stryker の設定: 走者1、bail 無し、node-test 走者と注入付きの build command', () => {
   const proj = inspectJsProject(fixtureRepo)
   const cfg = buildStrykerConfig(proj, { tools: { dir: '/t', plugins: '/t/plugins', stryker: '/t/s.js' }, mutate: ['src/tax.mjs:3:1-3:9'], reportFile: '/r/m.json', timeoutMs: 1000, testTimeoutMs: 2000, concurrencyFiles: 2 })
@@ -127,4 +161,12 @@ test('一巡: 固定リポジトリで全変異を流し、残す試験と候補
   assert.match(r.stdout, /\[冗長\] test\/(tax|price)\.test\.mjs/)
   const log = readFileSync(join(dir, 'state', 'testgate', 'log.jsonl'), 'utf8')
   assert.match(log, /"event":"prune"/)
+  assert.doesNotMatch(r.stdout, /回分の合算/)
+  // 2回目は過去の記録と合算した候補も書く
+  const r2 = spawnSync(process.execPath, [resolve(here, '..', 'bin', 'testgate.mjs'), 'prune', '--cwd', join(dir, 'repo'), '--sample', '0', '--seed', 'e2e2'], { encoding: 'utf8', env, timeout: 300000 })
+  assert.equal(r2.status, 0, r2.stderr)
+  assert.match(r2.stdout, /--- 2 回分の合算（.*）---\n2 回分を合算: 変異 \d+ 件を流した/)
+  const runDir = r2.stdout.match(/記録: (\S+)（/)[1]
+  assert.ok(existsSync(join(runDir, 'candidates-merged.txt')))
+  assert.equal(JSON.parse(readFileSync(join(runDir, 'candidates-merged.json'), 'utf8')).runs.length, 2)
 })
