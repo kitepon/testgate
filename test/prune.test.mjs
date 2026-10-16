@@ -6,9 +6,9 @@ import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { parseNodeTestScript, inspectJsProject } from '../lib/prune/project.mjs'
 import { analyzeReport, formatCandidates, mergeReports, broadThreshold, mutantKey } from '../lib/prune/candidates.mjs'
-import { buildStrykerConfig, parsePruneArgs, mergeRuns } from '../lib/prune/index.mjs'
+import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight } from '../lib/prune/index.mjs'
 import { injectFiles, listTargets } from '../lib/prune/inject-active-mutant.mjs'
-import { toolsDir } from '../lib/prune/tools.mjs'
+import { toolsDir, ensurePruneTools } from '../lib/prune/tools.mjs'
 
 const here = import.meta.dirname
 const fixtureRepo = resolve(here, '..', 'adapters', 'javascript', 'fixtures', 'node-repo')
@@ -176,10 +176,29 @@ test('引数: 既定は sample 200、未知の option は error', () => {
   assert.deepEqual(parsePruneArgs(['--cwd', '/x', '--sample', '0', '--exclude', 'a', '--exclude', 'b', '--jobs', '3']).exclude, ['a', 'b'])
   assert.equal(parsePruneArgs(['--jobs', '3']).concurrencyFiles, 3)
   assert.match(parsePruneArgs(['--nope']).error, /unknown option/)
+  assert.equal(parsePruneArgs(['--no-preflight']).noPreflight, true)
 })
 
 // 実物の一巡。道具（Stryker 一式）が導入済みの席でだけ流す（npm の導入はネットワークが要るので試験では行わない）。
 const toolsReady = existsSync(join(toolsDir(), 'node_modules', '@stryker-mutator', 'core', 'package.json'))
+test('下見: .git の無い写しで落ちる試験ファイルを見つける（走者の plugin をそのまま使う）', { skip: toolsReady ? false : '刈り込みの道具が未導入' }, async t => {
+  const dir = mkdtempSync(join(tmpdir(), 'tg-preflight-src-'))
+  t.after(() => rmSync(dir, { recursive: true, force: true }))
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'pf', scripts: { test: 'node --test test/*.test.mjs' } }))
+  mkdirSync(join(dir, '.git')); writeFileSync(join(dir, '.git', 'HEAD'), 'ref: refs/heads/main\n')
+  mkdirSync(join(dir, 'src')); writeFileSync(join(dir, 'src', 'a.mjs'), 'export const a = 1\n')
+  mkdirSync(join(dir, 'test'))
+  writeFileSync(join(dir, 'test', 'ok.test.mjs'), "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { a } from '../src/a.mjs'\ntest('ok', () => assert.equal(a, 1))\n")
+  writeFileSync(join(dir, 'test', 'git.test.mjs'), "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { existsSync } from 'node:fs'\ntest('.git を読む', () => assert.ok(existsSync('.git')))\ntest('これは通る', () => {})\n")
+  const proj = inspectJsProject(dir)
+  const tools = ensurePruneTools({ env: process.env, log: () => {} }) // 導入済みなので plugin の写しを更新するだけ
+  const r = await preflight(dir, proj, { tools, log: () => {} })
+  assert.deepEqual(r.failed, ['test/git.test.mjs'])
+  assert.equal(r.tests, 3)
+  assert.match(r.failedTests[0].error, /AssertionError/)
+  assert.equal(process.cwd(), resolve('.')) // cwd を戻す
+})
+
 test('一巡: 固定リポジトリで全変異を流し、残す試験と候補を出す', { skip: toolsReady ? false : '刈り込みの道具が未導入（testgate prune を一度流すと入る）' }, t => {
   const dir = mkdtempSync(join(tmpdir(), 'tg-prune-e2e-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
