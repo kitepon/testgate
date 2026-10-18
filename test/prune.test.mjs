@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { parseNodeTestScript, inspectJsProject } from '../lib/prune/project.mjs'
 import { analyzeReport, formatCandidates, mergeReports, broadThreshold, mutantKey } from '../lib/prune/candidates.mjs'
-import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight } from '../lib/prune/index.mjs'
+import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight, preflightLayout } from '../lib/prune/index.mjs'
 import { injectFiles, listTargets } from '../lib/prune/inject-active-mutant.mjs'
 import { toolsDir, ensurePruneTools } from '../lib/prune/tools.mjs'
 import { tmp } from './tmp.mjs'
@@ -274,6 +274,44 @@ test('下見: 読み込みで落ちる試験ファイルは、その 1 本の失
   assert.equal(r.tests, 2) // good の 1 本 + bad のファイル 1 本。(process) の行は出ない
   assert.deepEqual(r.failedTests.map(f => f.name), ['test/bad.test.mjs > (file)'])
   assert.match(r.failedTests[0].error, /ERR_MODULE_NOT_FOUND|tg-no-such-package|Cannot find package/)
+  assert.equal(process.cwd(), resolve('.'))
+})
+
+/** npm workspaces の形: 根に node_modules（tg-dep を hoist）、packages/server が試験を持ち tg-dep を import する。 */
+function workspaceRepo() {
+  const root = tmp('tg-prune-ws-')
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'ws', private: true, workspaces: ['packages/*'] }))
+  mkdirSync(join(root, 'node_modules', 'tg-dep'), { recursive: true })
+  writeFileSync(join(root, 'node_modules', 'tg-dep', 'package.json'), JSON.stringify({ name: 'tg-dep', type: 'module', main: 'index.mjs' }))
+  writeFileSync(join(root, 'node_modules', 'tg-dep', 'index.mjs'), 'export const dep = 42\n')
+  const server = join(root, 'packages', 'server')
+  mkdirSync(join(server, 'src'), { recursive: true }); mkdirSync(join(server, 'test'))
+  writeFileSync(join(server, 'package.json'), JSON.stringify({ name: 'server', scripts: { test: 'node --test test/*.test.mjs' } }))
+  writeFileSync(join(server, 'src', 'a.mjs'), 'export const a = 1\n')
+  writeFileSync(join(server, 'test', 'a.test.mjs'), "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { dep } from 'tg-dep'\nimport { a } from '../src/a.mjs'\ntest('依存が解決できる', () => assert.equal(a + dep, 43))\n")
+  return { root, server }
+}
+
+test('下見の写し: cwd から上へ辿って node_modules の有る階層を、写しの同じ相対位置に link する', () => {
+  const { root, server } = workspaceRepo()
+  const out = join(root, 'copy')
+  const l = preflightLayout(server, out)
+  assert.equal(l.copyRoot, join(out, 'packages', 'server')) // 根（node_modules の有る一番上）からの深さを保つ
+  assert.deepEqual(l.links.filter(([from]) => from.startsWith(root)), [[join(root, 'node_modules'), join(out, 'node_modules')]])
+  // package 自身にも node_modules があれば、それも同じ相対位置へ
+  mkdirSync(join(server, 'node_modules'))
+  const l2 = preflightLayout(server, out)
+  assert.deepEqual(l2.links.filter(([from]) => from.startsWith(root)), [[join(server, 'node_modules'), join(out, 'packages', 'server', 'node_modules')], [join(root, 'node_modules'), join(out, 'node_modules')]])
+})
+
+test('下見: workspaces の package を cwd にしても、根に hoist した依存が解決できて試験が通る', { skip: toolsReady ? false : '刈り込みの道具が未導入' }, async () => {
+  const { server } = workspaceRepo()
+  const proj = inspectJsProject(server)
+  const tools = ensurePruneTools({ env: process.env, log: () => {} })
+  const r = await preflight(server, proj, { tools, log: () => {} })
+  assert.equal(r.error, undefined)
+  assert.deepEqual(r.failed, [], JSON.stringify(r.failedTests))
+  assert.equal(r.tests, 1)
   assert.equal(process.cwd(), resolve('.'))
 })
 
