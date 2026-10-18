@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync, cpSync, mkdirSync
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { pathToFileURL } from 'node:url'
 import { parseNodeTestScript, inspectJsProject } from '../lib/prune/project.mjs'
 import { analyzeReport, formatCandidates, mergeReports, broadThreshold, mutantKey } from '../lib/prune/candidates.mjs'
 import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight, preflightLayout } from '../lib/prune/index.mjs'
@@ -96,7 +97,7 @@ test('--mutate を指定した時は注入の glob も同じ集合にする（bu
   const proj = inspectJsProject(dir, { mutate: ['scripts/*.mjs', '!scripts/skip.mjs'] })
   assert.deepEqual(proj.sources, [join('scripts', 'b.mjs')])
   assert.deepEqual(proj.inject, { globs: ['scripts/*.mjs'], exclude: ['scripts/skip.mjs'] }) // 既定の雑音（scripts/**）で注入が外れない
-  assert.deepEqual(listTargets(dir, proj.inject), ['scripts/b.mjs'])
+  assert.deepEqual(listTargets(dir, proj.inject), [join('scripts', 'b.mjs')])
   // tsconfig + build の形は dist への注入のまま
   const td = tmp('tg-prune-mutate-ts-')
   writeFileSync(join(td, 'package.json'), JSON.stringify({ name: 't', scripts: { build: 'tsc', test: 'npm run build && node --test test/*.test.mjs' } }))
@@ -292,7 +293,8 @@ test('reporter: 読み込みで落ちた試験ファイルは、ファイル名�
   const dir = repoWithBrokenTestFile()
   const reporter = resolve(here, '..', 'lib', 'prune', 'node-test-jsonl-reporter.mjs')
   const env = { ...process.env }; delete env.NODE_TEST_CONTEXT // 親が node --test の子だと、この変数で子扱いになって reporter に event が来ない（走者と同じ）
-  const r = spawnSync(process.execPath, ['--test', `--test-reporter=${reporter}`, '--test-reporter-destination=stdout', 'test/good.test.mjs', 'test/bad.test.mjs'], { cwd: dir, encoding: 'utf8', env })
+  const preload = pathToFileURL(resolve(here, '..', 'lib', 'prune', 'active-mutant-preload.mjs')).href
+  const r = spawnSync(process.execPath, ['--import', preload, '--test', `--test-reporter=${pathToFileURL(reporter).href}`, '--test-reporter-destination=stdout', 'test/good.test.mjs', 'test/bad.test.mjs'], { cwd: dir, encoding: 'utf8', env })
   assert.equal(r.status, 1)
   const rows = r.stdout.split('\n').filter(l => l.includes('\u001e')).map(l => JSON.parse(l.slice(l.indexOf('\u001e') + 1)))
   const fileRow = rows.find(x => x.fileRow)
