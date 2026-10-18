@@ -85,6 +85,29 @@ test('試験が src の .ts を直接読む（--experimental-strip-types）時�
   assert.deepEqual(proj.inject.globs, ['src/**/*.ts'])
 })
 
+test('--mutate を指定した時は注入の glob も同じ集合にする（build で dist へ注入する形はそのまま）', () => {
+  const dir = tmp('tg-prune-mutate-')
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'm', scripts: { test: 'node --test test/*.test.mjs' } }))
+  mkdirSync(join(dir, 'src')); writeFileSync(join(dir, 'src', 'a.mjs'), 'export const a = 1\n')
+  mkdirSync(join(dir, 'scripts')); writeFileSync(join(dir, 'scripts', 'b.mjs'), 'export const b = 2\n'); writeFileSync(join(dir, 'scripts', 'skip.mjs'), 'export const s = 3\n')
+  mkdirSync(join(dir, 'test')); writeFileSync(join(dir, 'test', 'a.test.mjs'), '')
+  const base = inspectJsProject(dir)
+  assert.deepEqual(base.inject.globs, ['src/**/*.{js,mjs,cjs}']) // 既定は src/lib/bin/app
+  const proj = inspectJsProject(dir, { mutate: ['scripts/*.mjs', '!scripts/skip.mjs'] })
+  assert.deepEqual(proj.sources, [join('scripts', 'b.mjs')])
+  assert.deepEqual(proj.inject, { globs: ['scripts/*.mjs'], exclude: ['scripts/skip.mjs'] }) // 既定の雑音（scripts/**）で注入が外れない
+  assert.deepEqual(listTargets(dir, proj.inject), ['scripts/b.mjs'])
+  // tsconfig + build の形は dist への注入のまま
+  const td = tmp('tg-prune-mutate-ts-')
+  writeFileSync(join(td, 'package.json'), JSON.stringify({ name: 't', scripts: { build: 'tsc', test: 'npm run build && node --test test/*.test.mjs' } }))
+  writeFileSync(join(td, 'tsconfig.json'), JSON.stringify({ compilerOptions: { rootDir: 'src', outDir: 'dist' } }))
+  mkdirSync(join(td, 'app')); writeFileSync(join(td, 'app', 'x.ts'), 'export const x = 1\n')
+  mkdirSync(join(td, 'test')); writeFileSync(join(td, 'test', 'x.test.mjs'), '')
+  const tp = inspectJsProject(td, { mutate: ['app/**/*.ts'] })
+  assert.deepEqual(tp.sources, [join('app', 'x.ts')])
+  assert.deepEqual(tp.inject, { dir: 'dist' })
+})
+
 test('ランナーが分からない・試験ファイルが無い時は error を返す', t => {
   const dir = mkdtempSync(join(tmpdir(), 'tg-prune-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
