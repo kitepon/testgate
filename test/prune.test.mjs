@@ -9,6 +9,7 @@ import { analyzeReport, formatCandidates, mergeReports, broadThreshold, mutantKe
 import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight } from '../lib/prune/index.mjs'
 import { injectFiles, listTargets } from '../lib/prune/inject-active-mutant.mjs'
 import { toolsDir, ensurePruneTools } from '../lib/prune/tools.mjs'
+import { tmp } from './tmp.mjs'
 
 const here = import.meta.dirname
 const fixtureRepo = resolve(here, '..', 'adapters', 'javascript', 'fixtures', 'node-repo')
@@ -234,6 +235,46 @@ test('下見: .git の無い写しで落ちる試験ファイルを見つける�
   assert.equal(r.tests, 3)
   assert.match(r.failedTests[0].error, /AssertionError/)
   assert.equal(process.cwd(), resolve('.')) // cwd を戻す
+})
+
+/** 試験ファイル自体が読み込みで落ちる小さなリポジトリ（test/bad.test.mjs は無い package を import、test/good.test.mjs は通る）。 */
+function repoWithBrokenTestFile() {
+  const dir = tmp('tg-prune-filefail-')
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'ff', scripts: { test: 'node --test test/*.test.mjs' } }))
+  mkdirSync(join(dir, 'src')); writeFileSync(join(dir, 'src', 'a.mjs'), 'export const a = 1\n')
+  mkdirSync(join(dir, 'test'))
+  writeFileSync(join(dir, 'test', 'good.test.mjs'), "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { a } from '../src/a.mjs'\ntest('ok', () => assert.equal(a, 1))\n")
+  writeFileSync(join(dir, 'test', 'bad.test.mjs'), "import 'tg-no-such-package'\nimport test from 'node:test'\ntest('never', () => {})\n")
+  return dir
+}
+
+test('reporter: 読み込みで落ちた試験ファイルは、ファイル名付きの fail 行に stderr の例外を添えて出す', () => {
+  const dir = repoWithBrokenTestFile()
+  const reporter = resolve(here, '..', 'lib', 'prune', 'node-test-jsonl-reporter.mjs')
+  const env = { ...process.env }; delete env.NODE_TEST_CONTEXT // 親が node --test の子だと、この変数で子扱いになって reporter に event が来ない（走者と同じ）
+  const r = spawnSync(process.execPath, ['--test', `--test-reporter=${reporter}`, '--test-reporter-destination=stdout', 'test/good.test.mjs', 'test/bad.test.mjs'], { cwd: dir, encoding: 'utf8', env })
+  assert.equal(r.status, 1)
+  const rows = r.stdout.split('\n').filter(l => l.includes('\u001e')).map(l => JSON.parse(l.slice(l.indexOf('\u001e') + 1)))
+  const fileRow = rows.find(x => x.fileRow)
+  assert.ok(fileRow, `ファイル行が無い: ${r.stdout}`)
+  assert.equal(fileRow.status, 'fail')
+  assert.equal(resolve(dir, fileRow.name), fileRow.file)
+  assert.match(fileRow.error, /ERR_MODULE_NOT_FOUND|tg-no-such-package/) // "test failed" ではなく、本当の例外
+  const ok = rows.find(x => x.name === 'ok')
+  assert.equal(ok.status, 'pass'); assert.equal(ok.fileRow, undefined)
+})
+
+test('下見: 読み込みで落ちる試験ファイルは、その 1 本の失敗として報告され、除外に足される', { skip: toolsReady ? false : '刈り込みの道具が未導入' }, async () => {
+  const dir = repoWithBrokenTestFile()
+  const proj = inspectJsProject(dir)
+  const tools = ensurePruneTools({ env: process.env, log: () => {} })
+  const r = await preflight(dir, proj, { tools, log: () => {} })
+  assert.equal(r.error, undefined)
+  assert.deepEqual(r.failed, ['test/bad.test.mjs'])
+  assert.equal(r.tests, 2) // good の 1 本 + bad のファイル 1 本。(process) の行は出ない
+  assert.deepEqual(r.failedTests.map(f => f.name), ['test/bad.test.mjs > (file)'])
+  assert.match(r.failedTests[0].error, /ERR_MODULE_NOT_FOUND|tg-no-such-package|Cannot find package/)
+  assert.equal(process.cwd(), resolve('.'))
 })
 
 test('一巡: 固定リポジトリで全変異を流し、残す試験と候補を出す', { skip: toolsReady ? false : '刈り込みの道具が未導入（testgate prune を一度流すと入る）' }, t => {
