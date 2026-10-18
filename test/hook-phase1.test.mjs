@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { writeFileSync, readFileSync, existsSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmp } from './tmp.mjs'
 
@@ -79,6 +79,16 @@ test('codex / cursor / grok の形', () => {
   assert.equal(u.permission, 'allow'); assert.match(u.updated_input.command, / run --cwd /)
   const g = JSON.parse(hook('grok', { toolName: 'run_terminal_command', toolInput: { command: 'npm test', foo: 1 }, cwd: dir }, dir).stdout)
   assert.match(g.hookSpecificOutput.updatedInput.command, / run --cwd /); assert.equal(g.hookSpecificOutput.updatedInput.foo, 1)
+})
+test('codex: tool_input.workdir があれば包んだ run の --cwd はそこ（相対なら cwd 基準）', { skip: windows && 'Windows では codex を中継する' }, () => {
+  const dir = repo()
+  const sub = repo() // 別の repo を workdir にする（相対指定は dir からの相対で辿る）
+  const abs = JSON.parse(hook('codex', { tool_name: 'Bash', tool_input: { command: 'npm test', workdir: sub }, cwd: dir, tool_use_id: 'call_w1' }, dir).stdout)
+  assert.match(abs.hookSpecificOutput.updatedInput.command, new RegExp(` run --cwd ${sub.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} `))
+  const rel = JSON.parse(hook('codex', { tool_name: 'Bash', tool_input: { command: 'npm test', workdir: relative(dir, sub) }, cwd: dir, tool_use_id: 'call_w2' }, dir).stdout)
+  assert.equal(rel.hookSpecificOutput.updatedInput.command, abs.hookSpecificOutput.updatedInput.command)
+  const rows2 = rows(dir).filter(r => r.id === 'call_w1' || r.id === 'call_w2')
+  assert.equal(rows2.length, 2); for (const r of rows2) assert.equal(r.cwd, sub)
 })
 test('WindowsのBashは包まず段階0へ中継する', { skip: !windows && 'Windowsの限定仕様' }, () => {
   const dir = repo()
