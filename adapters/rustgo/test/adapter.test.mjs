@@ -153,6 +153,10 @@ test('cargo が無い環境では passthrough', async () => {
   rmSync(dir, { recursive: true })
 })
 
+// go の初回は cache が冷えていて go list だけで依存解決の上限（4.5 秒）に掛かる事がある（fox の v0.3.8 で 4.97 秒 → passthrough）。
+// 試験が測るのはアダプタの判断なので、先に一度 go list を流して温めておく。
+if (HAS_GO) { const d = repo('go-mod'); spawnSync('go', ['list', './...'], { cwd: d, env }); rmSync(d, { recursive: true }) }
+
 test('go: 1package変更 → subset。importする側を含み、独立packageを含まない。実際に流せる', { skip: skipGo }, async () => {
   const dir = repo('go-mod')
   const r = await sel(dir, ['go', 'test', './...'], ['core/core.go'])
