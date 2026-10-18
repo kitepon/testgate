@@ -134,7 +134,7 @@ test('候補: 自分しか狙いで殺さない変異を持つ試験は残し、
   assert.equal(a.tested, 5)
   assert.deepEqual(a.stat, { killed: 3, timeout: 1, survived: 1, errors: 0 })
   assert.deepEqual(a.timeouts.map(m => m.id), ['4'])
-  assert.deepEqual(a.survived, ['3 src/x.mjs:4:1-4:5 Regex → /x/'])
+  assert.deepEqual(a.survived.map(m => `${m.id} ${m.mutant}`), ['3 src/x.mjs:4:1-4:5 Regex → /x/'])
   // B は変異1を独占、C は変異4を独占 → 残す。A の殺す変異 {0,2} は B と C が殺す → 冗長。D は検出0
   const byName = Object.fromEntries(a.candidates.map(c => [c.test.name, c]))
   assert.deepEqual(Object.keys(byName).sort(), ['test/a.test.mjs > A', 'test/a.test.mjs > D'])
@@ -149,6 +149,7 @@ test('候補: 自分しか狙いで殺さない変異を持つ試験は残し、
   assert.match(text, /Timeout の変異（1 件）は.*被覆の計算に入れない/)
   assert.match(text, /殺す変異: \[0\] src\/x.mjs:1:1-1:5 BlockStatement → \{\} \[狙い\]\n    失敗: AssertionError \[ERR_ASSERTION\]: Expected values to be strictly equal:\n    同じ変異を狙いで殺す残す試験: test\/a.test.mjs > B/)
   assert.match(text, /\nTimeout の変異（1 件。どの試験が止めたかは分からないので被覆に入れていない）:\n  \[4\] src\/x.mjs/)
+  assert.match(text, /\n生存した変異（1 件）。.*\n  \[3\] src\/x.mjs:4:1-4:5 Regex → \/x\/ 同関数の検出 不明/)
 })
 
 test('候補: 試験の大半が落ちる広域の変異は冗長の根拠にせず、それしか検出しない試験は「広域のみ」。失敗の断言を添える', () => {
@@ -175,7 +176,7 @@ test('候補: 試験の大半が落ちる広域の変異は冗長の根拠にせ
   assert.notEqual(mutantKey('src/a.mjs', r.files['src/a.mjs'].mutants[1]), mutantKey('src/a.mjs', r.files['src/a.mjs'].mutants[2]))
   const text = formatCandidates(a)
   assert.match(text, /広域の変異: \[0\] src\/a.mjs:1:1-9:2 BlockStatement → \{\}（11 本）/)
-  assert.match(text, /\[広域のみ\] t.test.mjs > T0\n  殺す変異: \[0\] .* \[前提\]（広域: 11 本が落ちる）\n    失敗: TypeError: path is undefined/)
+  assert.match(text, /\[広域のみ\] t.test.mjs > T0\n  殺す変異: \[0\] .* \[前提\]（広域: 11 本が落ちる）\n    位置: 関数 不明 \/ x\n    失敗: TypeError: path is undefined/)
 })
 
 test('合算: 2回分の変異は位置で束ね、killedBy は和集合。検出0 だった試験が2回目で変異を独占すれば残す側へ', t => {
