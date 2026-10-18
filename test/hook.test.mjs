@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmp } from './tmp.mjs'
@@ -75,15 +75,19 @@ test('BOM 付きの入力でも判定できる', { skip: !hasRtk && 'rtk が無�
 })
 
 test('rtk hook が時間内に返らない時は、書き換えずに通して exit 1 で知らせる（2 は使わない）', () => {
-  const fake = fileURLToPath(new URL('./fixtures/bin/rtk', import.meta.url))
-  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'ls' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: fake, TESTGATE_RTK_TIMEOUT_MS: '300', TESTGATE_LOG: join(tmp('tg-'), 'l') } })
+  const dir = tmp('tg-rtk-timeout-')
+  // node hook claudeとして起動する。拡張子なしのshスクリプトを実行できないWindowsでも同じ待ちを作る。
+  writeFileSync(join(dir, 'hook'), 'setTimeout(() => {}, 30000)\n')
+  const r = spawnSync(process.execPath, [bin, 'hook', 'claude'], { cwd: dir, input: JSON.stringify({ tool_input: { command: 'ls' } }), encoding: 'utf8', env: { ...process.env, RTK_BIN: process.execPath, TESTGATE_RTK_TIMEOUT_MS: '300', TESTGATE_LOG: join(dir, 'l') } })
   assert.equal(r.status, 1)
   assert.equal(r.stdout, '')
   assert.match(r.stderr, /rtk hook failed/)
 })
 
 test('ログの書き込みに失敗しても hook は通る', { skip: !hasRtk && 'rtk が無い' }, () => {
-  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'pytest' } }), encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: '/proc/nonexistent/log.jsonl' } })
+  const blocked = join(tmp('tg-log-failure-'), 'file')
+  writeFileSync(blocked, 'not a directory')
+  const r = spawnSync('node', [bin, 'hook', 'claude'], { input: JSON.stringify({ tool_input: { command: 'pytest' } }), encoding: 'utf8', env: { ...process.env, TESTGATE_LOG: join(blocked, 'log.jsonl') } })
   assert.equal(r.status, 0)
   assert.match(r.stderr, /log failed/)
 })
@@ -92,8 +96,8 @@ test('段階0の影の判断: アダプタがあれば選択の結果を記録�
   const adapters = fileURLToPath(new URL('./fixtures/mock-adapter', import.meta.url))
   const dir = tmp('tg-shadow-')
   const g = (...a) => spawnSync('git', a, { cwd: dir })
-  g('init', '-q'); spawnSync('sh', ['-c', 'echo a > a.txt && echo m > mocktest.mjs'], { cwd: dir }); g('add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'i')
-  spawnSync('sh', ['-c', 'echo b > a.txt'], { cwd: dir })
+  g('init', '-q'); writeFileSync(join(dir, 'a.txt'), 'a\n'); writeFileSync(join(dir, 'mocktest.mjs'), 'm\n'); g('add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'i')
+  writeFileSync(join(dir, 'a.txt'), 'b\n')
   const raw = JSON.stringify({ tool_name: 'Bash', tool_input: { command: 'node mocktest.mjs' }, cwd: dir })
   const log = join(dir, 'log.jsonl')
   const r = spawnSync('node', [bin, 'hook', 'claude'], { input: raw, encoding: 'utf8', env: { ...process.env, TESTGATE_ADAPTERS: adapters, TESTGATE_LOG: log, XDG_STATE_HOME: join(dir, 'state') } })
@@ -119,8 +123,8 @@ test('記録では前置きの環境変数の値を消し、id・session・trans
 
 test('既定の記録先は ~/.local/state/testgate', async () => {
   const { logPath } = await import('../lib/log.mjs')
-  assert.equal(logPath({ HOME: '/h' }), '/h/.local/state/testgate/log.jsonl')
-  assert.equal(logPath({ HOME: '/h', XDG_STATE_HOME: '/s' }), '/s/testgate/log.jsonl')
+  assert.equal(logPath({ HOME: '/h' }), join('/h', '.local', 'state', 'testgate', 'log.jsonl'))
+  assert.equal(logPath({ HOME: '/h', XDG_STATE_HOME: '/s' }), join('/s', 'testgate', 'log.jsonl'))
 })
 
 // Grok（tool_name=run_terminal_command）と Cursor（tool_name=Shell）が ~/.claude/settings.json の hook を相乗りで呼んだ時は、記録も書き換えもせず通す

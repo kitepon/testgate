@@ -10,6 +10,11 @@ import { tmp } from './tmp.mjs'
 const bin = fileURLToPath(new URL('../bin/testgate.mjs', import.meta.url))
 const adapters = fileURLToPath(new URL('./fixtures/hook-adapter', import.meta.url))
 const hasRtk = spawnSync('rtk', ['--version']).status === 0
+const windows = process.platform === 'win32'
+const shellTool = windows ? 'PowerShell' : 'Bash'
+const runWrapped = (command, dir) => spawnSync(windows ? 'pwsh' : 'sh', windows
+  ? ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(command, 'utf16le').toString('base64')]
+  : ['-c', command], { cwd: dir, encoding: 'utf8', env: envFor(dir) })
 
 function repo() {
   const dir = tmp('tg-p1-')
@@ -23,10 +28,10 @@ const envFor = (dir, extra = {}) => ({ ...process.env, TESTGATE_PHASE: '1', TEST
 const hook = (harness, event, dir, extra) => spawnSync('node', [bin, 'hook', harness], { input: JSON.stringify(event), encoding: 'utf8', env: envFor(dir, extra) })
 const rows = dir => readFileSync(join(dir, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
 
-test('claude: npm test を run に包み、包んだコマンドを sh で流すと a だけ走る', () => {
+test('claude: npm test を run に包み、OSのshellで流すと a だけ走る', () => {
   const dir = repo()
   writeFileSync(join(dir, 'a.txt'), 'changed')
-  const r = hook('claude', { tool_name: 'Bash', tool_input: { command: 'npm test', description: 'd' }, cwd: dir, tool_use_id: 'toolu_p1', session_id: 's' }, dir)
+  const r = hook('claude', { tool_name: shellTool, tool_input: { command: 'npm test', description: 'd' }, cwd: dir, tool_use_id: 'toolu_p1', session_id: 's' }, dir)
   assert.equal(r.status, 0, r.stderr)
   const out = JSON.parse(r.stdout)
   const cmd = out.hookSpecificOutput.updatedInput.command
@@ -35,7 +40,7 @@ test('claude: npm test を run に包み、包んだコマンドを sh で流す
   const row = rows(dir).at(-1)
   assert.equal(row.phase, 1); assert.equal(row.event, 'rewrite'); assert.equal(row.adapter, 'mocknpm'); assert.equal(row.id, 'toolu_p1')
   // 包んだコマンドをそのまま流す（席が実行するのと同じ道）
-  const x = spawnSync('sh', ['-c', cmd], { cwd: dir, encoding: 'utf8', env: envFor(dir) })
+  const x = runWrapped(cmd, dir)
   assert.equal(x.status, 0, x.stderr)
   assert.match(x.stdout, /running a/)
   assert.doesNotMatch(x.stdout, /\d+ ok, \d+ ng/)
@@ -43,7 +48,7 @@ test('claude: npm test を run に包み、包んだコマンドを sh で流す
   const last = rows(dir).at(-1)
   assert.equal(last.event, 'run'); assert.equal(last.mode, 'subset'); assert.equal(last.passed, 1)
 })
-test('前置きの環境変数（TESTGATE_FULL=1）は包んだ後も効く', () => {
+test('POSIXの前置き環境変数（TESTGATE_FULL=1）は包んだ後も効く', { skip: windows && 'POSIXの環境変数構文' }, () => {
   const dir = repo()
   const r = hook('claude', { tool_name: 'Bash', tool_input: { command: 'TESTGATE_FULL=1 npm test' }, cwd: dir }, dir)
   const cmd = JSON.parse(r.stdout).hookSpecificOutput.updatedInput.command
@@ -54,12 +59,34 @@ test('前置きの環境変数（TESTGATE_FULL=1）は包んだ後も効く', ()
 })
 test('codex / cursor / grok の形', () => {
   const dir = repo()
+  if (windows) {
+    for (const [harness, event] of [
+      ['codex', { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir, tool_use_id: 'call_1' }],
+      ['cursor', { command: 'npm test', cwd: dir, workspace_roots: [dir] }],
+      ['grok', { toolName: 'run_terminal_command', toolInput: { command: 'npm test', foo: 1 }, cwd: dir }],
+    ]) {
+      const r = hook(harness, event, dir)
+      const relay = hook(harness, event, dir, { TESTGATE_PHASE: '0' })
+      assert.equal(r.status, 0, r.stderr)
+      assert.equal(r.stdout, relay.stdout, `${harness}: Windowsでは段階0へ中継する`)
+      assert.equal(rows(dir).at(-2).phase, 0)
+    }
+    return
+  }
   const c = JSON.parse(hook('codex', { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir, tool_use_id: 'call_1' }, dir).stdout)
   assert.equal(c.hookSpecificOutput.permissionDecision, 'allow'); assert.match(c.hookSpecificOutput.updatedInput.command, / run --cwd /)
   const u = JSON.parse(hook('cursor', { command: 'npm test', cwd: dir, workspace_roots: [dir] }, dir).stdout)
   assert.equal(u.permission, 'allow'); assert.match(u.updated_input.command, / run --cwd /)
   const g = JSON.parse(hook('grok', { toolName: 'run_terminal_command', toolInput: { command: 'npm test', foo: 1 }, cwd: dir }, dir).stdout)
   assert.match(g.hookSpecificOutput.updatedInput.command, / run --cwd /); assert.equal(g.hookSpecificOutput.updatedInput.foo, 1)
+})
+test('WindowsのBashは包まず段階0へ中継する', { skip: !windows && 'Windowsの限定仕様' }, () => {
+  const dir = repo()
+  const event = { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir }
+  const r = hook('claude', event, dir)
+  assert.equal(r.status, 0, r.stderr)
+  assert.equal(r.stdout, hook('claude', event, dir, { TESTGATE_PHASE: '0' }).stdout)
+  assert.equal(rows(dir).at(-2).phase, 0)
 })
 test('PowerShell は & で包む', () => {
   const dir = repo()

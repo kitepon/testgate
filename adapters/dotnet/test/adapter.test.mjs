@@ -415,8 +415,11 @@ test('実機: select の argv を dotnet test で流すと、選んだクラス�
   if (restore.status !== 0) return t.skip('dotnet restore ができない（NuGet に届かない）')
   const r = await sel(dir, ['src/Core/Greeter.cs'])
   assert.equal(r.mode, 'subset')
-  const res = spawnSync(r.argv[0], r.argv.slice(1), { cwd: dir, env, encoding: 'utf8' })
-  const p = adapter.parseOutput(res.stdout + res.stderr)
+  // fixtureはnet8.0。SDK10だけの席でも、選択argvの実行を実在するruntimeで確かめる。
+  const res = spawnSync(r.argv[0], r.argv.slice(1), { cwd: dir, env: { ...env, DOTNET_ROLL_FORWARD: 'Major' }, encoding: 'utf8' })
+  const output = res.stdout + res.stderr
+  assert.equal(res.status, 0, output)
+  const p = adapter.parseOutput(output)
   assert.equal(p.failed, 0)
   assert.equal(p.passed, 2)
 })
