@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { existsSync, mkdtempSync, readFileSync, writeFileSync, cpSync, mkdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, cpSync, mkdirSync, rmSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 import { parseNodeTestScript, inspectJsProject } from '../lib/prune/project.mjs'
 import { analyzeReport, formatCandidates, mergeReports, broadThreshold, mutantKey } from '../lib/prune/candidates.mjs'
-import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight, preflightLayout } from '../lib/prune/index.mjs'
+import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight, preflightLayout, runPrune, readDryRunFailures, dryRunFailedFiles } from '../lib/prune/index.mjs'
 import { injectFiles, listTargets } from '../lib/prune/inject-active-mutant.mjs'
 import { toolsDir, ensurePruneTools } from '../lib/prune/tools.mjs'
 import { tmp } from './tmp.mjs'
@@ -385,4 +385,90 @@ test('一巡: 固定リポジトリで全変異を流し、残す試験と候補
   assert.equal(c.commit, null) // 固定リポジトリの写しは git ではない
   assert.match(c.platform, /^linux node v/)
   assert.ok(c.candidates.some(o => o.detail.some(d => d.failure)))
+})
+
+// 初回試験（dry run）で落ちた試験ファイルの除外と流し直し（v0.3.11）。下見は計装の無い写しなので、ソースを文字列で読む試験はここで初めて落ちる
+test('初回試験の失敗: 走者の dry-run-failures.json を読み、ファイルの無い失敗（(process)）は除外に数えない', () => {
+  const dir = tmp('tg-prune-dryfail-')
+  const f = join(dir, 'dry-run-failures.json')
+  assert.deepEqual(readDryRunFailures(f), [])
+  writeFileSync(f, 'not json'); assert.deepEqual(readDryRunFailures(f), [])
+  writeFileSync(f, JSON.stringify([
+    { id: 'test/b.test.mjs#x', name: 'test/b.test.mjs > x', fileName: 'test/b.test.mjs', error: 'AssertionError' },
+    { id: 'test/a.test.mjs#(file)', name: 'test/a.test.mjs > (file)', fileName: 'test/a.test.mjs', error: 'SyntaxError' },
+    { id: 'test/b.test.mjs#y', name: 'test/b.test.mjs > y', fileName: 'test/b.test.mjs', error: 'AssertionError' },
+    { id: '(process)', name: 'node --test exit 1', fileName: null, error: '' },
+  ]))
+  assert.deepEqual(dryRunFailedFiles(readDryRunFailures(f)), ['test/a.test.mjs', 'test/b.test.mjs'])
+  assert.deepEqual(dryRunFailedFiles([{ id: '(process)', fileName: null }]), [])
+  // 設定に dryRunFailuresFile を渡すと走者の nodeTest に入る
+  const proj = inspectJsProject(fixtureRepo)
+  const cfg = buildStrykerConfig(proj, { tools: { dir: '/t', plugins: '/t/plugins', stryker: '/t/s.js' }, mutate: ['src/tax.mjs'], reportFile: '/r/m.json', dryRunFailuresFile: '/r/d.json', timeoutMs: 1000, testTimeoutMs: 2000 })
+  assert.equal(cfg.nodeTest.dryRunFailuresFile, '/r/d.json')
+  assert.equal(buildStrykerConfig(proj, { tools: { dir: '/t', plugins: '/t/plugins', stryker: '/t/s.js' }, mutate: [], reportFile: '/r/m.json', timeoutMs: 1, testTimeoutMs: 1 }).nodeTest.dryRunFailuresFile, undefined)
+  // 候補の本文に注記を足せる
+  const text = formatCandidates({ tested: 0, stat: { killed: 0, survived: 0, timeout: 0 }, tests: 0, kept: 0, candidates: [], files: [], broadThreshold: 1, broad: [] }, { notes: ['注記 N1'] })
+  assert.match(text, /\n注記 N1\n/)
+})
+
+/** 製品ソースを文字列で読み「計装の印が無い」と断言する試験を持つ小さなリポジトリ。下見（計装無し）では通り、Stryker の初回試験でだけ落ちる。 */
+function repoWithSourceTextTest() {
+  const dir = tmp('tg-prune-srctext-')
+  writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'st', scripts: { test: 'node --test test/*.test.mjs' } }))
+  mkdirSync(join(dir, 'src')); writeFileSync(join(dir, 'src', 'a.mjs'), "export function add(a, b) { return a + b }\nexport function big(n) { return n > 10 ? 'big' : 'small' }\n")
+  mkdirSync(join(dir, 'test'))
+  writeFileSync(join(dir, 'test', 'a.test.mjs'), "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { add, big } from '../src/a.mjs'\ntest('add', () => assert.equal(add(1, 2), 3))\ntest('big', () => { assert.equal(big(11), 'big'); assert.equal(big(10), 'small') })\n")
+  writeFileSync(join(dir, 'test', 'src-text.test.mjs'), "import test from 'node:test'\nimport assert from 'node:assert/strict'\nimport { readFileSync } from 'node:fs'\ntest('ソースに計装の印が無い', () => assert.doesNotMatch(readFileSync(new URL('../src/a.mjs', import.meta.url), 'utf8'), /__tg_active_mutant__|stryNS_/))\n")
+  return dir
+}
+
+test('走者: dry run の失敗を dryRunFailuresFile に書く（計装の印を断言する試験は、計装の無い写しでは通る）', { skip: toolsReady ? false : '刈り込みの道具が未導入' }, async () => {
+  const dir = repoWithSourceTextTest()
+  const tools = ensurePruneTools({ env: process.env, log: () => {} })
+  const { NodeTestRunner, DryRunStatus } = await import(pathToFileURL(join(tools.plugins, 'node-test-runner.mjs')).href)
+  const quiet = { debug() {}, info() {}, warn() {}, error() {} }
+  const out = join(dir, 'dry-run-failures.json')
+  const prev = process.cwd()
+  process.chdir(dir)
+  try {
+    let runner = new NodeTestRunner({ concurrency: 1, nodeTest: { files: ['test/*.test.mjs'], dryRunFailuresFile: out } }, quiet)
+    let r = await runner.dryRun({}); await runner.dispose()
+    assert.equal(r.status, DryRunStatus.Complete); assert.equal(r.tests.length, 3)
+    assert.deepEqual(JSON.parse(readFileSync(out, 'utf8')), []) // 計装が無ければ落ちない → []
+    // 計装の印を src に入れると、その試験だけ落ちてファイル名付きで書かれる
+    writeFileSync(join(dir, 'src', 'a.mjs'), '/*__tg_active_mutant__*/\n' + readFileSync(join(dir, 'src', 'a.mjs'), 'utf8'))
+    runner = new NodeTestRunner({ concurrency: 1, nodeTest: { files: ['test/*.test.mjs'], dryRunFailuresFile: out } }, quiet)
+    r = await runner.dryRun({}); await runner.dispose()
+    const failed = JSON.parse(readFileSync(out, 'utf8'))
+    assert.deepEqual(failed.map(f => [f.id, f.fileName]), [['test/src-text.test.mjs#ソースに計装の印が無い', 'test/src-text.test.mjs']])
+    assert.match(failed[0].error, /AssertionError/)
+    assert.deepEqual(dryRunFailedFiles(failed), ['test/src-text.test.mjs'])
+  } finally { process.chdir(prev) }
+})
+
+test('実物: 下見では通り初回試験でだけ落ちる試験ファイルを除外して一度だけ流し直し、exit 0 で dryRunExcluded に残す', { skip: toolsReady ? false : '刈り込みの道具が未導入' }, async () => {
+  const dir = repoWithSourceTextTest()
+  const state = tmp('tg-prune-srctext-state-')
+  const logs = [], outs = []
+  const code = await runPrune({ cwd: dir, sample: 2, seed: 'srctext', env: { ...process.env, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: s => outs.push(s) })
+  const log = logs.join('\n')
+  assert.equal(code, 0, log)
+  assert.doesNotMatch(log, /下見で落ちた試験ファイルを除外する/) // 下見では通る
+  assert.match(log, /初回試験で落ちた試験ファイルを除外して流し直す（計装でだけ落ちる。ソースを文字列で読む等。候補にも出ない）: test\/src-text\.test\.mjs/)
+  assert.match(log, /test\/src-text\.test\.mjs > ソースに計装の印が無い: AssertionError/)
+  assert.equal(log.match(/One or more tests failed in the initial test run/g).length, 1) // 2 回目は通る（流し直しは一度だけ）
+  assert.match(log, /Initial test run succeeded/)
+  const runDir = join(state, 'testgate', 'prune', 'st')
+  const rec = join(runDir, readdirSync(runDir)[0])
+  const c = JSON.parse(readFileSync(join(rec, 'candidates.json'), 'utf8'))
+  assert.deepEqual(c.preflightExcluded, [])
+  assert.deepEqual(c.dryRunExcluded, ['test/src-text.test.mjs'])
+  assert.deepEqual(c.excluded, ['test/src-text.test.mjs'])
+  assert.equal(c.tests, 2) // a.test.mjs の 2 本だけ。除外した試験は候補にも出ない
+  assert.match(readFileSync(join(rec, 'candidates.txt'), 'utf8'), /\n初回試験で落ちた試験ファイル 1 本を除外して流し直した（計装でだけ落ちる物。ソースを文字列で読む等。候補にも出ない）: test\/src-text\.test\.mjs\n/)
+  assert.match(outs.join(''), /初回試験で落ちた試験ファイル 1 本を除外して流し直した/)
+  assert.deepEqual(JSON.parse(readFileSync(join(rec, 'dry-run-failures.json'), 'utf8')), []) // 2 回目の初回試験は落ちていない
+  assert.deepEqual(JSON.parse(readFileSync(join(rec, 'project.json'), 'utf8')).dryRunExcluded, ['test/src-text.test.mjs'])
+  assert.match(readFileSync(join(rec, 'stryker.log'), 'utf8'), /^--- testgate prune: 初回試験で落ちた試験ファイルを除外して流し直す: test\/src-text\.test\.mjs ---$/m)
+  assert.ok(!existsSync(join(dir, '.stryker-tmp')), '失敗した回の sandbox を残さない') // 1 回目の sandbox は消し、2 回目は Stryker 自身が消す
 })
