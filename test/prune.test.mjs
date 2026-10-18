@@ -44,7 +44,7 @@ test('package.json が無い・test script が無いリポジトリも --runner 
   mkdirSync(join(dir, 'tools', 'tests'), { recursive: true }); writeFileSync(join(dir, 'tools', 'x.mjs'), 'export const x = 1\n'); writeFileSync(join(dir, 'tools', 'tests', 'x.test.mjs'), '')
   assert.match(inspectJsProject(dir).error, /package.json が無い/)
   const proj = inspectJsProject(dir, { runner: 'node --test', tests: ['tools/tests/*.test.mjs'], mutate: ['tools/*.mjs'] })
-  assert.equal(proj.error, undefined); assert.equal(proj.runner, 'node --test'); assert.deepEqual(proj.files, ['tools/tests/*.test.mjs']); assert.deepEqual(proj.sources, ['tools/x.mjs'])
+  assert.equal(proj.error, undefined); assert.equal(proj.runner, 'node --test'); assert.deepEqual(proj.files, ['tools/tests/*.test.mjs']); assert.deepEqual(proj.sources, [join('tools', 'x.mjs')])
   assert.equal(parsePruneArgs(['--runner', 'node-test']).runner, 'node-test')
   assert.match(parsePruneArgs(['--runner', 'mocha']).error, /--runner は/)
 })
@@ -54,7 +54,7 @@ test('build 無しの JS リポジトリは src/lib/bin を変異対象にし、
   assert.equal(proj.error, undefined)
   assert.equal(proj.runner, 'node --test')
   assert.equal(proj.build, null)
-  assert.deepEqual(proj.sources, ['src/greeting.mjs', 'src/price.mjs', 'src/slug.cjs', 'src/tax.mjs'])
+  assert.deepEqual(proj.sources, ['greeting.mjs', 'price.mjs', 'slug.cjs', 'tax.mjs'].map(name => join('src', name)))
   assert.ok(proj.inject.globs.length > 0)
 })
 
@@ -66,7 +66,7 @@ test('tsconfig と build script がある時は src/**/*.ts を変異し、dist 
   mkdirSync(join(dir, 'src')); writeFileSync(join(dir, 'src', 'a.ts'), 'export const a = 1\n'); writeFileSync(join(dir, 'src', 'a.d.ts'), '')
   const proj = inspectJsProject(dir)
   assert.deepEqual(proj.build, { script: 'build', distDir: 'out' })
-  assert.deepEqual(proj.sources, ['src/a.ts'])
+  assert.deepEqual(proj.sources, [join('src', 'a.ts')])
   assert.deepEqual(proj.inject, { dir: 'out' })
 })
 
@@ -80,7 +80,7 @@ test('試験が src の .ts を直接読む（--experimental-strip-types）時�
   assert.equal(proj.error, undefined)
   assert.equal(proj.build, null)
   assert.deepEqual(proj.testArgs, ['--experimental-strip-types']) // --test の後ろの旗は testArgs（node はどちらでも受ける）
-  assert.deepEqual(proj.sources, ['src/lib/a.ts'])
+  assert.deepEqual(proj.sources, [join('src', 'lib', 'a.ts')])
   assert.deepEqual(proj.inject.globs, ['src/**/*.ts'])
 })
 
@@ -183,10 +183,11 @@ test('Stryker の設定: 走者1、bail 無し、node-test 走者と注入付き
   assert.equal(cfg.disableBail, true)
   assert.equal(cfg.coverageAnalysis, 'off')
   assert.equal(cfg.testRunner, 'node-test')
-  assert.deepEqual(cfg.plugins, ['/t/plugins/node-test-runner.mjs'])
+  assert.deepEqual(cfg.plugins, [join('/t/plugins', 'node-test-runner.mjs')])
   assert.deepEqual(cfg.nodeTest.files, ['test/*.test.mjs'])
   assert.deepEqual(cfg.nodeTest.testArgs, ['--test-timeout=2000', '--test-concurrency=2'])
-  assert.match(cfg.buildCommand, /^node \/t\/plugins\/build-and-inject\.mjs --glob /)
+  const prefix = `node ${join('/t/plugins', 'build-and-inject.mjs')} --glob `
+  assert.equal(cfg.buildCommand.slice(0, prefix.length), prefix)
   assert.doesNotMatch(cfg.buildCommand, /--script/)
 })
 
@@ -198,7 +199,7 @@ test('注入: .mjs は import、.cjs は require のヘッダを shebang の後�
   writeFileSync(join(dir, 'lib', 'deep', 'b.cjs'), 'module.exports = 2\n')
   writeFileSync(join(dir, 'test', 'a.test.mjs'), 'import test from "node:test"\n')
   const targets = listTargets(dir, { globs: ['lib/**/*.{mjs,cjs}', 'test/**'], exclude: ['test/**'] })
-  assert.deepEqual(targets, ['lib/a.mjs', 'lib/deep/b.cjs'])
+  assert.deepEqual(targets, [join('lib', 'a.mjs'), join('lib', 'deep', 'b.cjs')])
   assert.equal(injectFiles(dir, targets), 2)
   assert.equal(injectFiles(dir, targets), 0)
   const a = readFileSync(join(dir, 'lib', 'a.mjs'), 'utf8').split('\n')

@@ -3,10 +3,9 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { existsSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { tmp } from './tmp.mjs'
 
-const helper = fileURLToPath(new URL('./tmp.mjs', import.meta.url))
+const helper = new URL('./tmp.mjs', import.meta.url).href
 
 // 別プロセスで tmp() を使い、終わり方ごとに一時物が消えている事を確かめる
 function child(tail) {
