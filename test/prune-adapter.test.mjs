@@ -7,6 +7,9 @@ import { runPrune, parsePruneArgs, resolvePruneAdapter, defaultPruneAdapters, PR
 import { analyzeReport } from '../lib/prune/candidates.mjs'
 import { tmp } from './tmp.mjs'
 
+// 記録（log.jsonl）は XDG_STATE_HOME の下で断言するので、席の TESTGATE_LOG（配布確認器が固定で渡す）は外す
+const { TESTGATE_LOG, ...BASE_ENV } = process.env
+
 const REPORT = {
   schemaVersion: '1', thresholds: { high: 80, low: 60 },
   testFiles: { 'tests/a_test.go': { tests: [{ id: 'TestAdd', name: 'TestAdd', location: { start: { line: 5 } } }, { id: 'TestAddAgain', name: 'TestAddAgain', location: { start: { line: 12 } } }, { id: 'TestNothing', name: 'TestNothing', location: { start: { line: 20 } } }] } },
@@ -46,7 +49,7 @@ test('--runner は他言語の名前も受け、未実装のアダプタは exit
   assert.equal(parsePruneArgs(['--runner', 'dotnet']).runner, 'dotnet')
   assert.match(parsePruneArgs(['--runner', 'swift']).error, /--runner は node-test\|jest\|vitest\|dotnet\|pytest\|cargo\|go: swift/)
   const logs = []
-  const code = await runPrune({ cwd: tmp('tg-pa-'), runner: 'dotnet', adapters: {}, env: { ...process.env, XDG_STATE_HOME: tmp('tg-pa-state-') }, log: m => logs.push(m), stdout: () => {} })
+  const code = await runPrune({ cwd: tmp('tg-pa-'), runner: 'dotnet', adapters: {}, env: { ...BASE_ENV, XDG_STATE_HOME: tmp('tg-pa-state-') }, log: m => logs.push(m), stdout: () => {} })
   assert.equal(code, 2)
   assert.match(logs.join('\n'), /--runner dotnet の刈り込みアダプタは未実装（adapters\/dotnet\/prune\.mjs が無い）/)
   assert.deepEqual(typeof defaultPruneAdapters(tmp('tg-pa-empty-')), 'object')
@@ -56,7 +59,7 @@ test('アダプタが書いた mutation.json と failures.jsonl（kind 付き）
   const cwd = tmp('tg-pa-cwd-'), state = tmp('tg-pa-state-')
   const file = fakeAdapter(tmp('tg-pa-mod-'))
   const logs = [], outs = []
-  const code = await runPrune({ cwd, runner: 'go', adapters: { go: file }, sample: 2, seed: 's1', mutate: ['calc.go'], exclude: ['tests/skip_test.go'], env: { ...process.env, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: s => outs.push(s) })
+  const code = await runPrune({ cwd, runner: 'go', adapters: { go: file }, sample: 2, seed: 's1', mutate: ['calc.go'], exclude: ['tests/skip_test.go'], env: { ...BASE_ENV, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: s => outs.push(s) })
   assert.equal(code, 0, logs.join('\n'))
   assert.match(logs.join('\n'), /アダプタ go（.*prune\.mjs）\/ 記録 /)
   assert.match(logs.join('\n'), /fake: sample=2 seed=s1 mutate=calc\.go exclude=tests\/skip_test\.go/)
@@ -80,12 +83,12 @@ test('kind 無しの failures.jsonl は JS 向けの判定に落ち、2 回目�
   const cwd = tmp('tg-pa-cwd-'), state = tmp('tg-pa-state-')
   const file = fakeAdapter(tmp('tg-pa-mod-'), { withKind: false })
   const quiet = { log: () => {}, stdout: () => {} }
-  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: file }, env: { ...process.env, XDG_STATE_HOME: state }, ...quiet }), 0)
+  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: file }, env: { ...BASE_ENV, XDG_STATE_HOME: state }, ...quiet }), 0)
   let c = JSON.parse(readFileSync(join(lastRun(state), 'candidates.json'), 'utf8'))
   assert.equal(c.killKinds.狙い, 0); assert.equal(c.killKinds.前提, 2) // Go の失敗文は AssertionError で始まらない
   const outs = []
   await new Promise(r => setTimeout(r, 1100)) // 記録のフォルダ名は秒単位なので、2 回目を次の秒にする
-  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: file }, env: { ...process.env, XDG_STATE_HOME: state }, log: () => {}, stdout: s => outs.push(s) }), 0)
+  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: file }, env: { ...BASE_ENV, XDG_STATE_HOME: state }, log: () => {}, stdout: s => outs.push(s) }), 0)
   assert.ok(existsSync(join(lastRun(state), 'candidates-merged.json')))
   assert.match(outs.join(''), /--- 2 回分の合算/)
 })
@@ -101,15 +104,15 @@ test('--runner 無しで package.json が無い時は detect(cwd) が true の�
   const bad = tmp('tg-pa-mod-'); writeFileSync(join(bad, 'prune.mjs'), 'export const id = "bad"\n')
   assert.match((await resolvePruneAdapter({ runner: 'go', cwd, adapters: { go: join(bad, 'prune.mjs') } })).error, /prune\(\) が無い/)
   const logs = []
-  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: join(bad, 'prune.mjs') }, env: { ...process.env, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: () => {} }), 2)
+  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: join(bad, 'prune.mjs') }, env: { ...BASE_ENV, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: () => {} }), 2)
 })
 
 test('アダプタが mutation.json を書かずに終わる・例外で止まる時は失敗の exit と log.jsonl の 1 行', async () => {
   const cwd = tmp('tg-pa-cwd-'), state = tmp('tg-pa-state-')
   const logs = []
-  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: fakeAdapter(tmp('tg-pa-mod-'), { noReport: true }) }, env: { ...process.env, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: () => {} }), 3)
+  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: fakeAdapter(tmp('tg-pa-mod-'), { noReport: true }) }, env: { ...BASE_ENV, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: () => {} }), 3)
   assert.match(logs.join('\n'), /アダプタ go が mutation\.json を書かずに終わった（exit 3）/)
-  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: fakeAdapter(tmp('tg-pa-mod-'), { throws: true }) }, env: { ...process.env, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: () => {} }), 1)
+  assert.equal(await runPrune({ cwd, runner: 'go', adapters: { go: fakeAdapter(tmp('tg-pa-mod-'), { throws: true }) }, env: { ...BASE_ENV, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: () => {} }), 1)
   assert.match(logs.join('\n'), /アダプタ go が例外で止まった: Error: boom/)
   const rows = readFileSync(join(state, 'testgate', 'log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l))
   assert.deepEqual(rows.map(r => [r.event, r.status, r.tests]), [['prune', 3, undefined], ['prune', 1, undefined]])
