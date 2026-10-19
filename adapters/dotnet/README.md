@@ -99,3 +99,64 @@ dotnet が PATH に無い席では、実機で流す試験1本だけ skip にな
 ## 日本語の VSTest 出力
 
 合計行は `成功!`/`失敗!` と `失敗:`・`合格:`・`スキップ:`・`合計:`・`期間:`（区切りは「、」）を読む。個別の `失敗 名前 [2 s]` 行も失敗名に数える。`合格 名前 [..]` 行は stripCounts が消す。実機（fox, SDK10.0.401）の採取で確かめた。他の言語の出力は未対応。
+
+## prune（刈り込み、段階2）
+
+`prune.mjs` は段階1の `adapter.mjs` と独立する。npm依存なし。
+
+```sh
+testgate prune --runner dotnet --cwd /path/to/repository --sample 200 --seed monthly-2026-10
+# 対象を明示する例（globはリポジトリの根から）
+testgate prune --runner dotnet --cwd /path/to/repository --mutate 'src/Calc/**/*.cs' --tests 'tests/Calc.Tests/**/*.cs' --sample 10
+```
+
+`--tests` はテストcsprojまたはC#ソースのglob。`--exclude` は試験ソースのglobまたは完全修飾メソッド名のglob。テストcsprojはMicrosoft.NET.Test.Sdk/xUnit/NUnit/MSTest参照またはIsTestProjectから発見する。参照とCompile項目は `dotnet msbuild -getItem` で評価し、生成物・テスト・依存ライブラリを変異させない。cwdは依存するcsprojとソースを含むリポジトリの根を指定する。外部のProjectReferenceを書き換えることはしない。
+
+### 実行方式
+
+[Stryker.NET 5.0.0](https://www.nuget.org/packages/dotnet-stryker/5.0.0) を `dotnet tool install --tool-path` で契約指定の `prune-tools/dotnet/5.0.0/` へ初回に導入する。dotnet SDKとNuGetへの初回アクセスが必要。MSBuildのJSON項目取得に対応するSDKが必要で、受入はSDK10で確認した。テスト実行はVSTest形式の `dotnet test --logger trx` を対象とする。MTP専用プロジェクトは未対応で、結果の無い実行を成功や検出0へ補わない。
+
+Stryker.NETの[disable-bailとcoverage分析](https://stryker-mutator.io/docs/stryker-net/configuration/)は失敗の打ち切りを止められるが、JSON報告には失敗文が無く、VSTestの実行設定は内部生成で任意のTRX loggerを渡す入口が無い。このため次の二段階にした。
+
+1. Stryker.NETに全mutatorを `ignore-mutations` として与え、変異の元ソース・位置・完全なreplacementをJSONへ列挙する。Stryker内部では変異テストを実行しない。列挙のJSONは `enumeration-*.json` に残す。
+2. seedと変異の内容・source hashで決まる順番から、sample件を正確に選ぶ（0は全件）。作業コピーのソースへ一件だけ適用し、全対象テストをTRX付きで流す。最初の失敗で止めず、全失敗テストを `killedBy` へ、同じ実行の失敗文を `failures.jsonl` へ書く。次の変異の前にソースを戻す。
+
+初回の非変異テストで失敗またはskipしたメソッドは候補から外し、`preflightExcluded` と注記に残す。型付きのxUnit/NUnit/MSTest断言例外と、TRXが例外型を省くxUnit/MSTestの定型断言文を扱う。断言で、最初のstack frameが当該試験クラスなら「狙い」。helperやsetup、製品例外、判定不能は「前提」。失敗本文とstackは4000字まで残す。Theoryのデータ行は完全修飾メソッド名で束ね、初回に一行でも失敗したメソッドは全体を除外する。
+
+計装によるcoverage判定はしない。全対象テストが通った変異はSurvivedとし、NoCoverageとは区別しない。変異でビルドが落ちればCompileError、試験が完了せず全対象の結果が揃わなければRuntimeError、変異全体の上限を超えた時はTimeoutでkilledByを空にする。試験ごとの上限はVSTestの[blame-hang](https://learn.microsoft.com/dotnet/core/tools/dotnet-test-vstest)を使い、ダンプを作らずtesthostを終了する。親の上限超過時は子プロセスの木も終了する。
+
+ソースの変異を混ぜないため変異実行は直列。`--jobs`を指定しても同時変異数は増やさず注記する。これは速度上の制約で、初期版では全失敗の取得を優先した。試験の長いプロジェクトは `--mutate`・`--tests`・`--sample` で範囲を指定する。Windowsの長いテスト一覧はRunSettingsのTestCaseFilterに書き、コマンド行長の制限を避ける。
+
+通常の一時物は本体の一時根の下へ作り、終了時に削除する。`--keep-sandbox` の時は `runDir/sandbox/` に保持する（本体が一時根を削除しても調査用の写しは残る）。リポジトリにGitの追跡ファイルがある時はそれをコピーし、未追跡物は持ち込まない。原本を編集せず、出力の永続物はrunDirと契約指定の外部道具だけ。
+
+### 受入の記録
+
+- 小fixture: `fixtures/prune/`。製品1ファイル、試験4メソッド。算術の変異は重複する2メソッドを両方killedByへ記録。Booleanの変異はsetup中の例外として「前提」を記録。検出0・冗長・前提のみの候補が出ることを断言する。foxの `node --test adapters/dotnet/test/prune.test.mjs` で実物を実行し正常終了。一時物の前後一致と原本不変も断言した（最終確認は約22秒）。
+- Linuxの本体 `npm test` は正常終了。.NET SDKが無いため実物fixtureだけ対象外、TRX変換・kind・標本・ソース置換の検証は実行した。
+- fox/OpenLogicoolの実リポジトリ確認は下に追記する。候補は採否の判断材料で、自動で試験を削除しない。変異を列挙できない場合は、試験を「検出0」として並べず失敗する。
+
+#### fox / OpenLogicool（2026-10-19）
+
+HEAD `a040f85716fee279a451762088c5931a90a2c122`、SDK10.0.402、Stryker.NET5.0.0。原本を変えず、v0.3.13本体へ候補アダプタを載せた専用TEMPのCLIで一回実行した。
+
+```sh
+testgate prune --runner dotnet --cwd C:\Users\kite_\Developer\openlogicool --sample 4 --seed exia-dotnet-accept-20261019 --mutate 'src/OpenLogicool.Host/G13LcdDisplayFrameSelector.cs' --tests 'tests/OpenLogicool.Host.Tests/G13LcdDisplayFrameSelectorTests.cs' --timeout-sec 90 --test-timeout-sec 30 --jobs 1
+```
+
+| 項目 | 結果 |
+| --- | --- |
+| CLI終了 | 0、candidates.txtを生成 |
+| 所要時間 | 356.8秒（本体記録356.5秒） |
+| 変異の範囲 | G13LcdDisplayFrameSelector.csの17変異からseedで4変異を抽出 |
+| 結果 | Killed1、Timeout0、生存1、CompileError2 |
+| 試験の範囲 | G13LcdDisplayFrameSelectorTestsの2メソッド、各変異で両方を実行 |
+| 候補 | 前提のみ1、冗長0、広域のみ0、検出0は0。残す1 |
+| 殺しの分類 | 狙い1、前提1、不明0 |
+
+候補は `Saved_frame_is_selected_and_missing_setting_selects_windows`。内蔵frameの初期化が壊れた変異で前提の例外になっており、削除の採否は求めない。今回の結果は、明示した標本と試験の候補出力を確認した範囲である。
+
+記録はfoxの `C:\Users\kite_\.local\state\testgate\prune\openlogicool\20261019-012032\`。candidates.txt/candidates.json/mutation.json/failures.jsonl/project.json/prune.logを保持。原本HEADとtracked差分は前後で一致した。列挙時にStryker.NETがプロジェクト全体を解析・コンパイルするため、明示した一ファイルでも初期費用が大きい。変異自体の実行よりこの列挙が時間の中心だった。
+
+実機確認で共有コンパイラのAnalyzerAssemblyLoader等が本体の一時根に残ったため、アダプタの子プロセスでは共有コンパイラとMSBuildの再利用を無効にし、削除時の再試行を追加した。原本のビルドサーバー全体を停止しない。最終fixtureでは本体のwithRunTmpで包み、一時根の前後一致も確認する。
+
+当該実機回の残存物は、完了と所有を確認して削除再試行で回収済み。削除後は当該tg-run/tg-dotnet-pruneの残存なし。再利用停止を入れた最終fixtureも、本体の一時根を含めた前後一致で成功した。
