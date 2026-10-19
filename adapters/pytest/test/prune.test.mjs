@@ -4,7 +4,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, 
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { buildReport, classifyKind, defaultMutateFiles, detect, findProjectPython, formatError, id, isTestFile, judgeMutant, name, prune, runners, toolsReady } from '../prune.mjs'
+import { MAX_PER_POSITION, buildReport, classifyKind, defaultMutateFiles, detect, findProjectPython, formatError, id, isTestFile, judgeMutant, name, prune, runners, toolsReady } from '../prune.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const fixture = join(here, '..', 'fixtures', 'prune')
@@ -106,8 +106,10 @@ test('judgeMutant: 試験が走らない・異常終了は RuntimeError（候補
   assert.equal(judgeMutant({ status: 'done', ended: false, ran: 1, exit: null, records: [] }, ids).status, 'RuntimeError')
   assert.equal(judgeMutant({ status: 'error', error: 'x' }, ids).status, 'RuntimeError')
 })
-test('judgeMutant: 収集の失敗だけでも Killed（killedBy は空）', () => {
-  assert.deepEqual(judgeMutant({ status: 'done', ended: true, ran: 0, exit: 2, records: [{ t: 'c', id: 'tests/test_calc.py', message: 'ImportError', types: ['CollectError'], frames: [] }] }, ids), { status: 'Killed', killedBy: [] })
+test('judgeMutant: 収集・import の失敗だけで試験が走らない変異は CompileError（手柄が付かない）', () => {
+  assert.deepEqual(judgeMutant({ status: 'done', ended: true, ran: 0, exit: 2, records: [{ t: 'c', id: 'tests/test_calc.py', message: 'ImportError', types: ['CollectError'], frames: [] }] }, ids), { status: 'CompileError', killedBy: [] })
+  // 収集の失敗と、落ちた試験が両方有れば Killed（落ちた試験が手柄）
+  assert.deepEqual(judgeMutant({ status: 'done', ended: true, ran: 1, exit: 1, records: [{ t: 'c', id: 'tests/test_x.py', message: 'x', types: ['CollectError'], frames: [] }, fail(tests[0].id)] }, ids), { status: 'Killed', killedBy: [tests[0].id] })
 })
 
 test('buildReport: mutation.json と failures.jsonl の形', () => {
@@ -127,10 +129,16 @@ test('buildReport: mutation.json と failures.jsonl の形', () => {
   assert.deepEqual(f.mutants[0].location, { start: { line: 2, column: 12 }, end: { line: 2, column: 13 } })
   assert.equal(f.mutants[0].replacement, '*')
   assert.equal(f.mutants[0].functionName, 'add')
+  assert.equal(f.mutants[1].functionName, 'add')
   assert.deepEqual(Object.keys(mutation.testFiles), ['tests/test_calc.py'])
   assert.deepEqual(mutation.testFiles['tests/test_calc.py'].tests[0], { id: tests[0].id, name: tests[0].id, location: { start: { line: 6 } } })
   assert.deepEqual(failures.map(x => [x.mutant, x.test, x.kind]), [['0', tests[0].id, '狙い'], ['0', tests[1].id, '前提']])
   assert.ok(failures[0].error.startsWith('AssertionError'))
+})
+
+test('buildReport: 関数の外の変異は functionName が <module>', () => {
+  const { mutation } = buildReport({ enumeration: { sources: { 'pkg/c.py': 'X = 1\n' } }, tests, results: [{ index: 0, file: 'pkg/c.py', operator: 'core/N', start: [1, 4], end: [1, 5], fn: null, replacement: '2', status: 'done', ended: true, ran: 1, exit: 0, records: [] }] })
+  assert.equal(mutation.files['pkg/c.py'].mutants[0].functionName, '<module>')
 })
 
 test('defaultMutateFiles: 製品コードだけ（試験・仮想環境・build・conftest・setup を外す）', () => {
@@ -184,7 +192,7 @@ test('実物: killedBy は変異ごとに落ちた試験を全部、kind は狙�
   try {
     assert.equal(r.status, 0)
     assert.equal(r.runner, 'pytest')
-    assert.equal(r.sampled.sampled, r.sampled.total)
+    assert.ok(r.sampled.sampled <= r.sampled.total && r.sampled.sampled >= 8) // 位置ごとに最大 MAX_PER_POSITION 件へ絞る
     const ms = mutantsOf(mutation)
     assert.equal(ms.length, r.sampled.sampled)
     assert.deepEqual(Object.keys(mutation.files).sort(), ['pkg/calc.py', 'pkg/report.py'])
@@ -193,29 +201,34 @@ test('実物: killedBy は変異ごとに落ちた試験を全部、kind は狙�
     const all = Object.values(mutation.testFiles).flatMap(v => v.tests.map(t => t.id))
     assert.equal(all.length, 8)
     assert.ok(all.every(t => /^tests\/test_\w+\.py::test_\w+$/.test(t)))
-    // `a + b` の変異（位置 pkg/calc.py:2）は、add を使う試験の全部（test_add・test_add_again・test_add_strings・test_total・test_total_helper）で落ちる
+    // 同じ位置の置換先は最大 MAX_PER_POSITION 件（位置を先に選ぶ）
+    const perPos = {}
+    for (const [f, v] of Object.entries(mutation.files)) for (const m of v.mutants) { const k = `${f}:${m.location.start.line}:${m.location.start.column}-${m.location.end.line}:${m.location.end.column}`; perPos[k] = (perPos[k] || 0) + 1 }
+    assert.ok(Object.values(perPos).every(n => n <= MAX_PER_POSITION), JSON.stringify(perPos))
+    assert.equal(r.sampled.positions, Object.keys(perPos).length)
+    assert.equal(JSON.parse(readFileSync(join(runDir, 'project.json'), 'utf8')).sampled.maxPerPosition, MAX_PER_POSITION)
+    // `a + b` の変異（pkg/calc.py:2）は、add を使う試験で落ちる。落ちた試験は全部 killedBy に入り、failures.jsonl の行と一致する
     const add = ms.filter(m => m.location.start.line === 2 && m.status === 'Killed')
-    assert.ok(add.length >= 8)
-    const sub = add.find(m => m.mutatorName.endsWith('Add_Sub'))
-    assert.deepEqual([...sub.killedBy].sort(), ['tests/test_calc.py::test_add', 'tests/test_calc.py::test_add_again', 'tests/test_calc.py::test_add_strings', 'tests/test_report.py::test_total', 'tests/test_report.py::test_total_helper'])
-    // replacement は置換後の完全なコード、位置は 1 始まり
-    assert.equal(sub.replacement, '-')
-    assert.deepEqual(sub.location, { start: { line: 2, column: 14 }, end: { line: 2, column: 15 } })
-    assert.equal(sub.functionName, 'add')
+    assert.ok(add.length >= 1)
+    assert.ok(add.every(m => m.functionName === 'add' && m.killedBy.length >= 1))
+    const wide = add.reduce((a, b) => (b.killedBy.length > a.killedBy.length ? b : a))
+    assert.ok(wide.killedBy.length >= 4, `最初の失敗で止めず全部記録する: ${wide.killedBy}`)
+    assert.ok(wide.killedBy.every(t => /^tests\/test_\w+\.py::test_\w+$/.test(t)))
+    assert.ok(wide.replacement.length > 0 && wide.replacement !== '+')
+    assert.deepEqual(wide.location.start, { line: 2, column: 14 })
+    // failures.jsonl: 変異ごと・試験ごとに 1 行、kind が両方出る
+    const sFail = failures.filter(f => f.mutant === wide.id)
+    assert.deepEqual(sFail.map(f => f.test).sort(), [...wide.killedBy].sort())
+    for (const m of ms.filter(m => m.status === 'Killed')) assert.deepEqual(failures.filter(f => f.mutant === m.id).map(f => f.test).sort(), [...m.killedBy].sort())
+    assert.ok(failures.some(f => f.kind === '狙い' && f.error.startsWith('AssertionError: assert ')))
+    const strs = failures.find(f => f.test === 'tests/test_calc.py::test_add_strings' && f.kind === '前提') // 製品コード（pkg/calc.py）の TypeError
+    if (strs) { assert.match(strs.error, /^TypeError/); assert.match(strs.error, /at pkg\/calc\.py:2/) }
+    const helper = failures.find(f => f.test === 'tests/test_report.py::test_total_helper')
+    assert.equal(helper.kind, '前提') // helper の断言
+    assert.ok(new Set(failures.map(f => f.kind)).size === 2)
+    assert.ok(failures.filter(f => f.test === 'tests/test_report.py::test_total').every(f => f.kind === '狙い'))
     // 生存も出る（clamp の境界）
     assert.ok(ms.some(m => m.status === 'Survived'))
-    // failures.jsonl: 変異ごと・試験ごとに 1 行、kind が両方出る
-    const sFail = failures.filter(f => f.mutant === sub.id)
-    assert.equal(sFail.length, 5)
-    const byTest = Object.fromEntries(sFail.map(f => [f.test, f]))
-    assert.equal(byTest['tests/test_calc.py::test_add'].kind, '狙い')
-    assert.match(byTest['tests/test_calc.py::test_add'].error, /^AssertionError: assert -1 == 3/)
-    assert.equal(byTest['tests/test_calc.py::test_add_strings'].kind, '前提') // 製品コード（pkg/calc.py）の TypeError
-    assert.match(byTest['tests/test_calc.py::test_add_strings'].error, /^TypeError/)
-    assert.match(byTest['tests/test_calc.py::test_add_strings'].error, /at pkg\/calc\.py:2/)
-    assert.equal(byTest['tests/test_report.py::test_total_helper'].kind, '前提') // helper の断言
-    assert.equal(byTest['tests/test_report.py::test_total'].kind, '狙い')
-    assert.ok(new Set(failures.map(f => f.kind)).size === 2)
     // pytest.raises の失敗（DID NOT RAISE）も狙い
     const raises = failures.filter(f => f.test === 'tests/test_calc.py::test_clamp_rejects_none')
     if (raises.length) assert.ok(raises.every(f => f.kind === '狙い'))
@@ -234,7 +247,7 @@ test('実物: 同じ seed・同じ内容なら同じ標本、sample 件を流す
     assert.equal(a.r.sampled.sampled, 12)
     assert.equal(a.r.sampled.total, 41)
     assert.equal(mutantsOf(a.mutation).length, 12)
-    assert.ok(a.r.sampled.positions <= 12)
+    assert.ok(a.r.sampled.positions >= 4 && a.r.sampled.positions <= 12) // 1 位置から最大 3 件
     assert.deepEqual(key(a), key(b))
     assert.notDeepEqual(key(a), key(c))
   } finally { for (const x of [a, b, c]) rmSync(x.runDir, { recursive: true, force: true }) }
@@ -253,8 +266,8 @@ test('実物: addopts の -x があっても落ちた試験を全部記録する
       assert.ok(r.notes.some(n => n.includes('基準の試験で落ちた物を除外')))
       const ids = Object.values(mutation.testFiles).flatMap(v => v.tests.map(t => t.id))
       assert.ok(!ids.some(i => i.includes('test_flaky')))
-      const sub = mutantsOf(mutation).find(m => m.mutatorName.endsWith('Add_Sub'))
-      assert.ok(sub.killedBy.length >= 5, `-x でも全部記録する: ${sub.killedBy}`)
+      const most = Math.max(...mutantsOf(mutation).map(m => m.killedBy.length))
+      assert.ok(most >= 4, `-x でも全部記録する: 最大 ${most}`)
       assert.ok(failures.every(f => !f.test.includes('test_flaky')))
     } finally { rmSync(runDir, { recursive: true, force: true }) }
   } finally { rmSync(d, { recursive: true, force: true }) }
@@ -283,6 +296,26 @@ test('実物: 無限ループになる変異は Timeout（killedBy 空）', need
       const t = mutantsOf(mutation).filter(m => m.status === 'Timeout')
       assert.ok(t.length >= 1, '無限ループの変異が Timeout になる')
       assert.ok(t.every(m => m.killedBy.length === 0))
+    } finally { rmSync(runDir, { recursive: true, force: true }) }
+  } finally { rmSync(d, { recursive: true, force: true }) }
+})
+
+test('実物: import で落ちて試験が走らない変異は CompileError（killedBy 空、failures 無し）', needTools, async () => {
+  const d = tmp()
+  try {
+    mkdirSync(join(d, 'pkg'), { recursive: true }); mkdirSync(join(d, 'tests'), { recursive: true })
+    writeFileSync(join(d, 'pytest.ini'), '[pytest]\npythonpath = .\n')
+    writeFileSync(join(d, 'pkg', '__init__.py'), '')
+    writeFileSync(join(d, 'pkg', 'm.py'), 'ITEM = [1, 2][1]\n')
+    writeFileSync(join(d, 'tests', 'test_m.py'), 'from pkg.m import ITEM\n\n\ndef test_item():\n    assert ITEM == 2\n')
+    const { r, runDir, mutation, failures } = await runPrune(d)
+    try {
+      assert.equal(r.status, 0)
+      const ms = mutantsOf(mutation)
+      const ce = ms.filter(m => m.status === 'CompileError')
+      assert.ok(ce.length >= 1, JSON.stringify(ms.map(m => [m.replacement, m.status])))
+      assert.ok(ce.every(m => m.killedBy.length === 0 && m.functionName === '<module>'))
+      assert.ok(failures.every(f => !ce.some(m => m.id === f.mutant)))
     } finally { rmSync(runDir, { recursive: true, force: true }) }
   } finally { rmSync(d, { recursive: true, force: true }) }
 })

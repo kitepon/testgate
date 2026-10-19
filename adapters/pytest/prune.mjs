@@ -11,6 +11,8 @@ export const id = 'pytest'
 export const runners = ['pytest']
 
 export const COSMIC_RAY_VERSION = '8.7.0'
+/** 同じ位置の置換先の上限（契約 v0.2）。標本は位置を先に選び、各位置から最大この件数。 */
+export const MAX_PER_POSITION = 3
 const here = dirname(fileURLToPath(import.meta.url))
 const PY_DIR = existsSync(join(here, 'py')) ? join(here, 'py') : here
 const IS_WIN = process.platform === 'win32'
@@ -149,7 +151,11 @@ export function judgeMutant(r, tests) {
   if (r.status === 'error') return { status: 'RuntimeError', killedBy: [] }
   if (r.status === 'timeout') return { status: 'Timeout', killedBy: [] }
   const failed = (r.records || []).filter(x => x.t === 'c' || x.outcome === 'failed')
-  if (failed.length) return { status: 'Killed', killedBy: [...new Set(failed.filter(x => x.t === 'r' && tests.has(x.id)).map(x => x.id))] }
+  if (failed.length) {
+    const killedBy = [...new Set(failed.filter(x => x.t === 'r' && tests.has(x.id)).map(x => x.id))]
+    // 収集・import の失敗だけで、どの試験にも手柄が付かない変異は CompileError（契約 v0.2。候補の集計から外れる）
+    return killedBy.length ? { status: 'Killed', killedBy } : { status: 'CompileError', killedBy: [] }
+  }
   if (r.ended && r.ran > 0 && (r.exit === 0 || r.exit === 1)) return { status: 'Survived', killedBy: [] }
   return { status: 'RuntimeError', killedBy: [] } // 試験が走らない・異常終了（収集0件、内部エラー、道具の都合）。候補の集計から外れる
 }
@@ -170,7 +176,7 @@ export function buildReport({ enumeration, results, tests }) {
     f.mutants.push({
       id: mid, mutatorName: r.operator, replacement: r.replacement ?? '',
       location: { start: { line: r.start[0], column: r.start[1] + 1 }, end: { line: r.end[0], column: r.end[1] + 1 } },
-      status, killedBy, ...(r.fn ? { functionName: r.fn } : {}),
+      status, killedBy, functionName: r.fn || '<module>',
     })
     if (status === 'Killed') {
       for (const x of r.records) {
@@ -308,7 +314,7 @@ export async function prune({ cwd, runDir, logFile, sample = 200, seed = 'testga
     // 2. 変異の列挙と標本
     const enumOut = join(base, 'enumeration.json')
     const enumCfg = join(base, 'enumerate.json')
-    writeFileSync(enumCfg, JSON.stringify({ root: roots[0], files: targets, sample, seed: String(seed), out: enumOut }))
+    writeFileSync(enumCfg, JSON.stringify({ root: roots[0], files: targets, sample, seed: String(seed), max_per_position: MAX_PER_POSITION, out: enumOut }))
     const en = await runChild(tools.python, [join(tools.plugins, 'prune_driver.py'), 'enumerate', enumCfg], { cwd: roots[0], env: { ...env, PYTHONDONTWRITEBYTECODE: '1' }, timeoutMs: 10 * 60000, onLine: lineSink })
     if (en.status !== 0 || !existsSync(enumOut)) return fail(`変異の列挙に失敗（exit ${en.status}）。記録 ${logFile}`)
     const enumeration = JSON.parse(readFileSync(enumOut, 'utf8'))
@@ -341,11 +347,12 @@ export async function prune({ cwd, runDir, logFile, sample = 200, seed = 'testga
     writeFileSync(join(runDir, 'failures.jsonl'), failures.map(f => JSON.stringify(f)).join('\n') + (failures.length ? '\n' : ''))
     const killed = results.filter(r => judgeMutant(r, new Set(finalTests.map(t => t.id))).status === 'Killed').length
     if (!killed) notes.push('Killed が 0 件。製品コードが作業の写しから import されていない（editable install など）か、試験が変異に届いていない可能性がある。README の「うまく動かない時」を見る')
+    notes.push(`標本は位置を先に選び、同じ位置の置換先は seed で最大 ${MAX_PER_POSITION} 件に絞った（演算子の置換が位置ごとの重みを偏らせないため）`)
     const sampled = { total: enumeration.total, sampled: enumeration.sampled, positions: enumeration.positions }
     writeFileSync(join(runDir, 'project.json'), JSON.stringify({
       cwd, runner: 'pytest', python: proj.python, pytestVersion: proj.pytestVersion, tool: { name: 'cosmic-ray', version: tools.cosmicRay, use: '変異の列挙と適用だけ。試験は prune_driver.py が変異ごとに pytest を流す' },
       testListing: 'testgate_prune_plugin（pytest の nodeid）', mutateFiles: targets, tests: finalTests.length, excluded, baselineExcluded: { failed: baseFailed, collect: baseCollect },
-      sampled: { ...sampled, seed: String(seed) }, baselineMs: baseMs, mutantTimeoutMs: mutantTimeout, testTimeoutMs, jobs: workers,
+      sampled: { ...sampled, seed: String(seed), maxPerPosition: MAX_PER_POSITION }, baselineMs: baseMs, mutantTimeoutMs: mutantTimeout, testTimeoutMs, jobs: workers,
     }, null, 2) + '\n')
     return { status: run.status === 0 ? 0 : 1, runner: 'pytest', sampled, excluded, preflightExcluded: [], dryRunExcluded: [...baseFailed, ...baseCollect], notes }
   } finally {

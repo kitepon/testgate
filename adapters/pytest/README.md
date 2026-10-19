@@ -87,11 +87,11 @@
 | 契約 | 中身 |
 | --- | --- |
 | 試験の id | pytest の nodeid（`tests/test_calc.py::test_add`、パラメータ付きは `[...]` まで） |
-| `killedBy` | その変異で落ちた試験の nodeid を全部（setup・teardown の失敗も、重複は 1 つ）。収集の失敗（import 失敗など）だけで落ちた変異は `Killed`、`killedBy` は空 |
-| `status` | `Killed`／`Survived`／`Timeout`（変異 1 件の上限を超えた。`killedBy` 空）／`RuntimeError`（試験が 1 本も走らない、pytest が異常終了。候補の集計から外れる） |
+| `killedBy` | その変異で落ちた試験の nodeid を全部（setup・teardown の失敗も、重複は 1 つ）。収集・import の失敗だけで落ち、どの試験にも手柄が付かない変異は `CompileError`（`killedBy` 空、failures 無し。契約 v0.2） |
+| `status` | `Killed`／`Survived`／`CompileError`／`Timeout`（変異 1 件の上限を超えた。`killedBy` 空）／`RuntimeError`（試験が 1 本も走らない、pytest が異常終了。候補の集計から外れる） |
 | `location` | cosmic-ray の位置（行 1 始まり、桁 0 始まり、終わりは含まない）の桁を +1 した物 |
 | `replacement` | 変異の範囲を置き換えた後の完全なコード（`a + b` の `+` なら `-`。短縮しない） |
-| `functionName`（契約外の任意欄） | 変異位置を囲む関数名（cosmic-ray の値）。本体の `enclosingFunction` は波括弧の言語向けなので、Python では「関数 不明」になる。本体が読めば使える |
+| `functionName`（任意欄、契約 v0.2） | 変異位置を囲む関数名（cosmic-ray の値）。関数の外は `<module>`。必ず付ける |
 | `failures.jsonl` の `error` | 1 行目は `型: 本文`（pytest の書き換え後の断言文）、続けて例外の発生位置から外へ向かう frame を `   at path:line` で並べる。4000 字まで |
 | `kind` | 下 |
 
@@ -116,21 +116,22 @@ pytest が表示する最後の frame（例外の発生位置）で判定する�
 | `--timeout-sec` | 変異 1 件の上限。全試験にかかる時間の 4 倍 + 5 秒（10 秒以上）を目安に、指定より短ければそれを使う。全試験が指定の 2/3 以上かかる時は、全体の 2 倍 + 10 秒へ延ばして `notes` に書く |
 | `--test-timeout-sec` | 試験 1 本（setup・call・teardown それぞれ）の上限。SIGALRM で止めて失敗（前提）にする。Windows では効かない |
 | `--jobs N` | 並列数。作業の写しを N 個作る。既定 1。試験が DB やポートを共有する場合は上げない |
-| `--sample N`／`--seed S` | cosmic-ray が列挙した変異の全部（演算子の置換ごとに 1 件）から、seed で決定的に N 件。`positions` は選んだ変異の位置の数 |
+| `--sample N`／`--seed S` | **位置を先に seed で選び、同じ位置の置換先は seed で最大 3 件に絞る**（演算子の置換は置換先ごとに別の変異になり、`a + b` の `+` だけで 11 件になるため）。合計 N 件になるまで位置を足す。`--sample 0` は全部の位置、各位置は最大 3 件。上限は `project.json` の `sampled.maxPerPosition`。`total` は絞る前の全変異数、`positions` は選んだ位置の数 |
 | `--keep-sandbox` | 作業の写しを `<runDir>/sandbox/` に残す |
 
 pytest へは `--tb=short --maxfail=1000000000`（`addopts` の `-x` などを上書き）、`-p no:randomly`、`PYTHONDONTWRITEBYTECODE=1` を付ける（同サイズ・同秒の書き換えで古い `.pyc` が使われるのを防ぐ）。作業の写しの根（と `src/`）を `PYTHONPATH` の先頭に置くので、editable install のプロジェクトでも変異した写しが import される（src 配置で実測した）。
 
 ## 実測（fixtures の小さな package）
 
-`fixtures/prune/`（製品 `pkg/calc.py`・`pkg/report.py`、試験 8 本。狙い・前提の両方が出る）を `testgate prune --runner pytest --cwd fixtures/prune` で流した結果: 変異 41 件（全部）を約 8 秒（道具の導入済み）、Killed 39・Timeout 0・生存 2、候補 5 本（冗長 3、前提のみ 2）。`candidates.txt` が出る。
+`fixtures/prune/`（製品 `pkg/calc.py`・`pkg/report.py`、試験 8 本。狙い・前提の両方が出る）を `testgate prune --runner pytest --cwd fixtures/prune`（関所 v0.3.14）で流した結果: 位置 8 か所、全変異 41 件のうち同じ位置は最大 3 件に絞って 17 件を約 8 秒（道具の導入済み）、Killed 16・Timeout 0・生存 1、候補 5 本（冗長 3、前提のみ 2）。`candidates.txt` が出て、位置は「関数 add」と出る。
 
 - 前提の例: `test_add_strings`（文字列に `-` を適用した製品コードの `TypeError`）、`test_total_helper`（`tests/helpers.py` の断言）。
 
 ## うまく動かない時
 
+- **試験を流す python（プロジェクト側の `.venv`、または `python3`）に pytest が要る。** 道具（cosmic-ray）の venv とは別で、そこに pytest は入れない。pytest の入った python が無いと `pytest の入った python が無い` で止まる（`TESTGATE_PYTHON` で指定できる）。
+
 - **Killed が 0 件** の時は `notes` に出る。製品コードが作業の写しから import されていない（`PYTHONPATH` より前に解決される別の場所に入っている）か、試験が変異に届いていない。
 - **`addopts` に `--testmon`、`--lf`、`--ff`** などの選択系が入っていると、変異ごとの試験が選択される。刈り込みの時は外す。
 - **pytest-xdist**（`-n`）は結果を controller で書くので動く想定だが、並列の試験の選択結果は検証していない。
-- cosmic-ray の既定の演算子は 200 種類を超え、算術・比較の演算子は置換先ごとに別の変異になる（`a + b` の `+` だけで 11 件）。`--sample` で絞る。
 - parso が読めない新しい構文のファイルは、そのファイルだけ変異の対象から外し、`notes` に書く。

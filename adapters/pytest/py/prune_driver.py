@@ -177,12 +177,26 @@ def main():
     cfg = load(cfg_path)
     if cmd == "enumerate":
         items, skipped = enumerate_items(cfg)
-        # 標本は seed から決まる。同じ seed・同じ commit なら同じ標本（並びは位置順で固定済み）
+        # 標本は seed から決まる（同じ seed・同じ commit なら同じ標本）。位置を先に選び、同じ位置の置換先は最大 max_per_position 件に絞る。
+        # 演算子の置換は置換先ごとに別の変異になる（`a + b` の + だけで 11 件）ので、位置ごとの重みを揃える。
+        cap = int(cfg.get("max_per_position") or 3)
         n = cfg.get("sample") or 0
-        chosen = list(range(len(items)))
-        if 0 < n < len(items):
-            rnd = random.Random(f"testgate-prune:{cfg.get('seed', '')}")
-            chosen = sorted(rnd.sample(chosen, n))
+        by_pos = {}
+        for i, s in enumerate(items):
+            by_pos.setdefault((s["file"], tuple(s["start"]), tuple(s["end"])), []).append(i)
+        keys = sorted(by_pos)
+        random.Random(f"testgate-prune:{cfg.get('seed', '')}:positions").shuffle(keys)
+        chosen = []
+        for k in keys:
+            idx = by_pos[k]
+            if len(idx) > cap:
+                idx = sorted(random.Random(f"testgate-prune:{cfg.get('seed', '')}:{k}").sample(idx, cap))
+            chosen.extend(idx)
+            if 0 < n <= len(chosen):
+                break
+        if 0 < n < len(chosen):
+            chosen = chosen[:n]
+        chosen.sort()
         picked = [items[i] for i in chosen]
         positions = len({(s["file"], tuple(s["start"]), tuple(s["end"])) for s in picked})
         files = {}
