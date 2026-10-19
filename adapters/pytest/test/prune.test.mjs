@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { MAX_PER_POSITION, buildReport, classifyKind, defaultMutateFiles, detect, findProjectPython, formatError, id, isTestFile, judgeMutant, name, prune, runners, toolsReady } from '../prune.mjs'
 
@@ -167,7 +167,7 @@ test('detect と name', async () => {
     rmSync(join(d, 'pyproject.toml'))
     mkdirSync(join(d, 'tests')); writeFileSync(join(d, 'tests', 'test_a.py'), '')
     assert.equal(await detect(d, { env: {} }), true)
-    assert.equal(await name(d, { env: {} }), d.split('/').pop())
+    assert.equal(await name(d, { env: {} }), basename(d))
   } finally { rmSync(d, { recursive: true, force: true }) }
   assert.equal(await detect(fixture, { env: {} }), true)
 })
