@@ -4,7 +4,7 @@ import test from 'node:test'
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { runPrune, parsePruneArgs, resolvePruneAdapter, defaultPruneAdapters, PRUNE_RUNNERS, readFailures } from '../lib/prune/index.mjs'
-import { analyzeReport } from '../lib/prune/candidates.mjs'
+import { analyzeReport, declaredName, enclosingFunction } from '../lib/prune/candidates.mjs'
 import { tmp } from './tmp.mjs'
 
 // 記録（log.jsonl）は XDG_STATE_HOME の下で断言するので、席の TESTGATE_LOG（配布確認器が固定で渡す）は外す
@@ -27,9 +27,9 @@ export const id = 'fake'
 export const runners = ['go test']
 export async function detect(cwd) { return ${detectHit} }
 export async function name(cwd) { return 'fake-repo' }
-export async function prune({ cwd, runDir, sample, seed, mutate, tests, exclude, log }) {
+export async function prune({ cwd, runDir, runner, sample, seed, mutate, tests, exclude, log }) {
   ${throws ? "throw new Error('boom')" : ''}
-  log('fake: sample=' + sample + ' seed=' + seed + ' mutate=' + mutate.join(',') + ' exclude=' + exclude.join(','))
+  log('fake: runner=' + runner + ' sample=' + sample + ' seed=' + seed + ' mutate=' + mutate.join(',') + ' exclude=' + exclude.join(','))
   ${noReport ? 'return { status: 3 }' : ''}
   writeFileSync(join(runDir, 'mutation.json'), JSON.stringify(${JSON.stringify(REPORT)}))
   writeFileSync(join(runDir, 'failures.jsonl'), [
@@ -62,7 +62,7 @@ test('アダプタが書いた mutation.json と failures.jsonl（kind 付き）
   const code = await runPrune({ cwd, runner: 'go', adapters: { go: file }, sample: 2, seed: 's1', mutate: ['calc.go'], exclude: ['tests/skip_test.go'], env: { ...BASE_ENV, XDG_STATE_HOME: state }, log: m => logs.push(m), stdout: s => outs.push(s) })
   assert.equal(code, 0, logs.join('\n'))
   assert.match(logs.join('\n'), /アダプタ go（.*prune\.mjs）\/ 記録 /)
-  assert.match(logs.join('\n'), /fake: sample=2 seed=s1 mutate=calc\.go exclude=tests\/skip_test\.go/)
+  assert.match(logs.join('\n'), /fake: runner=go sample=2 seed=s1 mutate=calc\.go exclude=tests\/skip_test\.go/)
   const rec = lastRun(state)
   for (const f of ['mutation.json', 'failures.jsonl', 'project.json', 'candidates.json', 'candidates.txt']) assert.ok(existsSync(join(rec, f)), f)
   const c = JSON.parse(readFileSync(join(rec, 'candidates.json'), 'utf8'))
@@ -128,4 +128,21 @@ test('集計: failures の kind が有ればそれを使い、無ければ失敗
   ] })
   assert.equal(a.killKinds.狙い, 2) // 2 本目は kind が契約外なので失敗文の判定（AssertionError かつ試験ファイルの frame → 狙い）
   assert.deepEqual(readFailures(join(tmp('tg-pa-none-'), 'nothing.jsonl')), [])
+})
+
+test('関数名の推定: Go・Rust・Python の宣言行も読む（JS の書式だけだと Go の候補の大半が「関数 不明」になった）', () => {
+  assert.equal(declaredName('func Add(a, b int) int {'), 'Add')
+  assert.equal(declaredName('func (s *Server) Handle(w http.ResponseWriter, r *http.Request) {'), 'Handle')
+  assert.equal(declaredName('func Map[T any](xs []T) []T {'), 'Map')
+  assert.equal(declaredName('pub async fn fetch<T: Into<String>>(url: T) -> Result<(), E> {'), 'fetch')
+  assert.equal(declaredName('    unsafe fn raw(ptr: *const u8) {'), 'raw')
+  assert.equal(declaredName('def total(items):'), 'total')
+  assert.equal(declaredName('    async def run(self) -> None:'), 'run')
+  assert.equal(declaredName('    if x > 0 {'), null)
+  const go = ['package calc', '', 'func (c *Calc) Add(a, b int) int {', '  if a > 0 {', '    return a + b', '  }', '  return b', '}', 'func Sub(a, b int) int { return a - b }']
+  assert.equal(enclosingFunction(go, 5), 'Add')
+  assert.equal(enclosingFunction(go, 7), 'Add')
+  assert.equal(enclosingFunction(go, 9), 'Sub')
+  const rs = ['impl Calc {', '    pub fn add(&self, a: i32, b: i32) -> i32 {', '        let x = a + b;', '        x', '    }', '}']
+  assert.equal(enclosingFunction(rs, 3), 'add')
 })

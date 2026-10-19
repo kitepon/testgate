@@ -1,6 +1,6 @@
-# testgate 刈り込みアダプタ契約（v0.2、2026-10-19）
+# testgate 刈り込みアダプタ契約（v0.3、2026-10-19）
 
-改版履歴: v0.2 — マナの Python アダプタ（v0.3.14 で取り込み）の問いに答えて 5 点を足した: 収集・import の失敗は CompileError、試験本文で明示的に失敗させる物も「狙い」、任意欄 functionName、同じ位置の置換先の上限、--jobs の既定。
+改版履歴: v0.3 — ジエンの Rust・Go アダプタ（v0.3.17 で取り込み）の問いに答えて 4 点: prune() に runner を渡す、本体の関数名推定が Go・Rust・Python の宣言行も読む、変異 1 件の上限は下見の時間から短くしてよい、変異の種類（粗さ）は notes に書く。v0.2 — マナの Python アダプタ（v0.3.14 で取り込み）の問いに答えて 5 点を足した: 収集・import の失敗は CompileError、試験本文で明示的に失敗させる物も「狙い」、任意欄 functionName、同じ位置の置換先の上限、--jobs の既定。
 
 関所本体（マクスウェル所有）と、JavaScript 以外の言語の刈り込み（`testgate prune`）アダプタ（マナ: Python、ジエン: Rust・Go、エクシア: .NET）の境目。
 段階1の `adapter.mjs`（docs/adapter-contract.md）とは別のファイル `prune.mjs` で、同じ `adapters/<dir>/` に置く。
@@ -30,6 +30,7 @@ export async function name(cwd, { env }) → string
 // 3. 刈り込み。runDir に下の「書く物」を書く。戻りは status と事実。
 export async function prune({
   cwd,            // リポジトリ（または package）の根
+  runner,         // --runner の値（'dotnet'|'pytest'|'cargo'|'go'）。一つの prune.mjs が複数の走者を受ける時（rustgo）の見分けに使う。detect で選ばれた時はその名前
   runDir,         // 記録のフォルダ（作成済み、空）。ここ以外に永続物を残さない。一時物は os.tmpdir() の下（本体が TMPDIR を専用の根に向け、終わったら根ごと消す）
   logFile,        // runDir/prune.log。道具の stdout/stderr はここへ追記する
   sample,         // 変異の標本数（既定 200、0 は全部）
@@ -37,7 +38,7 @@ export async function prune({
   mutate,         // --mutate の glob（空なら既定: 製品コードだけ。試験・生成物・依存は外す）
   tests,          // --tests の glob（空なら既定）
   exclude,        // --exclude（試験ファイルや試験名の glob。候補にも出さない）
-  timeoutMs,      // 変異 1 件の上限（既定 60 秒）。超えた変異は status 'Timeout'
+  timeoutMs,      // 変異 1 件の上限（既定 60 秒）。超えた変異は status 'Timeout'。下見（基準の 1 回）の時間から min(timeoutMs, 下見×4+10 秒) のように短くしてよい（無限ループ化した変異を毎回 60 秒待たない。rustgo の形）。使った上限は project.json に書く
   testTimeoutMs,  // 試験 1 本の上限
   jobs,           // 並列数（未指定なら道具の既定）
   keepSandbox,    // true なら作業の写しを消さない（調査用）
@@ -114,6 +115,10 @@ cwd・走者・使った道具と版・試験の一覧の取り方・除外・�
 ### 4. `prune.log`
 
 道具の生の出力。本体は中身を見ない。
+
+## 変異の種類
+
+- 道具の変異の種類（演算子・真偽値・否定・リテラル・文の削除・戻り値・関数本体…）は道具ごとに違う。何を持ち何を持たないかを `notes`（candidates.txt の冒頭）と project.json に書く。文の削除や戻り値の差し替えを持たない道具では、副作用だけを守る試験（送信の呼び出し等）が「検出0／前提のみ」に偏るので、担当へ出す文面に入れる（本体がそのまま冒頭に出す）。
 
 ## 標本抽出
 
