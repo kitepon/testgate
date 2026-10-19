@@ -1,4 +1,6 @@
-# testgate 刈り込みアダプタ契約（v0.1、2026-10-19）
+# testgate 刈り込みアダプタ契約（v0.2、2026-10-19）
+
+改版履歴: v0.2 — マナの Python アダプタ（v0.3.14 で取り込み）の問いに答えて 5 点を足した: 収集・import の失敗は CompileError、試験本文で明示的に失敗させる物も「狙い」、任意欄 functionName、同じ位置の置換先の上限、--jobs の既定。
 
 関所本体（マクスウェル所有）と、JavaScript 以外の言語の刈り込み（`testgate prune`）アダプタ（マナ: Python、ジエン: Rust・Go、エクシア: .NET）の境目。
 段階1の `adapter.mjs`（docs/adapter-contract.md）とは別のファイル `prune.mjs` で、同じ `adapters/<dir>/` に置く。
@@ -72,6 +74,7 @@ export async function prune({
         "status": "Killed",                // Killed | Survived | Timeout | NoCoverage | CompileError | RuntimeError | Ignored
         "killedBy": ["Calc.Tests.AddTests.Adds"],  // この変異で落ちた試験の id の配列（Killed の時。全部。先頭 1 件だけにしない）
         "coveredBy": ["..."]               // 任意
+        "functionName": "Add"             // 任意。変異が入った関数名。本体は有ればこれを「位置: 関数 X」に使い、無ければ元コードの波括弧から推定する（Python 等の波括弧の無い言語は必ず付ける）
       }]
     }
   },
@@ -84,7 +87,7 @@ export async function prune({
 ```
 
 - `killedBy` が試験ごとに無いと、冗長も検出0も出せない。**変異 1 件につき全試験を流し、落ちた試験を全部記録する**のが要件。道具が「最初の失敗で止める」なら、止めない設定にするか、道具の外で自分の試験実行を組む。
-- `status` は Killed（試験が落ちた）、Survived（全部通った）、Timeout（timeoutMs を超えた。`killedBy` は空）、NoCoverage（どの試験も通らない。道具が分かる時だけ）、CompileError（変異で build が落ちた。候補の集計から外れる）。
+- `status` は Killed（試験が落ちた）、Survived（全部通った）、Timeout（timeoutMs を超えた。`killedBy` は空）、NoCoverage（どの試験も通らない。道具が分かる時だけ）、CompileError（変異で build・import・試験の収集が落ちて、試験が 1 本も走らなかった。候補の集計から外れる。Python の import 失敗や収集の失敗もこれ。「Killed で killedBy 空」にはしない: どの試験にも手柄が付かず、検出の数だけ膨らむ）、RuntimeError（道具や環境の都合で判定できなかった。集計から外れる）。
 - 試験の `id` は回をまたいで安定した完全名（Go: `pkg/path.TestName/Sub`、Python: pytest の nodeid、Rust: `module::path::test_name`、.NET: `Namespace.Class.Method`）。月次の合算は id で束ねる。
 - 変異の対応も合算は `file・始終の位置・mutatorName・replacement・source の hash` で取るので、短縮 label を id にしない。
 
@@ -100,6 +103,7 @@ export async function prune({
 
 `kind` の規則（本体の JS と同じ意味）:
 - **狙い** = 試験本文の断言で落ちた。Go: `t.Error*/t.Fatal*`（testify の `assert.*`/`require.*` 含む）が試験ファイルの行で出た失敗。Python: `AssertionError` で、traceback の最後の frame が試験ファイル。Rust: `assertion ... failed`／`assert_eq!` の panic で、位置が試験ファイル（`#[cfg(test)]` のモジュールか `tests/`）。.NET: `Xunit.Sdk.*Exception`／`NUnit.Framework.AssertionException`／`Microsoft.VisualStudio.TestTools.UnitTesting.AssertFailedException` で、stack の最初の frame が試験のクラス。
+- 試験本文で**明示的に失敗させる物**も狙い: Python の `pytest.fail` と `pytest.raises` の DID NOT RAISE（pytest の `Failed`）、Go の `t.Fatal*`、Rust の試験本文の `panic!`／`unreachable!`、.NET の `Assert.Fail`。発生位置が試験ファイルである事が条件。
 - **前提** = それ以外。製品コードや helper の中の panic・例外・nil 参照、fixture・setup・DB 接続の失敗、build の失敗、timeout。
 - 同じ変異で 3 本以上が同じ失敗文（path・数値・引用を消した 1 行目）で落ちた物は、本体が断言でも「前提」に落とす。アダプタはやらない。
 
@@ -114,6 +118,8 @@ cwd・走者・使った道具と版・試験の一覧の取り方・除外・�
 ## 標本抽出
 
 - `sample` 件を `seed` で決定的に選ぶ。道具が位置の指定を受けない時は、ファイル単位・演算子単位の絞り込みでよい（`sampled.positions` にその数）。全変異数（`total`）は道具の列挙（dry run）から取る。
+- 同じ位置の置換先が多い道具（cosmic-ray は `+` だけで 11 件）は、位置を先に seed で選び、同じ位置の置換先は seed で **最大 3 件**に絞る（上限は project.json に書く）。位置 1 か所の殺しが候補の根拠を膨らませるのを防ぐ（本体の JS は位置で標本を取り、位置の中の変異は全部流す。Stryker は位置あたり 1〜2 件）。
+- `--jobs` の既定は 1（試験が DB・ポート・ファイルを共有する恐れ）。道具が安全に並列化できる時だけ jobs を使う。
 - `**/node_modules/**`・`vendor/`・`target/`・`bin/ obj/`・`.venv/`・生成物・試験ファイルは変異対象から外す（本体の JS で mabimoba の node_modules が標本の 7 割を食った）。
 
 ## 言語ごとの道具（候補。担当が決めてよい。契約は「書く物」だけ）

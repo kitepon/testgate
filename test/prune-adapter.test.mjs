@@ -14,7 +14,7 @@ const REPORT = {
   schemaVersion: '1', thresholds: { high: 80, low: 60 },
   testFiles: { 'tests/a_test.go': { tests: [{ id: 'TestAdd', name: 'TestAdd', location: { start: { line: 5 } } }, { id: 'TestAddAgain', name: 'TestAddAgain', location: { start: { line: 12 } } }, { id: 'TestNothing', name: 'TestNothing', location: { start: { line: 20 } } }] } },
   files: { 'calc.go': { language: 'go', source: 'package calc\nfunc Add(a, b int) int { return a + b }\nfunc Sub(a, b int) int { return a - b }\n', mutants: [
-    { id: '0', mutatorName: 'ArithmeticOperator', replacement: 'a - b', location: { start: { line: 2, column: 33 }, end: { line: 2, column: 38 } }, status: 'Killed', killedBy: ['TestAdd', 'TestAddAgain'] },
+    { id: '0', mutatorName: 'ArithmeticOperator', replacement: 'a - b', location: { start: { line: 2, column: 33 }, end: { line: 2, column: 38 } }, status: 'Killed', killedBy: ['TestAdd', 'TestAddAgain'], functionName: 'Add' },
     { id: '1', mutatorName: 'ArithmeticOperator', replacement: 'a + b', location: { start: { line: 3, column: 33 }, end: { line: 3, column: 38 } }, status: 'Survived', killedBy: [] },
   ] } },
 }
@@ -74,6 +74,8 @@ test('アダプタが書いた mutation.json と failures.jsonl（kind 付き）
   const names = Object.fromEntries(c.candidates.map(x => [x.test.name, x.reason]))
   assert.equal(names.TestNothing, '検出0'); assert.equal(names.TestAddAgain, '前提のみ'); assert.equal(names.TestAdd, undefined) // 狙いで独占 → 残す
   assert.match(readFileSync(join(rec, 'candidates.txt'), 'utf8'), /偽のアダプタの注記/)
+  assert.match(readFileSync(join(rec, 'candidates.txt'), 'utf8'), /位置: 関数 Add \/ func Add/) // アダプタの functionName を優先（波括弧の無い言語向け）
+  assert.equal(c.candidates.find(x => x.test.name === 'TestAddAgain').detail[0].fn, 'Add')
   assert.match(outs.join(''), /記録: .*（candidates\.json \/ candidates\.txt \/ mutation\.json \/ prune\.log）/)
   const log = readFileSync(join(state, 'testgate', 'log.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l)).at(-1)
   assert.equal(log.event, 'prune'); assert.equal(log.runner, 'go test'); assert.equal(log.name, 'fake-repo'); assert.equal(log.tests, 3); assert.equal(log.killed, 1)
