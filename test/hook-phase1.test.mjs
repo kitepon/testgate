@@ -2,7 +2,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { writeFileSync, readFileSync, existsSync, realpathSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmp } from './tmp.mjs'
@@ -94,7 +94,7 @@ test('codex: workdir が hook に来ない時（unified exec の exec_command）
   assert.equal(x.status, 0, x.stderr)
   assert.match(x.stdout, /running a/) // sub の変更に合わせて a だけ流れた（dir ではなく sub で動いた証拠）
   const last = rows(sub).at(-1)
-  assert.equal(last.event, 'run'); assert.equal(last.cwd, sub); assert.equal(last.mode, 'subset')
+  assert.equal(last.event, 'run'); assert.equal(last.cwd, realpathSync(sub)); assert.equal(last.mode, 'subset')
 })
 test('codex: tool_input.workdir があれば包んだ run の --cwd はそこ（相対なら cwd 基準）', { skip: windows && 'Windows では codex を中継する' }, () => {
   const dir = repo()
