@@ -2,12 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { existsSync, mkdtempSync, readFileSync, writeFileSync, cpSync, mkdirSync, rmSync, readdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { pathToFileURL } from 'node:url'
 import { parseNodeTestScript, inspectJsProject } from '../lib/prune/project.mjs'
 import { analyzeReport, formatCandidates, mergeReports, broadThreshold, mutantKey } from '../lib/prune/candidates.mjs'
-import { buildStrykerConfig, parsePruneArgs, mergeRuns, preflight, preflightLayout, runPrune, readDryRunFailures, dryRunFailedFiles } from '../lib/prune/index.mjs'
+import { buildStrykerConfig, parsePruneArgs, mergeRuns, normalizeRun, preflight, preflightLayout, runPrune, readDryRunFailures, dryRunFailedFiles } from '../lib/prune/index.mjs'
 import { injectFiles, listTargets } from '../lib/prune/inject-active-mutant.mjs'
 import { toolsDir, ensurePruneTools } from '../lib/prune/tools.mjs'
 import { tmp } from './tmp.mjs'
@@ -209,13 +209,121 @@ test('合算: 2回分の変異は位置で束ね、killedBy は和集合。検�
   const dir = mkdtempSync(join(tmpdir(), 'tg-merge-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
   mkdirSync(join(dir, '20260101-000000')); writeFileSync(join(dir, '20260101-000000', 'mutation.json'), JSON.stringify(r1))
+  writeFileSync(join(dir, '20260101-000000', 'failures.jsonl'), aimedFailures(r1).map(f => JSON.stringify(f)).join('\n') + '\n')
   assert.equal(mergeRuns(dir), null)
   mkdirSync(join(dir, '20260201-000000')); writeFileSync(join(dir, '20260201-000000', 'mutation.json'), JSON.stringify(r2))
+  writeFileSync(join(dir, '20260201-000000', 'failures.jsonl'), aimedFailures(r2).map(f => JSON.stringify(f)).join('\n') + '\n')
   mkdirSync(join(dir, '20260301-000000')) // mutation.json が無い（失敗した回）は飛ばす
   const mr = mergeRuns(dir)
   assert.equal(mr.runs.length, 2)
   assert.equal(mr.analysis.tested, 6)
   assert.equal(mergeRuns(join(dir, 'none')), null)
+})
+
+// ---- 合算の試験 id（v0.3.19）: Stryker の試験 id は回ごとの通し番号。試験が増えると回をまたいで別の試験を指す ----
+
+const TF = 'test/a.test.mjs'
+/** Stryker の形の 1 回分（試験 id は番号）。tests: 名前の列（番号は並び順）。mutants: [行, 列, 殺した試験の名前の列, status]。 */
+function strykerRun(tests, mutants, source) {
+  const ids = new Map(tests.map((n, i) => [n, String(i)]))
+  return {
+    schemaVersion: '2',
+    testFiles: { [TF]: { tests: tests.map((n, i) => ({ id: String(i), name: `${TF} > ${n}`, location: { start: { line: 10 + i, column: 1 } } })) } },
+    files: { 'src/x.mjs': { source, mutants: mutants.map(([line, col, killers, status], i) => ({ id: String(i), mutatorName: 'BlockStatement', replacement: '{}', status: status || (killers.length ? 'Killed' : 'Survived'), killedBy: killers.map(n => ids.get(n)), location: { start: { line, column: col }, end: { line, column: col + 2 } } })) } },
+  }
+}
+/** 走者の failures.jsonl の行（試験は file#name と file > name で持つ）。全部、試験ファイルの断言（狙い）。 */
+function strykerFailures(run) {
+  const names = new Map(run.testFiles[TF].tests.map(t => [t.id, t.name.split(' > ')[1]]))
+  return run.files['src/x.mjs'].mutants.flatMap(m => m.killedBy.map(id => ({ mutant: m.id, test: `${TF}#${names.get(id)}`, name: `${TF} > ${names.get(id)}`, error: aimedError(TF) })))
+}
+function writeRun(nameDir, stampName, run, { failures = true } = {}) {
+  const d = join(nameDir, stampName); mkdirSync(d, { recursive: true })
+  writeFileSync(join(d, 'mutation.json'), JSON.stringify(run))
+  if (failures) writeFileSync(join(d, 'failures.jsonl'), strykerFailures(run).map(f => JSON.stringify(f)).join('\n') + '\n')
+  return d
+}
+const SRC1 = 'export function f() {\n  return 1\n}\nexport function g() {\n  return 2\n}'
+// 2 回目の commit: 先頭に関数が足され、行がずれた
+const SRC2 = 'export function h() {\n  return 10\n}\nexport function f() {\n  return 1\n}\nexport function g() {\n  return 2\n}'
+
+test('合算: 回ごとに番号のずれた試験 id は名前で束ね、殺しは名前で付く。同じ名前の試験は 1 本だけ', t => {
+  const dir = tmp('tg-merge-ids-')
+  // 1 回目: A(0) B(1) D(2)。変異 0 は A だけ、変異 1 は A と B
+  const r1 = strykerRun(['A', 'B', 'D'], [[2, 3, ['A']], [5, 3, ['A', 'B']]], SRC1)
+  // 2 回目: 先頭に NEW が入り、A(1) B(2) D(3) にずれた。変異 0 は B だけ、変異 1 は NEW だけ
+  const r2 = strykerRun(['NEW', 'A', 'B', 'D'], [[8, 3, ['B']], [2, 3, ['NEW']]], SRC2)
+  writeRun(dir, '20260101-000000', r1); writeRun(dir, '20260201-000000', r2)
+  const mr = mergeRuns(dir)
+  const names = mr.analysis.candidates.map(c => c.test.name)
+  assert.equal(mr.analysis.tests, 4)
+  assert.equal(new Set(names).size, names.length)
+  // A は 1 回目の変異 0、B は 2 回目の変異 0、NEW は 2 回目の変異 1 を独占して残る。D は何も殺さない
+  assert.equal(mr.analysis.kept, 3)
+  assert.deepEqual(mr.analysis.candidates.map(c => [c.test.name, c.reason]), [[`${TF} > D`, '検出0']])
+  assert.equal(mr.analysis.candidates[0].test.line, 13) // 試験の場所は新しい回の物
+  // 殺しの付け替え: 2 回目の番号 '2' は B（1 回目なら D だった）
+  const r = strykerRun(['NEW', 'A', 'B', 'D'], [[8, 3, ['B']]], SRC2)
+  const f = normalizeRun(r, strykerFailures(r), '20260201-000000')
+  assert.deepEqual(r.files['src/x.mjs'].mutants[0].killedBy, [`${TF} > B`])
+  assert.deepEqual(r.testFiles[TF].tests.map(x => x.id), ['NEW', 'A', 'B', 'D'].map(n => `${TF} > ${n}`))
+  assert.equal(f[0].mutant, '20260201-000000:0')
+})
+
+test('合算: 変異の元コードと関数名は、その回の source から出す（合算のファイルの source は最新の回）', () => {
+  const dir = tmp('tg-merge-src-')
+  // 2 行目は 1 回目では f の `return 1`、2 回目では h の `return 10`。どちらも生存
+  writeRun(dir, '20260101-000000', strykerRun(['A'], [[2, 3, []], [5, 3, ['A']]], SRC1))
+  writeRun(dir, '20260201-000000', strykerRun(['A'], [[2, 3, []], [8, 3, ['A']]], SRC2))
+  const mr = mergeRuns(dir)
+  const byId = Object.fromEntries(mr.analysis.survived.map(m => [m.id, [m.fn, m.code]]))
+  assert.deepEqual(byId['20260101-000000:0'], ['f', 'return 1'])
+  assert.deepEqual(byId['20260201-000000:0'], ['h', 'return 10'])
+  const m = mergeReports([strykerRun(['A'], [], SRC1), strykerRun(['A'], [], SRC2)])
+  assert.equal(m.files['src/x.mjs'].source, SRC2)
+})
+
+test('合算: Killed があるのに failures.jsonl の無い回は外し、skipped と候補の注記に出す。残りが 2 回未満なら null', () => {
+  const dir = tmp('tg-merge-skip-')
+  const old = writeRun(dir, '20260101-000000', strykerRun(['A', 'B'], [[2, 3, ['A']]], SRC1), { failures: false })
+  writeRun(dir, '20260201-000000', strykerRun(['A', 'B'], [[5, 3, ['A']]], SRC1))
+  const logs = []
+  assert.equal(mergeRuns(dir, { log: m => logs.push(m) }), null)
+  assert.deepEqual(logs, [`testgate prune: ${old} は失敗の記録が無いので合算から外す`])
+  writeRun(dir, '20260301-000000', strykerRun(['A', 'B'], [[2, 3, ['B']]], SRC1))
+  const mr = mergeRuns(dir)
+  assert.deepEqual(mr.skipped, [old])
+  assert.deepEqual(mr.runs.map(d => basename(d)), ['20260201-000000', '20260301-000000'])
+  assert.equal(mr.analysis.runs, 2)
+  assert.match(mr.text, /失敗の記録（failures\.jsonl）が無いので合算から外した回 1 件: 20260101-000000/)
+  // Killed の無い回（全部生存）は失敗の記録が無くても外さない
+  const none = tmp('tg-merge-nokill-')
+  writeRun(none, '20260101-000000', strykerRun(['A'], [[2, 3, []]], SRC1), { failures: false })
+  writeRun(none, '20260201-000000', strykerRun(['A'], [[5, 3, ['A']]], SRC1))
+  assert.deepEqual(mergeRuns(none).skipped, [])
+})
+
+test('testgate prune --merge-only NAME: Stryker を流さず合算し直し、いちばん新しい回のフォルダへ candidates-merged.* を書く', () => {
+  assert.equal(parsePruneArgs(['--merge-only', 'repo', '--cwd', '/x']).mergeOnly, 'repo')
+  assert.match(parsePruneArgs(['--merge-only']).error, /--merge-only/)
+  const state = tmp('tg-merge-only-')
+  const nameDir = join(state, 'testgate', 'prune', 'repo')
+  const bin = resolve(here, '..', 'bin', 'testgate.mjs')
+  const { TESTGATE_LOG, ...env } = process.env
+  const cli = () => spawnSync(process.execPath, [bin, 'prune', '--merge-only', 'repo', '--cwd', state], { encoding: 'utf8', env: { ...env, XDG_STATE_HOME: state } })
+  writeRun(nameDir, '20260101-000000', strykerRun(['A', 'B'], [[2, 3, ['A', 'B']]], SRC1))
+  const one = cli()
+  assert.equal(one.status, 1); assert.match(one.stderr, /合算できる記録が 2 回分無い/)
+  const newest = writeRun(nameDir, '20260201-000000', strykerRun(['A', 'B'], [[5, 3, ['A']]], SRC1))
+  const r = cli()
+  assert.equal(r.status, 0, r.stderr)
+  assert.match(r.stdout, /^2 回分の合算（20260101-000000, 20260201-000000）\n2 回分を合算: /)
+  assert.ok(r.stdout.endsWith(`記録: ${newest}\n`))
+  const merged = JSON.parse(readFileSync(join(newest, 'candidates-merged.json'), 'utf8'))
+  assert.equal(merged.name, 'repo'); assert.equal(merged.tests, 2); assert.deepEqual(merged.skipped, [])
+  assert.deepEqual(merged.candidates.map(c => [c.test.name, c.reason]), [[`${TF} > B`, '冗長']])
+  assert.match(readFileSync(join(newest, 'candidates-merged.txt'), 'utf8'), /^2 回分を合算: /)
+  assert.ok(!existsSync(join(nameDir, '20260101-000000', 'candidates-merged.json')))
 })
 
 test('Stryker の設定: 走者1、bail 無し、node-test 走者と注入付きの build command', () => {

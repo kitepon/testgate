@@ -36,10 +36,11 @@ if (sub === 'hook' && HARNESSES.includes(harness)) {
   process.exit(await runGate(tail))
 } else if (sub === 'prune') {
   // 段階2: testgate prune [--cwd DIR] [--sample N] … → 消してよい試験の候補を出す（消すのは担当）
-  const { runPrune, parsePruneArgs, PRUNE_USAGE } = await import('../lib/prune/index.mjs')
+  // testgate prune --merge-only NAME [--cwd DIR] → Stryker を流さず、state/prune/NAME の記録を合算し直す
+  const { runPrune, runMergeOnly, parsePruneArgs, PRUNE_USAGE } = await import('../lib/prune/index.mjs')
   const o = parsePruneArgs(tail)
   if (o.error) { console.error(`${o.error}\n${PRUNE_USAGE}`); process.exit(2) }
-  process.exit(await runPrune(o))
+  process.exit(o.mergeOnly ? runMergeOnly({ name: o.mergeOnly, cwd: o.cwd }) : await runPrune(o))
 } else if (sub === 'decide') {
   // 開発用: testgate decide "<command>" → アダプタの判断を表示（実行しない）
   const r = analyze(tail.join(' '))
@@ -54,7 +55,7 @@ if (sub === 'hook' && HARNESSES.includes(harness)) {
   process.stderr.write(`testgate: unknown harness "${harness}"; passing command through\n`)
   process.exit(1)
 } else {
-  console.error('usage: testgate hook <claude|codex|cursor|grok> | testgate run [--cwd DIR] -- <command...> | testgate prune [--cwd DIR] [--sample N] | testgate inspect <command>')
+  console.error('usage: testgate hook <claude|codex|cursor|grok> | testgate run [--cwd DIR] -- <command...> | testgate prune [--cwd DIR] [--sample N] | testgate prune --merge-only NAME [--cwd DIR] | testgate inspect <command>')
   process.exit(2)
 }
 
