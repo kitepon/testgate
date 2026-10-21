@@ -7,6 +7,7 @@ AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フ�
 `testgate hook <harness>` は、アダプタが扱えるテストコマンド（複合でない、`time`/`timeout` の包みが無い）を `node <入口> run --cwd <cwd> -- <元のコマンド>` に包み直して返す。席はその包んだコマンドを実行し、関所（`run`）がアダプタで変更に関わる分だけに絞って流し、合計行を落とし、長い出力を刈って返す。包んだ分は RTK の書き換えを通らない（関所の出力はもう短い）。
 
 - 包めない時（テストでない、複合、アダプタが無い、Windows の PowerShell 以外のハーネス）は段階0と同じ: 記録して `rtk hook <harness>` へ中継する。
+- Codex の unified exec（`tools.exec_command({cmd, workdir})`）は PreToolUse の tool_input を `{"command": cmd}` だけで作り、workdir を hook に渡さない。v0.3.20 から、codex で workdir が無い時は包んだ run に `--cwd` を付けず、実行時の cwd（Codex が workdir で起動する）で動く。旧 shell ツールの `tool_input.workdir` はこれまで通り `--cwd` にする。
 - `TESTGATE_PHASE=0` で段階0（記録だけ）へ戻せる。`current` を v0.1.11 へ付け替えても戻る。
 - 子プロセスの起動は shell を通さない。Windows では実行ファイルを `PATH`・`PATHEXT` で探し、`.exe` は直接起こす。`.cmd`/`.bat`（npm・npx など）だけ `cmd.exe /d /s /c` に引数を引用して渡す（`--filter` の `|` や空白を含む道が壊れない）。
 - 前置きの環境変数（`TESTGATE_FULL=1 npm test`）は包んだ後も先頭に残るので効く。PowerShell は `& 'node' ...` の形で包む（Claude の tool_name=PowerShell の時だけ）。

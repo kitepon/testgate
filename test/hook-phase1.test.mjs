@@ -74,11 +74,27 @@ test('codex / cursor / grok の形', () => {
     return
   }
   const c = JSON.parse(hook('codex', { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir, tool_use_id: 'call_1' }, dir).stdout)
-  assert.equal(c.hookSpecificOutput.permissionDecision, 'allow'); assert.match(c.hookSpecificOutput.updatedInput.command, / run --cwd /)
+  assert.equal(c.hookSpecificOutput.permissionDecision, 'allow'); assert.match(c.hookSpecificOutput.updatedInput.command, / run -- npm test$/)
+  assert.doesNotMatch(c.hookSpecificOutput.updatedInput.command, / --cwd /) // workdir が無い codex は --cwd を付けない（unified exec は workdir を hook に渡さない）
   const u = JSON.parse(hook('cursor', { command: 'npm test', cwd: dir, workspace_roots: [dir] }, dir).stdout)
   assert.equal(u.permission, 'allow'); assert.match(u.updated_input.command, / run --cwd /)
   const g = JSON.parse(hook('grok', { toolName: 'run_terminal_command', toolInput: { command: 'npm test', foo: 1 }, cwd: dir }, dir).stdout)
   assert.match(g.hookSpecificOutput.updatedInput.command, / run --cwd /); assert.equal(g.hookSpecificOutput.updatedInput.foo, 1)
+})
+test('codex: workdir が hook に来ない時（unified exec の exec_command）は --cwd を付けず、実行時の cwd（Codex が workdir で起動する）で動く', { skip: windows && 'Windows では codex を中継する' }, () => {
+  const dir = repo()
+  const sub = repo() // ターンの cwd（event.cwd）は dir、実際の実行は workdir の sub。hook には workdir が来ない
+  writeFileSync(join(sub, 'a.txt'), 'changed')
+  const r = hook('codex', { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir, tool_use_id: 'call_i1' }, dir)
+  assert.equal(r.status, 0, r.stderr)
+  const cmd = JSON.parse(r.stdout).hookSpecificOutput.updatedInput.command
+  assert.doesNotMatch(cmd, / --cwd /); assert.match(cmd, / run -- npm test$/)
+  assert.equal(rows(dir).at(-1).inheritCwd, true)
+  const x = spawnSync('sh', ['-c', cmd], { cwd: sub, encoding: 'utf8', env: envFor(sub) })
+  assert.equal(x.status, 0, x.stderr)
+  assert.match(x.stdout, /running a/) // sub の変更に合わせて a だけ流れた（dir ではなく sub で動いた証拠）
+  const last = rows(sub).at(-1)
+  assert.equal(last.event, 'run'); assert.equal(last.cwd, sub); assert.equal(last.mode, 'subset')
 })
 test('codex: tool_input.workdir があれば包んだ run の --cwd はそこ（相対なら cwd 基準）', { skip: windows && 'Windows では codex を中継する' }, () => {
   const dir = repo()

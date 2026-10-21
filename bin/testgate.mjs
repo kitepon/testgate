@@ -99,7 +99,7 @@ async function gatePhase1(harness, raw) {
   if (process.env.TESTGATE_PHASE === '0') return null
   let event
   try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return null }
-  const { command, cwd, tool, id, session, transcript } = extractCommand(harness, event)
+  const { command, cwd, tool, id, session, transcript, inheritCwd = false } = extractCommand(harness, event)
   const r = analyze(command)
   if (!r?.runner || r.compound) return null
   const words = splitWords(command).words
@@ -110,11 +110,12 @@ async function gatePhase1(harness, raw) {
     const adapters = await loadAdapters()
     const adapter = findAdapter(adapters, r.argv, { cwd: cwd ?? process.cwd(), env: process.env })
     if (!adapter) return null
-    const ran = buildRunCommand({ words, argv: r.argv, cwd, shell })
+    // codex の unified exec は workdir を hook に渡さないので --cwd を付けない（run は実行時の cwd = workdir で動く）
+    const ran = buildRunCommand({ words, argv: r.argv, cwd: inheritCwd ? null : cwd, shell })
     if (!ran) return null
     const out = hookOutput(harness, event, ran)
     if (!out) return null
-    await appendLog({ harness, tool, id, session, transcript, cwd: cwd ?? process.cwd(), runner: r.runner, lang: r.lang, compound: false, command, phase: 1, event: 'rewrite', adapter: adapter.id, ran })
+    await appendLog({ harness, tool, id, session, transcript, cwd: cwd ?? process.cwd(), runner: r.runner, lang: r.lang, compound: false, command, phase: 1, event: 'rewrite', adapter: adapter.id, ran, ...(inheritCwd ? { inheritCwd: true } : {}) })
     return out
   } catch (error) {
     process.stderr.write(`testgate: phase1 rewrite failed: ${error.message}; passing command through\n`)
