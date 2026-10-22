@@ -4,16 +4,18 @@ AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フ�
 
 ## 段階1（v0.2.0 から既定）
 
-`testgate hook <harness>` は、アダプタが扱えるテストコマンド（複合でない、`time`/`timeout` の包みが無い）を `node <入口> run --cwd <cwd> -- <元のコマンド>` に包み直して返す。席はその包んだコマンドを実行し、関所（`run`）がアダプタで変更に関わる分だけに絞って流し、合計行を落とし、長い出力を刈って返す。包んだ分は RTK の書き換えを通らない（関所の出力はもう短い）。
+`testgate hook <harness>` は、アダプタが扱えるテストコマンド（`time`/`timeout` の包みが無い）を `node <入口> run --cwd <cwd> -- <元のコマンド>` に包み直して返す。席はその包んだコマンドを実行し、関所（`run`）がアダプタで変更に関わる分だけに絞って流す。単純コマンドは合計行を落とし、長い出力を刈って返す。包んだ分は RTK の書き換えを通らない。
 
-- 包めない時（テストでない、複合、アダプタが無い、Windows の PowerShell 以外のハーネス）は段階0と同じ: 記録して `rtk hook <harness>` へ中継する。
+- v0.3.22から、POSIXの単純コマンド列（`&&`、`||`、`;`、改行、パイプ、通常の入出力先指定）はテスト部分だけを包む。たとえば `cd repo && npm test > test.log 2>&1; tail -n 40 test.log`。場所の移動や前後の処理は元のシェルが実行し、関所はその時点のcwdで選ぶ。stdoutとstderrは元の出力先へ逐次転送し、この道では件数行の除去や長文の短縮をしない。アダプタが無い時は元の単純コマンドを `/bin/sh` で実行し、テストを飛ばさない。
+- 制御構文、関数、subshell、コマンド置換、here-doc、background、3以上のファイル記述子、シェル定義を変えるsource/eval等は書き換えない。変数展開を含むテスト引数も固定化しない。PowerShellの複合は対象外。解釈対象外の複合やアダプタが無い単純コマンド、WindowsのPowerShell以外のハーネスは段階0と同じく記録して `rtk hook <harness>` へ中継する。
 - Codex の unified exec（`tools.exec_command({cmd, workdir})`）は PreToolUse の tool_input を `{"command": cmd}` だけで作り、workdir を hook に渡さない。v0.3.20 から、codex で workdir が無い時は包んだ run に `--cwd` を付けず、実行時の cwd（Codex が workdir で起動する）で動く。旧 shell ツールの `tool_input.workdir` はこれまで通り `--cwd` にする。
 - `TESTGATE_PHASE=0` で段階0（記録だけ）へ戻せる。`current` を v0.1.11 へ付け替えても戻る。
-- 子プロセスの起動は shell を通さない。Windows では実行ファイルを `PATH`・`PATHEXT` で探し、`.exe` は直接起こす。`.cmd`/`.bat`（npm・npx など）だけ `cmd.exe /d /s /c` に引数を引用して渡す（`--filter` の `|` や空白を含む道が壊れない）。
+- 選んだargvの子プロセスはshellを通さず起動する。POSIXの複合でargvを変えずに流す場合は元の単純コマンドを `/bin/sh` に渡し、glob等の展開を保つ。Windowsでは実行ファイルを `PATH`・`PATHEXT` で探し、`.exe` は直接起こす。`.cmd`/`.bat`（npm・npxなど）だけ `cmd.exe /d /s /c` に引数を引用して渡す。
 - 前置きの環境変数（`TESTGATE_FULL=1 npm test`）は包んだ後も先頭に残るので効く。PowerShell は `& 'node' ...` の形で包む（Claude の tool_name=PowerShell の時だけ）。
 - 全部通った記録が無く、変更も無い（commit 直後など）時、または変更が未追跡の資料などコードでない物だけでアダプタが「関わるテストが無い」と言う時は、一度全部流して「最後に全部通った commit」の基準を作る。失敗したら基準は作らず、通るまで同じ条件で全部流す。この全部流しには時間上限を掛けない。上限（`TESTGATE_FULL_LIMIT_SEC`、既定 180 秒）が付くのは `TESTGATE_FULL=1` とアダプタが選んだ full だけ。アダプタが判断できなかった passthrough にも掛けない。
 - `run` 側の select の待ち時間は `TESTGATE_SELECT_TIMEOUT_MS`（既定 30 秒。段階0の影の判断は 5 秒）。
 - 記録: hook が `phase:1, event:'rewrite'`（元のコマンドと包んだコマンド）、`run` が `phase:1, event:'run'`（mode、理由、所要 ms、件数、終了コード）を1行ずつ。
+- 複合コマンドのrewriteは `compound:true`、`wrappedCommands` と `invocationId` を持つ。各run/noneにも同じ `invocationId` を付けるので、時刻の近さによる推測なしに実行元を照合できる。ひとつの呼び出しに複数のrunが属することがある。
 
 ## 段階2（v0.3.0 から）: 刈り込みの候補 `testgate prune`
 

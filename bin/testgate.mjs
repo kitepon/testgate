@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // testgate hook <harness>: stdin の hook 入力を読む。
 // 段階1（既定、TESTGATE_PHASE=0 で段階0へ戻る）: アダプタが扱えるテストコマンドなら `testgate run -- <元のコマンド>` に包み直して返す。
-// それ以外（テストでない、複合、アダプタが無い、包めない形）は段階0と同じ: 記録して、同じ stdin で `rtk hook <harness>` を呼び、出力と終了コードを中継する。
+// POSIXの単純コマンド列はテスト部分だけを包み、連結子と出力先を残す。
+// それ以外（テストでない、解釈対象外の複合、包めない形）は段階0と同じ道へ中継する。
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import { extractCommand, HARNESSES } from '../lib/harness.mjs'
 import { splitWords, stripPrefix } from '../lib/shell-words.mjs'
 import { detectRunner } from '../lib/detect.mjs'
@@ -14,6 +16,7 @@ import { decide } from '../lib/gate.mjs'
 import { execCapture, trimForModel } from '../lib/run.mjs'
 import { recordFullPass, repoRoot } from '../lib/git.mjs'
 import { buildRunCommand, hookOutput } from '../lib/rewrite.mjs'
+import { rewriteCompound } from '../lib/compound.mjs'
 
 const [, , sub, harness, ...rest] = process.argv
 const tail = process.argv.slice(3)
@@ -33,7 +36,7 @@ if (sub === 'hook' && HARNESSES.includes(harness)) {
   process.exit(0)
 } else if (sub === 'run') {
   // 段階1: testgate run [--cwd DIR] -- <cmd...>
-  process.exit(await runGate(tail))
+  process.exitCode = await runGate(tail) // パイプへ転送中のstdout/stderrを最後まで書いてから終了する。
 } else if (sub === 'prune') {
   // 段階2: testgate prune [--cwd DIR] [--sample N] … → 消してよい試験の候補を出す（消すのは担当）
   // testgate prune --merge-only NAME [--cwd DIR] → Stryker を流さず、state/prune/NAME の記録を合算し直す
@@ -101,6 +104,21 @@ async function gatePhase1(harness, raw) {
   try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return null }
   const { command, cwd, tool, id, session, transcript, inheritCwd = false } = extractCommand(harness, event)
   const r = analyze(command)
+  if (typeof command !== 'string') return null
+  if (r?.compound && process.platform !== 'win32' && tool !== 'PowerShell') {
+    const invocationId = randomUUID()
+    const rewritten = rewriteCompound(command, part => buildRunCommand({
+      words: part.words.map(w => w.value), argv: part.argv, cwd: null,
+      originalShell: part.originalShell, invocationId,
+    }))
+    if (!rewritten) return null
+    const out = hookOutput(harness, event, rewritten.command)
+    if (!out) return null
+    await appendLog({ harness, tool, id, session, transcript, cwd: cwd ?? process.cwd(),
+      command, phase: 1, event: 'rewrite', compound: true, inheritCwd: true,
+      invocationId, wrappedCommands: rewritten.count, ran: rewritten.command })
+    return out
+  }
   if (!r?.runner || r.compound) return null
   const words = splitWords(command).words
   let shell = 'posix'
@@ -163,26 +181,51 @@ function outputText(event) {
 
 async function runGate(args) {
   let cwd = process.cwd()
+  let originalShell
+  let invocationId
   let i = 0
-  while (i < args.length && args[i] !== '--') { if (args[i] === '--cwd') { cwd = args[i + 1]; i += 2 } else i++ }
+  while (i < args.length && args[i] !== '--') {
+    if (args[i] === '--cwd') { cwd = args[i + 1]; i += 2 }
+    else if (args[i] === '--original-shell') { originalShell = args[i + 1]; i += 2 }
+    else if (args[i] === '--invocation-id') { invocationId = args[i + 1]; i += 2 }
+    else i++
+  }
   const argv = args.slice(i + 1)
   if (!argv.length) { console.error('usage: testgate run [--cwd DIR] -- <command...>'); return 2 }
   const adapters = await loadAdapters()
   const d = await decide({ argv, cwd, env: process.env, adapters, compound: false, selectTimeoutMs: Number(process.env.TESTGATE_SELECT_TIMEOUT_MS || 30000) })
+  if (!d && originalShell !== undefined) {
+    // cd等が実行された後のcwdでアダプタが無ければ、元の単純コマンドを実行する。
+    // globも元のシェルに展開させる。対応外のテストを成功扱いして飛ばさない。
+    const res = await execCapture(['/bin/sh', '-c', 'exec ' + originalShell], { cwd, env: process.env, timeoutMs: 0, forwardOutput: true })
+    await appendLog({ phase: 1, event: 'run', invocationId, cwd, command: originalShell,
+      adapter: null, mode: 'passthrough', reason: '実行場所で対応アダプタが無いので元のコマンドを実行',
+      status: res.status, timedOut: res.timedOut, durationMs: res.durationMs })
+    return res.status
+  }
   const adapter = d ? adapters.find(a => a.id === d.adapter) : null
   if (!d || d.mode === 'none') {
-    if (d) await appendLog({ phase: 1, event: 'none', cwd, command: argv.join(' '), adapter: d.adapter, reason: d.reason, changedCount: d.changedCount })
-    console.log(d ? `testgate: 変更に関わるテストが無いので流さない（${d.reason}）` : 'testgate: テストコマンドではない')
+    if (d) await appendLog({ phase: 1, event: 'none', invocationId, cwd, command: argv.join(' '), adapter: d.adapter, reason: d.reason, changedCount: d.changedCount })
+    const message = d ? `testgate: 変更に関わるテストが無いので流さない（${d.reason}）` : 'testgate: テストコマンドではない'
+    if (originalShell !== undefined) process.stderr.write(message + '\n')
+    else console.log(message)
     return 0
   }
   // 時間上限は、意図した全部流し（TESTGATE_FULL=1、アダプタが選んだ full）だけ。基準作りの full と、アダプタが判断できなかった passthrough には掛けない
   const limitMs = (d.mode === 'full' && !d.establish) ? (Number(process.env.TESTGATE_FULL_LIMIT_SEC || 180) * 1000) : 0
-  const res = await execCapture(d.argv, { cwd, env: process.env, timeoutMs: limitMs })
+  // そのまま流す時のglob等は、元と同じくシェルに展開させる。
+  const unchanged = d.argv.length === argv.length && d.argv.every((word, index) => word === argv[index])
+  const runArgv = originalShell !== undefined && unchanged ? ['/bin/sh', '-c', 'exec ' + originalShell] : d.argv
+  const res = await execCapture(runArgv, { cwd, env: process.env, timeoutMs: limitMs, forwardOutput: originalShell !== undefined })
   const parsed = safe(() => adapter?.parseOutput?.(res.output)) ?? {}
   const shown = safe(() => adapter?.stripCounts?.(res.output)) ?? res.output
   const ok = res.status === 0 && !res.timedOut
   if (ok && d.mode === 'full' && d.root) recordFullPass(d.root, process.env)
-  await appendLog({ phase: 1, event: 'run', cwd, command: argv.join(' '), ran: d.argv.join(' '), adapter: d.adapter, mode: d.mode, reason: d.reason, base: d.base, changedCount: d.changedCount, status: res.status, timedOut: res.timedOut, durationMs: res.durationMs, passed: parsed.passed, failed: parsed.failed, skipped: parsed.skipped, errors: parsed.errors })
+  await appendLog({ phase: 1, event: 'run', invocationId, cwd, command: argv.join(' '), ran: d.argv.join(' '), adapter: d.adapter, mode: d.mode, reason: d.reason, base: d.base, changedCount: d.changedCount, status: res.status, timedOut: res.timedOut, durationMs: res.durationMs, passed: parsed.passed, failed: parsed.failed, skipped: parsed.skipped, errors: parsed.errors })
+  if (originalShell !== undefined) {
+    if (res.timedOut) process.stderr.write(`testgate: 全部流しが ${limitMs / 1000} 秒を超えたので止めた。\n`)
+    return res.timedOut ? 124 : res.status
+  }
   process.stdout.write(trimForModel(shown, { ok }))
   if (!shown.endsWith('\n')) process.stdout.write('\n')
   if (res.timedOut) process.stdout.write(`testgate: 全部流しが ${limitMs / 1000} 秒を超えたので止めた。速くするか、分けるか、消すこと。\n`)

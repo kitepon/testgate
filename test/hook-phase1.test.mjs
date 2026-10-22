@@ -119,7 +119,7 @@ test('PowerShell は & で包む', () => {
   const r = hook('claude', { tool_name: 'PowerShell', tool_input: { command: 'npm test' }, cwd: dir }, dir)
   assert.match(JSON.parse(r.stdout).hookSpecificOutput.updatedInput.command, /^& /)
 })
-for (const [label, command] of [['複合', 'cd x && npm test'], ['アダプタが扱わない', 'pytest -q'], ['テストでない', 'ls -la'], ['time の包み', 'time npm test']]) {
+for (const [label, command] of [['subshell', '(cd x && npm test)'], ['アダプタが扱わない', 'pytest -q'], ['テストでない', 'ls -la'], ['time の包み', 'time npm test']]) {
   test(`${label}: 包まず段階0の中継（RTK と同じ出力）`, { skip: !hasRtk && 'rtk が無い' }, () => {
     const dir = repo()
     const raw = { tool_name: 'Bash', tool_input: { command }, cwd: dir }

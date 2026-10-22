@@ -45,3 +45,11 @@ test('execCapture: 引数は引用なしでそのまま子へ届く', async () =
   assert.equal(r.status, 0)
   assert.equal(r.output, 'a|b\nc d\n')
 })
+test('execCapture: timeout後、終了した子の強制終了タイマーを残さない', async () => {
+  const start = Date.now()
+  const source = `import { execCapture } from ${JSON.stringify(new URL('../lib/run.mjs', import.meta.url).href)}; const r = await execCapture([process.execPath, '-e', 'setInterval(() => {}, 1000)'], { env: process.env, cwd: process.cwd(), timeoutMs: 100 }); process.exitCode = r.timedOut ? 0 : 1`
+  const r = await execCapture([process.execPath, '--input-type=module', '-e', source], { env: process.env, cwd: process.cwd(), timeoutMs: 3000 })
+  assert.equal(r.status, 0, r.output)
+  assert.equal(r.timedOut, false)
+  assert.ok(Date.now() - start < 3000)
+})
