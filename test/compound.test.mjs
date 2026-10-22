@@ -178,3 +178,12 @@ test('大きい出力をパイプへ転送し終えてから終了する', posix
   assert.equal(r.status, 0, r.stderr)
   assert.equal(readFileSync(join(f.parent, 'large.log'), 'utf8'), 'x'.repeat(512 * 1024))
 })
+test('シグナルで終了したテストも元の143を後続処理へ渡す', posix, () => {
+  const f = fixture()
+  f.env.TESTGATE_ADAPTERS = mockAdapters
+  writeFileSync(join(f.dir, 'mocktest.mjs'), "process.kill(process.pid, 'SIGTERM')\n")
+  const r = f.run(f.hook(`cd 'repo with spaces' && npm test; result=$?; printf '%s' "$result"`))
+  assert.equal(r.status, 0, r.stderr)
+  assert.equal(r.stdout, '143')
+  assert.equal(f.rows().at(-1).status, 143)
+})

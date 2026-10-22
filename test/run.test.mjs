@@ -53,3 +53,7 @@ test('execCapture: timeout後、終了した子の強制終了タイマーを残
   assert.equal(r.timedOut, false)
   assert.ok(Date.now() - start < 3000)
 })
+test('execCapture: シグナル終了も元シェルと同じ終了値にする', { skip: process.platform === 'win32' && 'POSIXのシグナル終了値' }, async () => {
+  const r = await execCapture([process.execPath, '-e', "process.kill(process.pid, 'SIGTERM')"], { env: process.env, cwd: process.cwd(), timeoutMs: 0 })
+  assert.equal(r.status, 143)
+})

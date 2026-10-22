@@ -16,6 +16,7 @@ AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フ�
 - `run` 側の select の待ち時間は `TESTGATE_SELECT_TIMEOUT_MS`（既定 30 秒。段階0の影の判断は 5 秒）。
 - 記録: hook が `phase:1, event:'rewrite'`（元のコマンドと包んだコマンド）、`run` が `phase:1, event:'run'`（mode、理由、所要 ms、件数、終了コード）を1行ずつ。
 - 複合コマンドのrewriteは `compound:true`、`wrappedCommands` と `invocationId` を持つ。各run/noneにも同じ `invocationId` を付けるので、時刻の近さによる推測なしに実行元を照合できる。ひとつの呼び出しに複数のrunが属することがある。
+- v0.3.23から、子がシグナルで終了した場合も元のシェルと同じ終了値（SIGTERMなら143）を返す。
 
 ## 段階2（v0.3.0 から）: 刈り込みの候補 `testgate prune`
 
