@@ -52,9 +52,8 @@ test('rtk が無い時は何も書き換えずに通す', () => {
   assert.equal(r.stdout, '')
 })
 
-test('grok: BellTeam の grok-hook.mjs と同じ出力', { skip: !hasRtk && 'rtk が無い' }, () => {
-  const ref = '/srv/bellteam/bots/bot-47fad91c/work/BellTeam/integrations/rtk/grok-hook.mjs'
-  if (!existsSync(ref)) return
+test('grok: 同梱した従来hookの参照と同じ出力', { skip: !hasRtk && 'rtk が無い' }, () => {
+  const ref = fileURLToPath(new URL('./fixtures/legacy-grok-hook.mjs', import.meta.url))
   for (const command of ['pytest -q', 'ls -la', 'echo hi']) {
     const raw = JSON.stringify({ toolName: 'run_terminal_command', toolInput: { command, foo: 1 }, cwd: '/tmp' })
     const log = join(tmp('tg-'), 'l')
