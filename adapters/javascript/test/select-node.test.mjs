@@ -113,6 +113,35 @@ test('npm test は、同じ動きになる時だけ直接の呼び出しへ書�
   assert.deepEqual((await run(repo, ['node', '--run', 'test'], ['src/a.mjs'])).argv, ['node', '--test', 'test/a.test.mjs'])
 })
 
+test('script 本文のファイル名は入口の定義で、候補として扱う（利用者の名指しは今までどおり触らない）', async t => {
+  const files = {
+    'scripts/env.mjs': '\n',
+    'src/a.mjs': 'export const a = 1\n',
+    'src/b.mjs': 'export const b = 1\n',
+    'scripts/release.test.mjs': "import '../src/b.mjs'\n",
+    'pi5/__tests__/a.test.js': "require('../../src/a.mjs')\n",
+    'pi5/__tests__/c.test.js': '\n',
+  }
+  const scripts = body => JSON.stringify({ type: 'module', scripts: body })
+  const dev = 'node --test --import ./scripts/env.mjs scripts/release.test.mjs "pi5/__tests__/*.test.js"'
+  const repo = makeRepo(t, { ...files, 'package.json': scripts({ 'test:dev': dev, 'test:gone': 'node --test scripts/missing.test.mjs pi5/__tests__/*.test.js' }) })
+
+  const b = await run(repo, ['npm', 'run', 'test:dev'], ['src/b.mjs'])
+  assert.equal(b.mode, 'subset')
+  assert.deepEqual(b.argv, ['node', '--test', '--import', './scripts/env.mjs', 'scripts/release.test.mjs'])
+  const a = await run(repo, ['npm', 'run', 'test:dev'], ['src/a.mjs'])
+  assert.deepEqual(a.argv, ['node', '--test', '--import', './scripts/env.mjs', 'pi5/__tests__/a.test.js'])
+  assert.equal((await run(repo, ['npm', 'run', 'test:dev'], ['scripts/env.mjs'])).mode, 'full', '前読みファイルの変更は full')
+  assert.equal((await run(repo, ['npm', 'run', 'test:dev'], ['docs/notes.md'])).mode, 'none')
+
+  // 利用者が argv で名指しした時、script が見つからないファイルを書いている時は今までどおり触らない。
+  assert.equal((await run(repo, ['node', '--test', 'scripts/release.test.mjs'], ['src/b.mjs'])).mode, 'passthrough')
+  assert.equal((await run(repo, ['npm', 'run', 'test:dev', '--', 'scripts/release.test.mjs'], ['src/b.mjs'])).mode, 'passthrough')
+  const gone = await run(repo, ['npm', 'run', 'test:gone'], ['src/b.mjs'])
+  assert.equal(gone.mode, 'passthrough')
+  assert.match(gone.reason, /scripts\/missing\.test\.mjs/)
+})
+
 test('消えたファイルは、消える前の経路を参照していたテストを選ぶ', async t => {
   const cwd = copyFixture(t, 'node-repo')
   rmSync(join(cwd, 'src/tax.mjs'))

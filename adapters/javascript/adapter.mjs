@@ -924,7 +924,11 @@ function selectNode({ command, info, argv, cwd, files, say, pass }) {
   const patterns = info.positionals
   const kinds = patterns.map(pattern => (GLOB_MAGIC.test(pattern) ? 'glob' : isDirectory(resolve(execCwd, pattern)) ? 'dir' : 'file'))
   const named = patterns[kinds.indexOf('file')]
-  if (named !== undefined) return pass(say(`ファイルの名指し（${named}）なので触らない`))
+  // script 本文のファイル名は入口の定義で、その場の名指しではない（追加の引数は上で弾き済み）。
+  // 実在しない名前は node --test が失敗で教える物なので、隠さず触らない。
+  if (named !== undefined && !script) return pass(say(`ファイルの名指し（${named}）なので触らない`))
+  const missing = patterns.find((pattern, index) => kinds[index] === 'file' && !isFile(resolve(execCwd, pattern)))
+  if (missing !== undefined) return pass(say(`script に書かれたファイル（${missing}）が見つからないので触らない`))
 
   const globalHit = globalFile(files, 'node')
   if (globalHit) return pass(say(`全体に効くファイル（${globalHit}）が変わったので全部流す`), 'full')
@@ -934,7 +938,7 @@ function selectNode({ command, info, argv, cwd, files, say, pass }) {
   try {
     const found = patterns.length === 0
       ? discoverTests(execCwd, budget)
-      : patterns.flatMap((pattern, index) => (kinds[index] === 'glob' ? expandGlob(execCwd, pattern, budget) : discoverTests(resolve(execCwd, pattern), budget)))
+      : patterns.flatMap((pattern, index) => (kinds[index] === 'glob' ? expandGlob(execCwd, pattern, budget) : kinds[index] === 'file' ? [resolve(execCwd, pattern)] : discoverTests(resolve(execCwd, pattern), budget)))
     const candidates = [...new Set(found)].sort()
     if (candidates.length === 0) return pass(say('指定に合うテストファイルが見つからないので触らない'))
 

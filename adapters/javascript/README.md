@@ -43,6 +43,7 @@
 | `npx -c "jest"` | `detect` が false | コマンド文字列の中までは読まない |
 | `nx test`、`turbo run test` | `detect` が false | 自前の affected 選択を持つ別の道具 |
 | script が複合（`&&`、`|`、リダイレクトなど）、`pretest`/`posttest` がある、script が別の script を呼ぶ | `detect` は true、`select` は `passthrough` | 契約どおり |
+| `node --test` を呼ぶ script の本文に単一のファイル名がある（`test:dev` のような入口） | `select` が候補として扱う | 本文のファイル名は入口の定義で、その場の名指しではない。利用者が argv で名指しした時、本文のファイルが実在しない時は `passthrough` |
 | `node --test` を呼ぶ script で、追加の引数がある・script が環境変数を設定している・package.json と違う場所から打った | `passthrough` | 直接の呼び出しへ書き換えると動きが変わる |
 | 監視モード（`--watch`、`vitest watch`、`vitest --ui`） | `passthrough` | ランナー自身が変更を追う |
 
@@ -56,7 +57,7 @@
 | `changed` が空 | `none` | — |
 | 複合の script、pre/post、監視モード | `passthrough` | 元のまま |
 | 範囲を絞るオプションがある（`-t`、`--testNamePattern`、`--test-name-pattern`、`--test-only`、`--onlyChanged`、`--changedSince`、`--changed`、`--findRelatedTests`、`--shard`、`--project` など） | `passthrough` | 元のまま |
-| ファイルの名指し（Jest と Vitest は位置引数があれば全部。`node --test` は glob でもディレクトリでもない引数） | `passthrough` | 元のまま |
+| 利用者が argv で打ったファイルの名指し（Jest と Vitest は位置引数があれば全部。`node --test` は glob でもディレクトリでもない引数） | `passthrough` | 元のまま |
 | 全体に効くファイルが変わった（`package.json`、ロックファイル、`tsconfig*.json`、`.npmrc`、`jest.config.*`、`babel.config.*`、`vitest.config.*`、`vite.config.*`、`node_modules/` の下など） | `full` | 元のまま |
 | coverage 付き（`--coverage`、`--experimental-test-coverage`） | `full` | 元のまま |
 | Jest・Vitest で、変更が文書だけ（`.md`、`.txt` など） | `none` | — |
