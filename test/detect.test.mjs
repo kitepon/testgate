@@ -16,3 +16,11 @@ for (const [cmd, runner] of Object.entries(yes)) {
 for (const cmd of no) {
   test(`非判定: ${cmd}`, () => { assert.equal(detectRunner(cmd.split(' ')), null) })
 }
+
+test('npm run の test:* script も段階0で試験として拾う', () => {
+  assert.deepEqual(detectRunner(['npm', 'run', 'test:pi5']), { runner: 'npm test', lang: 'javascript' })
+  assert.deepEqual(detectRunner(['pnpm', 'run', 'test-unit']), { runner: 'npm test', lang: 'javascript' })
+  assert.deepEqual(detectRunner(['npm', 'run-script', 'test']), { runner: 'npm test', lang: 'javascript' })
+  assert.equal(detectRunner(['npm', 'run', 'testimonials']), null)
+  assert.equal(detectRunner(['npm', 'run', 'build']), null)
+})
