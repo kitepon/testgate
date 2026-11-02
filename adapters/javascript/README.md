@@ -44,6 +44,7 @@
 | `nx test`、`turbo run test` | `detect` が false | 自前の affected 選択を持つ別の道具 |
 | script が複合（`&&`、`|`、リダイレクトなど）、`pretest`/`posttest` がある、script が別の script を呼ぶ | `detect` は true、`select` は `passthrough` | 契約どおり |
 | `node --test` を呼ぶ script の本文に単一のファイル名がある（`test:dev` のような入口） | `select` が候補として扱う | 本文のファイル名は入口の定義で、その場の名指しではない。利用者が argv で名指しした時、本文のファイルが実在しない時は `passthrough` |
+| リポジトリ自前のラッパ経由の `node <ラッパ> --test ...`（package.json の `testgate.wrappers` に宣言した物） | `node <ラッパ>` を取り除いた残りを node として読み、書き換えでは `node <ラッパ> --test <選んだファイル>` と並べる | 宣言は「このラッパは node --test をそのまま包む」という表明。ラッパ本体と `preload` に書いたファイルは `--import` と同じ前読み（変更が及べば `full`）。ラッパが静的に import する物も追う。宣言が無い・ラッパの前にオプションがある・残りが `--test` でない時は従来どおり |
 | `node --test` を呼ぶ script で、追加の引数がある・script が環境変数を設定している・package.json と違う場所から打った | `passthrough` | 直接の呼び出しへ書き換えると動きが変わる |
 | 監視モード（`--watch`、`vitest watch`、`vitest --ui`） | `passthrough` | ランナー自身が変更を追う |
 

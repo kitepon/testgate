@@ -342,7 +342,26 @@ function parseNode(argv, i, cwd, depth) {
   const script = argv[end]?.replaceAll('\\', '/')
   if (script && JEST_SCRIPT.test(script)) return direct('jest', argv, end + 1)
   if (script && VITEST_SCRIPT.test(script)) return direct('vitest', argv, end + 1)
-  return undefined
+  const wrapper = script && options.length === 0 ? declaredWrapper(script, cwd) : undefined
+  if (!wrapper) return undefined
+  // 宣言されたラッパは透過で、node <ラッパ> <残り> を node <残り> として読む。lead にはラッパを残す。
+  const inner = parseNode(['node', ...argv.slice(end + 1)], 0, cwd, depth)
+  if (inner?.runner !== 'node' || inner.script || !inner.options?.some(([key]) => key === 'test')) return undefined
+  return { ...inner, lead: [...argv.slice(0, end + 1), ...inner.lead.slice(1)], wrapper }
+}
+
+// package.json の "testgate": { "wrappers": { "<ラッパ>": { "preload": ["<前読みファイル>"] } } }。
+// リポジトリが「このラッパは node --test をそのまま包むだけ」と宣言した物だけを読む。推測はしない。
+function declaredWrapper(script, cwd) {
+  const pkgFile = findUp(cwd, 'package.json')
+  const wrappers = pkgFile && readJson(pkgFile)?.testgate?.wrappers
+  if (!wrappers || typeof wrappers !== 'object') return undefined
+  const pkgDir = dirname(pkgFile)
+  const path = resolve(cwd, script)
+  const name = Object.keys(wrappers).find(key => resolve(pkgDir, key) === path)
+  if (name === undefined) return undefined
+  const preload = Array.isArray(wrappers[name]?.preload) ? wrappers[name].preload : []
+  return { path, preloads: preload.filter(file => typeof file === 'string').map(file => resolve(pkgDir, file)) }
 }
 
 function parsePackageManager(pm, argv, i, cwd, depth) {
@@ -946,10 +965,13 @@ function selectNode({ command, info, argv, cwd, files, say, pass }) {
     const graph = new Graph(root, budget)
     graph.add(candidates)
 
-    const preloads = (command.options ?? [])
-      .filter(([name, value]) => typeof value === 'string' && (NODE_PRELOAD_PATHS.includes(name) || (NODE_PRELOAD_MODULES.includes(name) && /^(\.{1,2}[\\/]|[\\/]|[A-Za-z]:[\\/])/.test(value))))
-      .map(([, value]) => resolve(execCwd, value))
-      .filter(path => isInside(root, path))
+    // ラッパ本体と宣言された前読みファイルは、--import と同じ前読みとして扱う。
+    const preloads = [
+      ...(command.wrapper ? [command.wrapper.path, ...command.wrapper.preloads] : []),
+      ...(command.options ?? [])
+        .filter(([name, value]) => typeof value === 'string' && (NODE_PRELOAD_PATHS.includes(name) || (NODE_PRELOAD_MODULES.includes(name) && /^(\.{1,2}[\\/]|[\\/]|[A-Za-z]:[\\/])/.test(value))))
+        .map(([, value]) => resolve(execCwd, value)),
+    ].filter(path => isInside(root, path))
     graph.add(preloads.filter(isFile))
 
     const starts = new Set()

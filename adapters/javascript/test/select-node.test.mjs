@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
+import { detect } from '../adapter.mjs'
 import { chosen, copyFixture, makeRepo, run } from './helpers.mjs'
 
 const ALL = ['node', '--test', 'test/*.test.mjs']
@@ -140,6 +141,49 @@ test('script 本文のファイル名は入口の定義で、候補として扱�
   const gone = await run(repo, ['npm', 'run', 'test:gone'], ['src/b.mjs'])
   assert.equal(gone.mode, 'passthrough')
   assert.match(gone.reason, /scripts\/missing\.test\.mjs/)
+})
+
+test('package.json で宣言されたラッパは透過で、node <ラッパ> --test の残りを node として読む', async t => {
+  const wrapper = "import '../test/env.mjs'\n"
+  const files = {
+    'scripts/wrap.mjs': wrapper,
+    'test/env.mjs': '\n',
+    'src/a.mjs': 'export const a = 1\n',
+    'src/b.mjs': 'export const b = 1\n',
+    'test/a.test.mjs': "import '../src/a.mjs'\n",
+    'test/b.test.mjs': "import '../src/b.mjs'\n",
+  }
+  const manifest = testgate => JSON.stringify({ type: 'module', testgate, scripts: { 'test:dev': 'node scripts/wrap.mjs --test test/*.test.mjs' } })
+  const declared = { wrappers: { 'scripts/wrap.mjs': {} } }
+  const repo = makeRepo(t, { ...files, 'package.json': manifest(declared) })
+  const direct = ['node', 'scripts/wrap.mjs', '--test', 'test/*.test.mjs']
+
+  const subset = await run(repo, direct, ['src/a.mjs'])
+  assert.equal(subset.mode, 'subset')
+  assert.deepEqual(subset.argv, ['node', 'scripts/wrap.mjs', '--test', 'test/a.test.mjs'])
+  assert.deepEqual((await run(repo, ['npm', 'run', 'test:dev'], ['src/b.mjs'])).argv, ['node', 'scripts/wrap.mjs', '--test', 'test/b.test.mjs'])
+  assert.equal((await run(repo, direct, ['docs/notes.md'])).mode, 'none')
+
+  // ラッパ本体と、ラッパが読むファイルの変更は全部に効く。
+  for (const changed of ['scripts/wrap.mjs', 'test/env.mjs']) assert.equal((await run(repo, direct, [changed])).mode, 'full', changed)
+
+  // import に現れない前読みファイルは preload で宣言する。
+  const hidden = makeRepo(t, { ...files, 'scripts/wrap.mjs': '\n', 'package.json': manifest({ wrappers: { 'scripts/wrap.mjs': { preload: ['test/env.mjs'] } } }) })
+  assert.equal((await run(hidden, direct, ['test/env.mjs'])).mode, 'full')
+  assert.equal((await run(hidden, direct, ['src/a.mjs'])).mode, 'subset')
+
+  // 宣言が無い、別のラッパ、利用者の名指し、ラッパの前のオプション、--test でない呼び方は今までどおり触らない。
+  for (const [cwd, argv] of [
+    [makeRepo(t, { ...files, 'package.json': manifest(undefined) }), direct],
+    [makeRepo(t, { ...files, 'package.json': manifest({ wrappers: { 'scripts/other.mjs': {} } }) }), direct],
+    [repo, ['node', 'scripts/wrap.mjs', '--test', 'test/a.test.mjs']],
+    [repo, ['node', '--import', './test/env.mjs', 'scripts/wrap.mjs', '--test', 'test/*.test.mjs']],
+  ]) {
+    const result = await run(cwd, argv, ['src/a.mjs'])
+    assert.equal(result.mode, 'passthrough', argv.join(' '))
+    assert.deepEqual(result.argv, argv)
+  }
+  assert.equal(detect(['node', 'scripts/wrap.mjs', 'build'], { cwd: repo }), false)
 })
 
 test('消えたファイルは、消える前の経路を参照していたテストを選ぶ', async t => {
