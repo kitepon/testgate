@@ -364,7 +364,40 @@ function declaredWrapper(script, cwd) {
   return { path, preloads: preload.filter(file => typeof file === 'string').map(file => resolve(pkgDir, file)) }
 }
 
-function parsePackageManager(pm, argv, i, cwd, depth) {
+// npm の --prefix と -w/--workspace は、別ディレクトリの package の script を走らせる。パスで一つだけ指され、
+// そこに package.json がある時だけ読む（名前指定・複数指定は読まない）。argv からそのオプションを除いた物と、走らせる場所を返す。
+const WHERE_OPTION = /^(--prefix|-w|--workspace)(?:=(.*))?$/
+function takeWhere(argv, from, cwd) {
+  const dashDash = argv.indexOf('--', from)
+  const end = dashDash === -1 ? argv.length : dashDash
+  const kept = []
+  const dirs = new Set()
+  for (let j = from; j < end; j++) {
+    const m = WHERE_OPTION.exec(argv[j])
+    if (m) {
+      const value = m[2] ?? argv[++j]
+      if (typeof value !== 'string' || value === '') return undefined
+      dirs.add(value)
+    } else if (ELSEWHERE.test(argv[j])) return undefined
+    else kept.push(argv[j])
+  }
+  if (dirs.size === 0) return { rest: argv, dir: undefined }
+  if (dirs.size > 1) return undefined
+  const dir = resolve(cwd, [...dirs][0])
+  if (!isFile(join(dir, 'package.json'))) return undefined
+  return { rest: [...argv.slice(0, from), ...kept, ...argv.slice(end)], dir }
+}
+
+function parsePackageManager(pm, original, i, cwd, depth) {
+  let argv = original
+  let workDir = cwd
+  let moved = false
+  if (pm === 'npm') {
+    const where = takeWhere(original, i + 1, cwd)
+    if (!where) return undefined
+    argv = where.rest
+    if (where.dir) { workDir = where.dir; moved = true }
+  }
   // 先頭のオプションを読み飛ばす（npm --silent test など）。
   let at = i + 1
   while (at < argv.length && argv[at].startsWith('-')) {
@@ -383,6 +416,7 @@ function parsePackageManager(pm, argv, i, cwd, depth) {
 
   const exec = { npm: ['exec', 'x'], pnpm: ['exec', 'dlx'], yarn: ['exec', 'dlx'], bun: ['x'] }[pm]
   if (exec.includes(sub)) {
+    if (moved) return undefined
     const start = skipLauncherOptions(argv, at + 1, NPX_VALUED)
     const runner = start === -1 ? undefined : binRunner(argv[start])
     return runner && direct(runner, argv, start + 1)
@@ -412,8 +446,8 @@ function parsePackageManager(pm, argv, i, cwd, depth) {
   const dashDash = tail.indexOf('--')
   const extra = pm === 'npm' ? (dashDash === -1 ? [] : tail.slice(dashDash + 1)) : tail.filter((word, index) => index !== dashDash)
 
-  const viaScript = parseScript(pm, scriptName, extra, argv, cwd, depth)
-  if (viaScript) return viaScript
+  const viaScript = parseScript(pm, scriptName, extra, original, workDir, depth)
+  if (viaScript) return moved ? { ...viaScript, moved: true } : viaScript
   // yarn jest / yarn run jest のように、script が無ければ node_modules/.bin のランナーを直接呼ぶ形。
   if (pm !== 'npm' && BIN_RUNNERS.has(scriptName)) return direct(scriptName, argv, extraStart)
   return undefined
@@ -434,10 +468,15 @@ function parseScript(pm, name, extra, argv, cwd, depth) {
     hooks: pm !== 'node --run' && ['pre', 'post'].some(prefix => typeof scripts[prefix + name] === 'string'),
   }
   const complex = /[;&|<>`]|\$\(/.test(body)
-  const inner = complex ? undefined : parseCommand(splitWords(body), pkgDir, depth + 1)
+  const words = complex ? undefined : splitWords(body)
+  const inner = words && parseCommand(words, pkgDir, depth + 1)
   if (inner) {
     // script の先頭に環境変数の代入がある時（NODE_ENV=test jest）も覚えておく。
-    return { ...inner, script: inner.script ?? script, outer: argv, inner: { lead: inner.lead, args: inner.args, hasEnvPrefix: inner.hasEnvPrefix }, args: [...inner.args, ...extra], nested: Boolean(inner.script) }
+    // 入れ子の script（npm --prefix sub test など）は、追加の引数が無く一段だけなら、内側の呼び出しそのもの（flat）へ置き換えて選べる。
+    // flat.cwd は、その呼び出しを相対パスのまま走らせられる場所（外側の package.json のある所）。
+    const nested = Boolean(inner.script)
+    const flat = nested && !inner.nested && extra.length === 0 && !words.some(word => ENV_ASSIGNMENT.test(word)) ? { argv: words, cwd: pkgDir } : undefined
+    return { ...inner, script: inner.script ?? script, outer: argv, inner: { lead: inner.lead, args: inner.args, hasEnvPrefix: inner.hasEnvPrefix }, args: [...inner.args, ...extra], nested, flat, nestedHooks: nested ? script.hooks || Boolean(inner.nestedHooks) : false }
   }
   // 単純には読めない script。ランナーの名前が見える時だけ「テストだが判断しない」とする。
   const runner = /(^|[\s/"'])jest(\s|$)/.test(body) ? 'jest' : /(^|[\s/"'])vitest(\s|$)/.test(body) ? 'vitest' : /(^|[\s/"'])node(js)?\s[^;&|]*--test(\s|$)/.test(body) ? 'node' : undefined
@@ -550,8 +589,13 @@ export async function select({ argv, cwd = process.cwd(), env, changed, base = n
   // 読み替え、名指しの一部だけ通った実行を全部通った基準として記録する（2026-11-10、11/9週データで確認）。
 
   if (command.undecidable) return pass(say(`${command.undecidable}なので触らない`))
-  if (command.script?.hooks) return pass(say(`script「${command.script.name}」に pre/post があるので触らない`))
-  if (command.nested) return pass(say('script が別の script を呼んでいるので触らない'))
+  if (command.script?.hooks || command.nestedHooks) return pass(say(`script「${command.script.name}」に pre/post があるので触らない`))
+  if (command.nested) {
+    // 一段の入れ子は、内側の呼び出しへ置き換えて選ぶ（Jest・Vitest だけ。置き換えた argv は外側の package.json のある場所から走る）。
+    if (!command.flat || command.runner === 'node' || resolve(cwd) !== resolve(command.flat.cwd)) return pass(say('script が別の script を呼んでいるので触らない'))
+    command = { ...command, outer: command.flat.argv, nested: false }
+  }
+  if (command.moved && command.runner === 'node') return pass(say('別ディレクトリの package（--prefix・-w）の node --test は、その場所で走らせる必要があるので触らない'))
   if (info.watch) return pass(say(`監視モード（${info.watch}）なので触らない`))
   if (info.narrowing) return pass(say(`範囲を絞る指定（${info.narrowing}）が既にあるので触らない`))
 

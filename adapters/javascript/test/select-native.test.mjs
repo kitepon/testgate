@@ -5,7 +5,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { rmSync } from 'node:fs'
 import { join } from 'node:path'
-import { copyFixture, run } from './helpers.mjs'
+import { copyFixture, makeRepo, run } from './helpers.mjs'
+import { detect } from '../adapter.mjs'
 
 const BASE = '3f2c1ab'
 
@@ -145,4 +146,48 @@ test('受け持ちでないコマンドが来ても壊れず passthrough', async
     assert.equal(result.mode, 'passthrough')
     assert.deepEqual(result.argv, argv)
   }
+})
+
+// --prefix / -w と入れ子の script（Lattice の `npm run test:sensor` = `npm --prefix sensor test` の形）。
+function prefixRepo(t, innerTest = 'vitest run --maxWorkers=4') {
+  return makeRepo(t, {
+    'package.json': JSON.stringify({ name: 'root', scripts: { 'test:sensor': 'npm --prefix sensor test', 'test:both': 'npm --prefix sensor test && echo done' } }),
+    'sensor/package.json': JSON.stringify({ name: 'sensor', scripts: { test: innerTest } }),
+    'sensor/src/a.ts': 'export const a = 1\n',
+    'README.md': 'x\n',
+  })
+}
+
+test('npm --prefix と -w は、その package の script が Vitest・Jest ならそのまま選ぶ', async t => {
+  const cwd = prefixRepo(t)
+  for (const argv of [['npm', '--prefix', 'sensor', 'test'], ['npm', 'test', '--prefix=sensor'], ['npm', 'test', '-w', 'sensor'], ['npm', 'run', '--workspace', 'sensor', 'test']]) {
+    const r = await run(cwd, argv, ['sensor/src/a.ts'], { base: BASE })
+    assert.equal(r.mode, 'subset', argv.join(' '))
+    assert.deepEqual(r.argv, [...argv, '--', `--changed=${BASE}`], argv.join(' '))
+  }
+  const jest = prefixRepo(t, 'jest')
+  assert.deepEqual((await run(jest, ['npm', '--prefix', 'sensor', 'test'], ['sensor/src/a.ts'])).argv, ['npm', '--prefix', 'sensor', 'test', '--', '--onlyChanged'])
+})
+
+test('入れ子の script は、一段で追加の引数が無く package.json のある場所からなら内側の呼び出しへ置き換えて選ぶ', async t => {
+  const cwd = prefixRepo(t)
+  const r = await run(cwd, ['npm', 'run', 'test:sensor'], ['sensor/src/a.ts'], { base: BASE })
+  assert.equal(r.mode, 'subset')
+  assert.deepEqual(r.argv, ['npm', '--prefix', 'sensor', 'test', '--', `--changed=${BASE}`])
+  // 追加の引数がある時は触らない。別の場所から呼ばれた、複合の script は、そもそも試験の呼び出しとして読まない。
+  const extra = await run(cwd, ['npm', 'run', 'test:sensor', '--', '--bail'], ['sensor/src/a.ts'])
+  assert.equal(extra.mode, 'passthrough')
+  assert.match(extra.reason, /別の script を呼んでいる/)
+  assert.equal(detect(['npm', 'run', 'test:both'], { cwd }), false)
+  assert.equal(detect(['npm', 'run', 'test:sensor'], { cwd: join(cwd, 'sensor') }), false)
+})
+
+test('--prefix・-w の先が node --test の package、名前指定、複数指定、package.json の無い場所は触らない', async t => {
+  const cwd = prefixRepo(t, 'node --test test/*.test.mjs')
+  const node = await run(cwd, ['npm', '--prefix', 'sensor', 'test'], ['sensor/src/a.ts'])
+  assert.equal(node.mode, 'passthrough')
+  assert.match(node.reason, /別ディレクトリの package/)
+  assert.equal(detect(['npm', 'test', '-w', 'sensor-by-name'], { cwd }), false)
+  assert.equal(detect(['npm', 'test', '-w', 'sensor', '-w', 'other'], { cwd }), false)
+  assert.equal(detect(['npm', 'test', '--prefix', 'missing'], { cwd }), false)
 })
