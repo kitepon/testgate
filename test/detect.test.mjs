@@ -25,3 +25,26 @@ test('npm run の test:* script も段階0で試験として拾う', () => {
   assert.equal(detectRunner(['npm', 'run', 'testimonials']), null)
   assert.equal(detectRunner(['npm', 'run', 'build']), null)
 })
+
+// 段階0の記録: 引用符・here-doc の中の語は、別のコマンドとして数えない（2c）。複合の本物のテストは数える。
+import { analyze } from '../lib/analyze.mjs'
+test('analyze: 引用符の中・here-doc の本文・rg の検索語は runner なし', () => {
+  for (const cmd of [
+    "ps -eo pid,args | rg 'cargo test|gdb'",
+    "cat > note.md <<'EOF'\ncargo test; go test ./...\nEOF",
+    "ssh macbook 'cd x && cargo test' ; echo done",
+    "rg -n 'pytest|npm test' docs && ls",
+    'echo "run npm test | tee out" && pwd',
+  ]) assert.equal(analyze(cmd).runner, null, cmd)
+})
+test('analyze: 複合の中の本物のテストは数える（括弧・リダイレクト・.・環境変数の前置きも）', () => {
+  const cases = {
+    'cd /repo && cargo test': 'cargo test',
+    '(npm run lint && npm test) 2>&1 | tail -5': 'npm test',
+    '. ./env.sh; uv run pytest -q tests/a.py 2>&1 | head': 'pytest',
+    'FOO=1 node --test test/a.test.mjs && echo ok': 'node --test',
+    "cat > f <<'EOF'\nx\nEOF\ngo test ./...": 'go test',
+  }
+  for (const [cmd, runner] of Object.entries(cases)) assert.equal(analyze(cmd).runner, runner, cmd)
+  assert.equal(analyze('npm test').runner, 'npm test')
+})

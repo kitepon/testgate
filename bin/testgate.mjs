@@ -7,8 +7,7 @@ import { relayGrok, relayToRtk } from '../lib/rtk-hook.mjs'
 import { readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { extractCommand, HARNESSES } from '../lib/harness.mjs'
-import { splitWords, stripPrefix } from '../lib/shell-words.mjs'
-import { detectRunner } from '../lib/detect.mjs'
+import { splitWords } from '../lib/shell-words.mjs'
 import { appendLog, readRecent } from '../lib/log.mjs'
 import { genericCounts } from '../lib/counts.mjs'
 import { loadAdapters, findAdapter } from '../lib/adapters.mjs'
@@ -17,6 +16,7 @@ import { execCapture, trimForModel } from '../lib/run.mjs'
 import { recordFullPass, repoRoot } from '../lib/git.mjs'
 import { buildRunCommand, hookOutput } from '../lib/rewrite.mjs'
 import { rewriteCompound } from '../lib/compound.mjs'
+import { analyze } from '../lib/analyze.mjs'
 
 const [, , sub, harness, ...rest] = process.argv
 const tail = process.argv.slice(3)
@@ -74,26 +74,6 @@ export function isCompatCaller(harness, raw) {
   try { event = JSON.parse(raw.replace(/^\uFEFF/, '')) } catch { return false }
   const tool = event?.tool_name
   return typeof tool === 'string' && !CLAUDE_SHELL_TOOLS.has(tool)
-}
-
-export function analyze(command) {
-  if (typeof command !== 'string' || !command.trim()) return null
-  const { words, compound, error } = splitWords(command)
-  if (error) return { compound: true, runner: null }
-  // 複合でも、どこかにテストランナーがあれば記録はする（select は呼ばない）
-  const segments = compound ? splitSegments(command) : [command]
-  for (const seg of segments) {
-    const sw = splitWords(seg)
-    if (sw.error) continue
-    const { argv } = stripPrefix(sw.words)
-    const hit = detectRunner(argv)
-    if (hit) return { compound, ...hit, argv, command }
-  }
-  return { compound, runner: null, argv: stripPrefix(words).argv }
-}
-
-function splitSegments(command) {
-  return command.split(/\s*(?:&&|\|\||;|\|)\s*/).filter(Boolean)
 }
 
 // 段階1: アダプタが扱えるテストコマンドを関所の run に包み直す。包めない時は null（段階0の道へ）。
