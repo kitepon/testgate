@@ -6,6 +6,7 @@
 import { relayGrok, relayToRtk } from '../lib/rtk-hook.mjs'
 import { readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+import { resolve } from 'node:path'
 import { extractCommand, HARNESSES } from '../lib/harness.mjs'
 import { splitWords } from '../lib/shell-words.mjs'
 import { appendLog, readRecent } from '../lib/log.mjs'
@@ -172,7 +173,7 @@ async function runGate(args) {
   let invocationId
   let i = 0
   while (i < args.length && args[i] !== '--') {
-    if (args[i] === '--cwd') { cwd = args[i + 1]; i += 2 }
+    if (args[i] === '--cwd') { cwd = resolve(args[i + 1]); i += 2 }  // アダプタは絶対パスの cwd を前提にする（相対だと依存の解決が空振りして none になった）
     else if (args[i] === '--original-shell') { originalShell = args[i + 1]; i += 2 }
     else if (args[i] === '--invocation-id') { invocationId = args[i + 1]; i += 2 }
     else i++

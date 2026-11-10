@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmp } from './tmp.mjs'
@@ -163,4 +163,19 @@ test('実行中に作業木が変わった run は treeStable=false。名指し�
   const named = readFileSync(join(out2, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).filter(r => r.event === 'run').at(-1)
   assert.equal(named.mode, 'passthrough'); assert.equal(named.establish, false); assert.equal(named.baselineRecorded, false)
   assert.equal(existsSync(join(out2, 'state.json')), false)
+})
+test('--cwd が相対パスでも、実アダプタが変更に関わるテストを選ぶ（相対 cwd で none になって試験を飛ばさない）', () => {
+  const dir = tmp('tg-rel-')
+  const out = tmp('tg-out-')
+  const g = (...a) => spawnSync('git', a, { cwd: dir, encoding: 'utf8' })
+  mkdirSync(join(dir, 'test'))
+  writeFileSync(join(dir, 'package.json'), '{"type":"module"}')
+  for (const name of ['a', 'b']) writeFileSync(join(dir, 'test', `${name}.test.mjs`), `import {test} from 'node:test'; test('${name}', () => {})\n`)
+  g('init', '-q'); g('add', '-A'); g('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'init')
+  const env = { ...process.env, TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  delete env.TESTGATE_ADAPTERS
+  const go = () => spawnSync('node', [bin, 'run', '--cwd', '.', '--', 'node', '--test', 'test/*.test.mjs'], { cwd: dir, encoding: 'utf8', env })
+  go() // 基準作り
+  writeFileSync(join(dir, 'test', 'a.test.mjs'), `import {test} from 'node:test'; test('a', () => {})\n// edited\n`)
+  assert.match(go().stdout, /変更に関わる分だけ流した/)
 })
