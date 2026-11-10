@@ -17,6 +17,7 @@ import { recordFullPass, repoRoot } from '../lib/git.mjs'
 import { buildRunCommand, hookOutput } from '../lib/rewrite.mjs'
 import { rewriteCompound } from '../lib/compound.mjs'
 import { analyze } from '../lib/analyze.mjs'
+import { fallbackArgv, shellPlan } from '../lib/shell.mjs'
 
 const [, , sub, harness, ...rest] = process.argv
 const tail = process.argv.slice(3)
@@ -77,7 +78,7 @@ export function isCompatCaller(harness, raw) {
 }
 
 // 段階1: アダプタが扱えるテストコマンドを関所の run に包み直す。包めない時は null（段階0の道へ）。
-// Windows は Claude の PowerShell（fox でドリリー・エクシアが確かめた道）だけ包む。他ハーネスの Windows は実物で確かめるまで通す。
+// 包み方（POSIX 複合・posix・pwsh・包まない）は lib/shell.mjs の shellPlan。Windows は Claude の PowerShell と Bash（Git Bash）、Codex（PowerShell 構文）を包み、他は通す。
 async function gatePhase1(harness, raw) {
   if (process.env.TESTGATE_PHASE === '0') return null
   let event
@@ -85,7 +86,8 @@ async function gatePhase1(harness, raw) {
   const { command, cwd, tool, id, session, transcript, inheritCwd = false } = extractCommand(harness, event)
   const r = analyze(command)
   if (typeof command !== 'string') return null
-  if (r?.compound && process.platform !== 'win32' && tool !== 'PowerShell') {
+  const plan = shellPlan({ harness, tool })
+  if (r?.compound && plan.compound) {
     const invocationId = randomUUID()
     const rewritten = rewriteCompound(command, part => buildRunCommand({
       words: part.words.map(w => w.value), argv: part.argv, cwd: null,
@@ -101,9 +103,8 @@ async function gatePhase1(harness, raw) {
   }
   if (!r?.runner || r.compound) return null
   const words = splitWords(command).words
-  let shell = 'posix'
-  if (tool === 'PowerShell') shell = 'pwsh'
-  else if (process.platform === 'win32') return null
+  const shell = plan.single
+  if (!shell) return null
   try {
     const adapters = await loadAdapters()
     const adapter = findAdapter(adapters, r.argv, { cwd: cwd ?? process.cwd(), env: process.env })
@@ -177,7 +178,7 @@ async function runGate(args) {
   if (!d && originalShell !== undefined) {
     // cd等が実行された後のcwdでアダプタが無ければ、元の単純コマンドを実行する。
     // globも元のシェルに展開させる。対応外のテストを成功扱いして飛ばさない。
-    const res = await execCapture(['/bin/sh', '-c', 'exec ' + originalShell], { cwd, env: process.env, timeoutMs: 0, forwardOutput: true })
+    const res = await execCapture(fallbackArgv(originalShell), { cwd, env: process.env, timeoutMs: 0, forwardOutput: true })
     await appendLog({ phase: 1, event: 'run', invocationId, cwd, command: originalShell,
       adapter: null, mode: 'passthrough', reason: '実行場所で対応アダプタが無いので元のコマンドを実行',
       status: res.status, timedOut: res.timedOut, durationMs: res.durationMs })
@@ -195,7 +196,7 @@ async function runGate(args) {
   const limitMs = (d.mode === 'full' && !d.establish) ? (Number(process.env.TESTGATE_FULL_LIMIT_SEC || 180) * 1000) : 0
   // そのまま流す時のglob等は、元と同じくシェルに展開させる。
   const unchanged = d.argv.length === argv.length && d.argv.every((word, index) => word === argv[index])
-  const runArgv = originalShell !== undefined && unchanged ? ['/bin/sh', '-c', 'exec ' + originalShell] : d.argv
+  const runArgv = originalShell !== undefined && unchanged ? fallbackArgv(originalShell) : d.argv
   const res = await execCapture(runArgv, { cwd, env: process.env, timeoutMs: limitMs, forwardOutput: originalShell !== undefined })
   const parsed = safe(() => adapter?.parseOutput?.(res.output)) ?? {}
   const shown = safe(() => adapter?.stripCounts?.(res.output)) ?? res.output

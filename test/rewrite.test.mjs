@@ -60,3 +60,28 @@ test('各ハーネスの hook 出力の形', () => {
   assert.deepEqual(g.hookSpecificOutput.updatedInput, { command: 'X', foo: 1 })
   assert.equal(hookOutput('nope', {}, 'X'), null)
 })
+
+import { fallbackArgv, gitBashPath, shellPlan } from '../lib/shell.mjs'
+test('shellPlan: 非 Windows は従来どおり（PowerShell 以外は POSIX 複合も包む）', () => {
+  assert.deepEqual(shellPlan({ harness: 'claude', tool: 'Bash', platform: 'linux' }), { compound: true, single: 'posix', bash: '/bin/sh' })
+  assert.deepEqual(shellPlan({ harness: 'claude', tool: 'PowerShell', platform: 'darwin' }), { compound: false, single: 'pwsh', bash: '/bin/sh' })
+})
+test('shellPlan: Windows は Git Bash が見つかる Claude の Bash だけ POSIX 複合を包み、Codex は pwsh の単純コマンドだけ', () => {
+  const found = { platform: 'win32', env: { CLAUDE_CODE_GIT_BASH_PATH: 'C:\\Git\\bin\\bash.exe' }, exists: () => true }
+  const none = { platform: 'win32', env: {}, exists: () => false }
+  assert.deepEqual(shellPlan({ harness: 'claude', tool: 'Bash', ...found }), { compound: true, single: 'posix', bash: 'C:\\Git\\bin\\bash.exe' })
+  assert.equal(shellPlan({ harness: 'claude', tool: 'Bash', ...none }).single, null)
+  assert.equal(shellPlan({ harness: 'claude', tool: 'Bash', ...none }).compound, false)
+  assert.deepEqual(shellPlan({ harness: 'claude', tool: 'PowerShell', ...found }), { compound: false, single: 'pwsh', bash: 'C:\\Git\\bin\\bash.exe' })
+  assert.deepEqual(shellPlan({ harness: 'codex', tool: 'Bash', ...found }), { compound: false, single: 'pwsh', bash: 'C:\\Git\\bin\\bash.exe' })
+  for (const harness of ['cursor', 'grok']) assert.deepEqual(shellPlan({ harness, tool: 'Bash', ...found }), { compound: false, single: null, bash: 'C:\\Git\\bin\\bash.exe' })
+})
+test('gitBashPath: 環境変数を先に、無ければ標準の置き場、どれも無ければ null', () => {
+  assert.equal(gitBashPath({ CLAUDE_CODE_GIT_BASH_PATH: 'X:\\b.exe', ProgramFiles: 'C:\\PF' }, p => p === 'X:\\b.exe'), 'X:\\b.exe')
+  assert.match(gitBashPath({ ProgramFiles: 'C:\\PF' }, p => /Git.bin.bash\.exe$/.test(p)), /Git.bin.bash\.exe$/)
+  assert.equal(gitBashPath({}, () => false), null)
+})
+test('fallbackArgv: 非 Windows は /bin/sh、Windows は見つけた Git Bash で exec', () => {
+  assert.deepEqual(fallbackArgv('cd x && npm test', { platform: 'linux' }), ['/bin/sh', '-c', 'exec cd x && npm test'])
+  assert.deepEqual(fallbackArgv('npm test', { platform: 'win32', env: { CLAUDE_CODE_GIT_BASH_PATH: 'C:\\Git\\bin\\bash.exe' }, exists: () => true }), ['C:\\Git\\bin\\bash.exe', '-c', 'exec npm test'])
+})
