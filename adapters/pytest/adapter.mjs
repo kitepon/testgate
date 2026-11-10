@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
 
 export const id = 'pytest'
-export const runners = ['pytest', 'python -m pytest', 'uv run pytest', 'poetry run pytest']
+export const runners = ['pytest', 'python -m pytest', 'uv run pytest', 'poetry run pytest', 'python -m unittest']
 
 const PROBE_TIMEOUT_MS = 5000
 
@@ -91,7 +91,7 @@ function parseRunner(argv) {
     if (j >= argv.length) return null
     const inner = parseRunner(argv.slice(j))
     if (!inner || inner.start !== 0 || Object.keys(inner.envAssigns).length) return null
-    return { end: inner.end + j, kind: first, envAssigns, start: i }
+    return { end: inner.end + j, kind: first, envAssigns, start: i, unittest: inner.unittest }
   }
   return null
 }
@@ -102,6 +102,7 @@ function parsePythonModule(argv, from, kind, envAssigns, start) {
     const t = argv[j]
     if (t === '-m') {
       if (argv[j + 1] === 'pytest') return { end: j + 2, kind, envAssigns, start }
+      if (argv[j + 1] === 'unittest') return { end: j + 2, kind, envAssigns, start, unittest: true }
       return null
     }
     if (!t.startsWith('-')) return null // スクリプト実行
@@ -184,6 +185,7 @@ function classifyPositional(token, cwd, out) {
 export function detect(argv, { cwd, env } = {}) {
   const runner = parseRunner(argv)
   if (!runner) return false
+  if (runner.unittest) return !argv.slice(runner.end).some((t) => t === '-h' || t === '--help')
   const args = parseArgs(argv.slice(runner.end), cwd)
   return !args.nonRunning
 }
@@ -241,11 +243,15 @@ export async function select({ argv, cwd, env, changed, base, full, probe } = {}
   if (full) {
     return { argv: original, mode: 'full', reason: 'pytest: 全部流す指定（TESTGATE_FULL）' }
   }
-  const changedFiles = (changed ?? []).map(toPosix)
-  if (changedFiles.length === 0) {
-    return { argv: original, mode: 'none', reason: 'pytest: 変更が無いので流す物が無い' }
+  // unittest は標準の選択の仕組みが無い。取りこぼしの出る自作選択は入れない方針なので、触らず理由付きで素通しする（持ち主: 試験選択（Python））。
+  if (runner.unittest) {
+    return { argv: original, mode: 'passthrough', reason: 'unittest: 変更から試験を選ぶ標準の仕組みが無いので触らない（全部または指定どおり流れる）' }
   }
 
+  const changedFiles = (changed ?? []).map(toPosix)
+
+  // 人の指定は変更の有無より先に見る。変更0件で none を返すと、関所が「基準作りの全部流し」に読み替え、
+  // 名指しの一部だけ通った実行を全部通った基準として記録してしまう（2026-11-10、11/9週データで確認）。
   const args = parseArgs(original.slice(runner.end), cwd)
   if (args.narrowing) {
     return { argv: original, mode: 'passthrough', reason: `pytest: 人が範囲を絞っている（${args.narrowing}）ので触らない` }
@@ -255,6 +261,10 @@ export async function select({ argv, cwd, env, changed, base, full, probe } = {}
   }
   if (args.testmonControlled) {
     return { argv: original, mode: 'passthrough', reason: `pytest: testmon を人が指定している（${args.testmonControlled}）ので触らない` }
+  }
+
+  if (changedFiles.length === 0) {
+    return { argv: original, mode: 'none', reason: 'pytest: 変更が無いので流す物が無い' }
   }
 
   if (changedFiles.every((f) => DOC_ONLY_RE.test(f))) {

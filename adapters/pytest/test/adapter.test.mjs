@@ -78,7 +78,6 @@ test('detect: ランナーでないコマンドと、テストを走らせない
     ['ls'],
     ['ls', '-la'],
     ['python', 'script.py'],
-    ['python', '-m', 'unittest'],
     ['python', '-m', 'pip', 'install', 'pytest'],
     ['pip', 'install', 'pytest'],
     ['uv', 'run', 'ruff', 'check'],
@@ -100,6 +99,20 @@ test('detect: ランナーでないコマンドと、テストを走らせない
 
 // --- select（外部コマンドを呼ばない分岐） -----------------------------------
 
+test('unittest: detect は true（-h は false）、select は変更の有無・名指しに関わらず理由付き passthrough', async () => {
+  for (const argv of [['python3', '-m', 'unittest'], ['python', '-m', 'unittest', 'discover', '-s', 'deploy', '-p', 'test_*.py'], ['uv', 'run', 'python', '-m', 'unittest', 'tests.test_calc'], ['PYTHONDONTWRITEBYTECODE=1', 'python3', '-m', 'unittest', 'test/a.test.py']]) {
+    assert.equal(detect(argv, ctx), true, argv.join(' '))
+    for (const changed of [[], ['pkg/calc.py']]) {
+      const r = await select({ argv, cwd: fixtureRepo, env: {}, changed, base: null, full: false, probe: noProbe })
+      assert.equal(r.mode, 'passthrough', argv.join(' '))
+      assert.deepEqual(r.argv, argv)
+      assert.match(r.reason, /^unittest: /)
+    }
+  }
+  assert.equal(detect(['python3', '-m', 'unittest', '-h'], ctx), false)
+  assert.equal(detect(['python3', '-m', 'http.server'], ctx), false)
+})
+
 test('select: full:true は元の argv をそのまま返す', async () => {
   const argv = ['uv', 'run', 'pytest', 'tests/', '-q']
   const r = await select({ argv, cwd: fixtureRepo, env: {}, changed: ['pkg/calc.py'], base: null, full: true, probe: noProbe })
@@ -110,6 +123,14 @@ test('select: full:true は元の argv をそのまま返す', async () => {
 test('select: 変更なしは none（前回の失敗が残っていても同じ）', async () => {
   const r = await select({ argv: ['pytest'], cwd: fixtureRepo, env: {}, changed: [], base: 'abc', full: false, probe: noProbe })
   assert.equal(r.mode, 'none')
+})
+
+test('select: 変更0件でも、名指し・絞り・testmon指定は passthrough（関所が基準作りに読み替えない）', async () => {
+  for (const argv of [['pytest', 'tests/test_calc.py'], ['pytest', '-k', 'calc'], ['pytest', '--lf'], ['pytest', '--testmon']]) {
+    const r = await select({ argv, cwd: fixtureRepo, env: {}, changed: [], base: null, full: false, probe: noProbe })
+    assert.equal(r.mode, 'passthrough', argv.join(' '))
+    assert.deepEqual(r.argv, argv)
+  }
 })
 
 test('select: 文書だけの変更は none', async () => {

@@ -55,7 +55,7 @@
 | 場面 | mode | argv |
 | --- | --- | --- |
 | `full: true` | `full` | 元のまま |
-| `changed` が空 | `none` | — |
+| `changed` が空（下の名指し・絞り込み・複合 script などの `passthrough` を先に判定した後） | `none` | — |
 | 複合の script、pre/post、監視モード | `passthrough` | 元のまま |
 | 範囲を絞るオプションがある（`-t`、`--testNamePattern`、`--test-name-pattern`、`--test-only`、`--onlyChanged`、`--changedSince`、`--changed`、`--findRelatedTests`、`--shard`、`--project` など） | `passthrough` | 元のまま |
 | 利用者が argv で打ったファイルの名指し（Jest と Vitest は位置引数があれば全部。`node --test` は glob でもディレクトリでもない引数） | `passthrough` | 元のまま |

@@ -54,7 +54,8 @@
 | 呼び方 | 理由 |
 | --- | --- |
 | `tox`、`nox`、`make test`、`hatch run`、`pdm run`、`pipenv run`、`uvx pytest` | 中身のコマンドをアダプタが知らない。`uv run` と `poetry run` だけ契約の範囲 |
-| `coverage run -m pytest`、`python -m unittest` | 別のランナー経由。pytest として判定しない |
+| `coverage run -m pytest` | 別のランナー経由。pytest として判定しない |
+| `python -m unittest`（`uv run` / `poetry run` 経由も） | 検出するが選ばない。標準に選択の仕組みが無く、自作選択も入れない方針。常に `passthrough`（reason は `unittest: …`）で記録に残る。持ち主は試験選択（Python） |
 | `pytest-xdist` の `-n` など | 解釈はするが、並列の選択結果は検証していない |
 | `pyproject.toml` の `addopts` に `-k` などが入っている場合 | argv に出ないので見えない。pytest の設定を読まない |
 

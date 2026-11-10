@@ -109,3 +109,19 @@ test('基準作りの全部流しが失敗 → 基準は作らず、次も全部
   assert.equal(r2.status, 1)
   assert.match(r2.stdout, /基準を作る/)
 })
+test('基準なし・変更なしでも、アダプタが passthrough（名指し）なら基準作りにせず、成功しても基準を記録しない', () => {
+  const dir = repo()
+  const out = tmp('tg-out-')
+  const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  const r = run(dir, env, 'node', 'mocktest.mjs', '--named')
+  assert.equal(r.status, 0)
+  assert.doesNotMatch(r.stdout, /基準を作る/)
+  const last = readFileSync(join(out, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).at(-1)
+  assert.equal(last.mode, 'passthrough')
+  assert.notEqual(last.establish, true)
+  assert.equal(existsSync(join(out, 'state.json')), false)
+  // 同じく、基準なし・未追跡の資料だけでも名指しは基準にしない。
+  writeFileSync(join(dir, 'notes.md'), 'untracked')
+  run(dir, env, 'node', 'mocktest.mjs', '--named')
+  assert.equal(existsSync(join(out, 'state.json')), false)
+})

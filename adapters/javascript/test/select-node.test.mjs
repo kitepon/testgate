@@ -41,8 +41,11 @@ test('変更なしは none、full: true は元の argv、変更が関わらな�
   assert.equal(full.mode, 'full')
   assert.deepEqual(full.argv, ALL)
 
-  // 名指しの実行でも、変更が無ければ none。
-  assert.equal((await run(cwd, ['node', '--test', 'test/tax.test.mjs'], [])).mode, 'none')
+  // 名指しの実行は、変更が無くても passthrough。none を返すと関所が基準作りの全部流しに読み替え、名指しの一部だけで基準を記録する。
+  const named = await run(cwd, ['node', '--test', 'test/tax.test.mjs'], [])
+  assert.equal(named.mode, 'passthrough')
+  assert.match(named.reason, /名指し/)
+  assert.equal((await run(cwd, ['node', '--test', '--test-name-pattern=tax', 'test/*.test.mjs'], [])).mode, 'passthrough')
   assert.equal((await run(cwd, ALL, ['docs/notes.md'])).mode, 'none')
 })
 

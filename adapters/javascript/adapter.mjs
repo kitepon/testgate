@@ -546,7 +546,8 @@ export async function select({ argv, cwd = process.cwd(), env, changed, base = n
 
   if (full) return pass(say('全部流す指定（TESTGATE_FULL）なので元のまま'), 'full')
   const files = normalizeChanged(changed)
-  if (files.length === 0) return pass(say('変更が無いので流す物が無い'), 'none')
+  // 変更が無い時の none は、人の指定・触らない判断（passthrough）の後で返す。先に none を返すと、関所が「基準作りの全部流し」に
+  // 読み替え、名指しの一部だけ通った実行を全部通った基準として記録する（2026-11-10、11/9週データで確認）。
 
   if (command.undecidable) return pass(say(`${command.undecidable}なので触らない`))
   if (command.script?.hooks) return pass(say(`script「${command.script.name}」に pre/post があるので触らない`))
@@ -566,6 +567,7 @@ export async function select({ argv, cwd = process.cwd(), env, changed, base = n
 function selectNative({ command, info, argv, cwd, files, base, say, pass }) {
   const { runner } = command
   if (info.positionals.length > 0) return pass(say(`テストの指定（${info.positionals[0]}）が既にあるので触らない`))
+  if (files.length === 0) return pass(say('変更が無いので流す物が無い'), 'none')
 
   const globalHit = globalFile(files, runner)
   if (globalHit) return pass(say(`全体に効くファイル（${globalHit}）が変わったので全部流す`), 'full')
@@ -948,6 +950,7 @@ function selectNode({ command, info, argv, cwd, files, say, pass }) {
   if (named !== undefined && !script) return pass(say(`ファイルの名指し（${named}）なので触らない`))
   const missing = patterns.find((pattern, index) => kinds[index] === 'file' && !isFile(resolve(execCwd, pattern)))
   if (missing !== undefined) return pass(say(`script に書かれたファイル（${missing}）が見つからないので触らない`))
+  if (files.length === 0) return pass(say('変更が無いので流す物が無い'), 'none')
 
   const globalHit = globalFile(files, 'node')
   if (globalHit) return pass(say(`全体に効くファイル（${globalHit}）が変わったので全部流す`), 'full')

@@ -3,6 +3,7 @@ export const runners = ['mocktest']
 export function detect(argv) { return argv[0] === 'node' && argv[1] === 'mocktest.mjs' }
 export async function select({ argv, changed, full }) {
   if (full) return { argv, mode: 'full', reason: 'mock: full' }
+  if (argv.includes('--named')) return { argv, mode: 'passthrough', reason: 'mock: ファイルの名指しなので触らない' }
   if (!changed.length) return { argv, mode: 'none', reason: 'mock: no change' }
   if (changed.every(f => f.endsWith('.md'))) return { argv, mode: 'none', reason: 'mock: 資料だけ' }
   if (changed.includes('a.txt')) return { argv: [...argv, '--only', 'a'], mode: 'subset', reason: 'mock: a だけ' }
