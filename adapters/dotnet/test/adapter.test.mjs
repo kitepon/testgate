@@ -57,6 +57,20 @@ test('変更なし → none', async () => {
   assert.deepEqual(r.argv, ['dotnet', 'test'])
 })
 
+test('変更0件でも、--filter・プロジェクト名指しは passthrough（関所が基準作りに読み替えない）', async () => {
+  const dir = repo()
+  for (const argv of [
+    ['dotnet', 'test', '--filter', 'FullyQualifiedName~Money'],
+    ['dotnet', 'test', 'tests/Main.Tests/Main.Tests.csproj'],
+    ['dotnet', 'test', 'Fx.sln', 'tests/Util.Tests/Util.Tests.csproj'],
+  ]) {
+    const r = await sel(dir, [], argv)
+    assert.equal(r.mode, 'passthrough', argv.join(' '))
+    assert.deepEqual(r.argv, argv)
+  }
+  assert.equal((await sel(dir, undefined)).mode, 'none') // changed が無い形でも投げない
+})
+
 test('full: true → 元の argv', async () => {
   const dir = repo()
   const argv = ['dotnet', 'test', '-c', 'Release']

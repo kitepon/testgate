@@ -100,6 +100,17 @@ test('cargo: 変更なし → none / full:true → 元のargv', { skip: skipCarg
   rmSync(dir, { recursive: true })
 })
 
+test('cargo: 変更0件でも、-p・テスト名・名前付きターゲットは passthrough（関所が基準作りに読み替えない）', { skip: skipCargo }, async () => {
+  const dir = repo('rust-ws')
+  for (const argv of [['cargo', 'test', '-p', 'core'], ['cargo', 'test', 'it_works'], ['cargo', 'test', '--test', 'integration']]) {
+    const r = await sel(dir, argv, [])
+    assert.equal(r.mode, 'passthrough', argv.join(' '))
+    assert.deepEqual(r.argv, argv)
+  }
+  assert.equal((await sel(dir, ['cargo', 'test'], undefined)).mode, 'none') // changed が無い形でも投げない
+  rmSync(dir, { recursive: true })
+})
+
 test('cargo: 属さないファイルだけ → none、全体に効くファイル・crateごと消えた → full', { skip: skipCargo }, async () => {
   const dir = repo('rust-ws')
   assert.equal((await sel(dir, ['cargo', 'test'], ['README.md', 'docs/a.md'])).mode, 'none')
@@ -178,6 +189,17 @@ test('go: 末端の変更・テストファイルの変更・後ろの引数は�
   assert.deepEqual(r.argv, ['go', 'test', 'example.com/fx/indep', '-v', '-count=1'])
   const r2 = await sel(dir, ['go', 'test', './...', '-args', '-x'], ['app/app.go'])
   assert.deepEqual(r2.argv, ['go', 'test', 'example.com/fx/app', '-args', '-x'])
+  rmSync(dir, { recursive: true })
+})
+
+test('go: 変更0件でも、package・ファイル・-run 指定は passthrough（関所が基準作りに読み替えない）', { skip: skipGo }, async () => {
+  const dir = repo('go-mod')
+  for (const argv of [['go', 'test', 'example.com/fx/app'], ['go', 'test', 'core/core_test.go'], ['go', 'test', '-run', 'TestX', './...']]) {
+    const r = await sel(dir, argv, [])
+    assert.equal(r.mode, 'passthrough', argv.join(' '))
+    assert.deepEqual(r.argv, argv)
+  }
+  assert.equal((await sel(dir, ['go', 'test', './...'], undefined)).mode, 'none') // changed が無い形でも投げない
   rmSync(dir, { recursive: true })
 })
 

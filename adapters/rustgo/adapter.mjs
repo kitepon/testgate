@@ -115,9 +115,10 @@ export async function select({ argv, cwd = process.cwd(), env = process.env, cha
   const kind = classify(argv)
   if (!kind) return passthrough(argv, 'cargo test / go test ではない')
   if (full) return { argv, mode: 'full', reason: '全部流す指定（TESTGATE_FULL）' }
-  if (!changed || changed.length === 0) return { argv, mode: 'none', reason: '変更ファイルが無い' }
+  // 変更0件の none は、人の指定（-p・テスト名・package・ファイル）の判定より後ろ（selectCargo/selectGo の中）で返す。
+  // 先に none を返すと、関所が「基準作りの全部流し」に読み替え、名指しの一部だけ通った実行を全部通った基準として記録する（2026-11-10）。
   const root = findRoot(cwd)
-  const files = changed.map((p) => path.resolve(root, p))
+  const files = (changed ?? []).map((p) => path.resolve(root, p))
   const run = makeRunner(cwd, env)
   const label = `${kind.tool} test: `
   try {
@@ -163,6 +164,7 @@ async function selectCargo({ argv, sub, cwd, files, run }) {
     else if (t.startsWith('--manifest-path=')) manifest = t.slice(16)
     else if (CARGO_VALUE_FLAGS.has(t)) k++
   }
+  if (files.length === 0) return { argv, mode: 'none', reason: '変更ファイルが無い' }
 
   const margs = ['metadata', '--format-version', '1', '--offline']
   if (manifest) margs.push('--manifest-path', manifest)
@@ -324,6 +326,7 @@ async function selectGo({ argv, sub, cwd, env, files, run }) {
   if (patterns.some((p) => p !== './...' && p !== '...')) {
     return passthrough(argv, 'packageが指定済み（人が絞っているので触らない）')
   }
+  if (files.length === 0) return { argv, mode: 'none', reason: '変更ファイルが無い' }
 
   // モジュールの全体像（go.work があれば全 use、無ければ最寄りの go.mod）
   let modDirs

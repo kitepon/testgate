@@ -99,7 +99,7 @@ export async function select({ argv, cwd = process.cwd(), env = process.env, cha
   const kind = classify(argv)
   if (!kind) return passthrough(argv, 'dotnet test: dotnet test ではない')
   if (full) return { argv, mode: 'full', reason: 'dotnet test: 全部流す指定（TESTGATE_FULL）' }
-  if (!changed || changed.length === 0) return { argv, mode: 'none', reason: 'dotnet test: 変更ファイルが無い' }
+  // 変更0件の none は、人の指定（--filter・プロジェクト名指しなど）の判定より後ろ（selectDotnet の中）で返す。理由は rustgo と同じ。
   const label = 'dotnet test: '
   try {
     const r = selectDotnet({ argv, sub: kind.sub, cwd, changed, deadline: Date.now() + DEADLINE_MS })
@@ -416,7 +416,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
   if (hasFilter) return passthrough(argv, '--filter が指定済み（人が絞っているので触らない）')
   if (pos.length > 1) return passthrough(argv, '引数が複数あり書き換えない')
   const root = findRoot(cwd)
-  const files = changed.map((p) => path.resolve(root, p))
+  const files = (changed ?? []).map((p) => path.resolve(root, p))
 
   // 対象の特定
   let target = null // { solution?: file, project?: file }
@@ -439,6 +439,7 @@ function selectDotnet({ argv, sub, cwd, changed, deadline }) {
     else if (slns.length === 0 && projs.length === 0) return passthrough(argv, 'solution もプロジェクトも見つからない')
     else return passthrough(argv, 'solution かプロジェクトが複数あり、dotnet が決められない')
   }
+  if (files.length === 0) return { argv, mode: 'none', reason: '変更ファイルが無い' }
 
   // 範囲（universe）の読み込み
   const convTestCache = new Map()
