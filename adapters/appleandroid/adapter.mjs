@@ -328,6 +328,13 @@ function hasTestSources(dir, buildText) {
   } catch { return false }
 }
 
+// cwd（または -p）がルート以外のサブプロジェクトなら、その相対パス。範囲は既に絞られている（人が決めた）
+function gradleSubproject(cwd, p) {
+  const effective = path.resolve(cwd, p.projectDir ?? '.')
+  const sf = findUp(effective, ['settings.gradle.kts', 'settings.gradle'])
+  return sf && effective !== sf.dir ? path.relative(sf.dir, effective) || '.' : null
+}
+
 function selectGradle({ argv, cwd, changed, info, n }) {
   const p = info.parsed
   const R = reason => `gradle test: ${reason}`
@@ -335,9 +342,6 @@ function selectGradle({ argv, cwd, changed, info, n }) {
   const sf = findUp(effective, ['settings.gradle.kts', 'settings.gradle'])
   if (!sf) return { argv, mode: 'full', reason: R('settings.gradle が見つからない単一プロジェクトか未知の構成。モジュール選択の仕組みが無いので full') }
   const rootDir = sf.dir
-  if (path.resolve(effective) !== rootDir) {
-    return { argv, mode: 'passthrough', reason: R(`サブプロジェクト内（${path.relative(rootDir, effective) || '.'}）から実行。範囲は既に絞られている`) }
-  }
   // 全体に効くファイル
   const gitRoot = findGitRoot(rootDir) ?? rootDir
   for (const c of changed) {
@@ -434,12 +438,17 @@ export async function select({ argv, cwd = process.cwd(), env, changed = [], bas
     // build は変更が無くても build をやめない（none にしない）。件数の記録のための full
     return { argv, mode: 'full', reason: 'gradle test: build は check 経由でテストも流す。build の意味を変えないため argv はそのまま（全部流れる）' }
   }
+  // 人が範囲を絞った実行は、変更が0件・文書だけでも passthrough（none にすると関所が基準作りの full に読み替える。契約: 名指しは触らない）
+  if (c.narrowed.length > 0) {
+    return { argv, mode: 'passthrough', reason: `${label}: 人が範囲を絞っている（${c.narrowed.join(' ')}）` }
+  }
+  const sub = c.tool === 'gradle' ? gradleSubproject(cwd, c.parsed) : null
+  if (sub !== null) {
+    return { argv, mode: 'passthrough', reason: `${label}: サブプロジェクト内（${sub}）から実行。範囲は既に絞られている` }
+  }
   if (!changed || changed.length === 0) return { argv, mode: 'none', reason: `${label}: 変更が無い` }
   if (changed.every(isDocOnly)) {
     return { argv, mode: 'none', reason: `${label}: 変更は文書・設定メモだけでテストに関わらない` }
-  }
-  if (c.narrowed.length > 0) {
-    return { argv, mode: 'passthrough', reason: `${label}: 人が範囲を絞っている（${c.narrowed.join(' ')}）` }
   }
   if (c.tool === 'swift') {
     return { argv, mode: 'full', reason: 'swift test: 変更からテストを選ぶ既製の仕組みが無いので full（時間上限は関所側）' }

@@ -34,9 +34,9 @@ TESTGATE_REAL_RUNNERS=1 JAVA_HOME=… node --test test/integration.test.mjs   # 
 順に判定する。
 
 1. `full: true` → 元の argv のまま `full`。
-2. `changed` が空 → `none`（前回の失敗があっても変えない）。
-3. `changed` が文書だけ（`*.md`・`*.txt`・`LICENSE`・`docs/`・`.github/` など。`src/`・`Sources/`・`Tests/` の下は文書扱いしない） → `none`。
-4. 人が範囲を絞っている → `passthrough`: swift の `--filter`/`--skip`、xcodebuild の `-only-testing`/`-skip-testing`/`-testPlan`、gradle の `--tests`、`-Dtest.single`、モジュール修飾のタスク（`:core:test`）、サブプロジェクトの中や `-p サブ` からの実行。
+2. 人が範囲を絞っている → `passthrough`（変更が0件・文書だけでも。none にすると関所が基準作りの full に読み替える）: swift の `--filter`/`--skip`、xcodebuild の `-only-testing`/`-skip-testing`/`-testPlan`、gradle の `--tests`、`-Dtest.single`、モジュール修飾のタスク（`:core:test`）、サブプロジェクトの中や `-p サブ` からの実行。
+3. `changed` が空 → `none`（前回の失敗があっても変えない）。
+4. `changed` が文書だけ（`*.md`・`*.txt`・`LICENSE`・`docs/`・`.github/` など。`src/`・`Sources/`・`Tests/` の下は文書扱いしない） → `none`。
 5. swift・xcodebuild → `full`（選ぶ手段が無い。時間上限は関所側）。
 6. gradle → 下のモジュール選択。
 

@@ -448,3 +448,53 @@ test('select は argv を書き換えない（元の配列を破壊しない）'
     assert.deepEqual(argv, copy)
   } finally { r.cleanup() }
 })
+
+// ───────── 人が範囲を絞った実行は、変更が0件・文書だけでも passthrough（none にしない） ─────────
+// none だと関所が基準作りの full に読み替え、人が選んだ一部だけが通った実行を「全部通った」基準にしてしまう。
+
+const NAMED = [
+  ['swift --filter', ['swift', 'test', '--filter', 'CalcTests']],
+  ['swift --skip', ['swift', 'test', '--skip', 'SlowTests']],
+  ['xcodebuild -only-testing', ['xcodebuild', 'test', '-scheme', 'S', '-only-testing:CoreTests/CalcTests']],
+  ['xcodebuild -skip-testing', ['xcodebuild', 'test', '-scheme', 'S', '-skip-testing:SlowTests']],
+  ['xcodebuild -testPlan', ['xcodebuild', 'test', '-scheme', 'S', '-testPlan', 'Unit']],
+  ['gradle --tests', ['./gradlew', 'test', '--tests', 'demo.CalcTest']],
+  ['gradle :app:test', ['./gradlew', ':app:test']]
+]
+for (const [name, argv] of NAMED) {
+  for (const [what, changed] of [['変更0件', []], ['変更が未定義', undefined], ['文書だけの変更', ['README.md', 'docs/x.md']]]) {
+    test(`${name}: ${what}でも passthrough（argv 不変）`, async () => {
+      const s = await select({ argv, cwd: '/tmp', env: {}, changed, base: null, full: false })
+      assert.equal(s.mode, 'passthrough')
+      assert.deepEqual(s.argv, argv)
+      assert.match(s.reason, /人が範囲を絞っている/)
+    })
+  }
+}
+
+test('gradle: サブプロジェクトの中や -p サブ からの実行は、変更0件・文書だけでも passthrough', async () => {
+  const r = tempRepo('gradle-multi')
+  try {
+    for (const changed of [[], ['README.md']]) {
+      const s = await gsel(r, { argv: ['../gradlew', 'test'], cwd: path.join(r.dir, 'core'), changed })
+      assert.equal(s.mode, 'passthrough')
+      assert.match(s.reason, /サブプロジェクト内/)
+      const s2 = await gsel(r, { argv: ['./gradlew', '-p', 'core', 'test'], changed })
+      assert.equal(s2.mode, 'passthrough')
+    }
+  } finally { r.cleanup() }
+})
+
+test('名指しでない呼び方は、変更0件なら従来どおり none（swift・xcodebuild・gradle）', async () => {
+  for (const argv of [['swift', 'test'], ['xcodebuild', 'test', '-scheme', 'S'], ['gradle', 'check']]) {
+    const s = await select({ argv, cwd: '/tmp', env: {}, changed: [], base: null, full: false })
+    assert.equal(s.mode, 'none', argv.join(' '))
+  }
+})
+
+test('テスト実行ではない呼び方は changed=[] でも passthrough で投げない', async () => {
+  for (const argv of [['xcodebuild', 'build'], ['swift', 'build'], ['./gradlew', 'assemble'], ['ls']]) {
+    const s = await select({ argv, cwd: '/tmp', env: {}, changed: [], base: null, full: false })
+    assert.equal(s.mode, 'passthrough', argv.join(' '))
+  }
+})
