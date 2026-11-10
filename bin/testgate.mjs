@@ -13,7 +13,7 @@ import { genericCounts } from '../lib/counts.mjs'
 import { loadAdapters, findAdapter } from '../lib/adapters.mjs'
 import { decide } from '../lib/gate.mjs'
 import { execCapture, trimForModel } from '../lib/run.mjs'
-import { recordFullPass, repoRoot } from '../lib/git.mjs'
+import { recordFullPass, repoRoot, testedState } from '../lib/git.mjs'
 import { buildRunCommand, hookOutput } from '../lib/rewrite.mjs'
 import { rewriteCompound } from '../lib/compound.mjs'
 import { analyze } from '../lib/analyze.mjs'
@@ -160,6 +160,12 @@ function outputText(event) {
   return ''
 }
 
+// run 行に残す「試験した状態」。実行前の状態を記録し、実行後と違えば（実行中に作業木が変わった）treeStable=false。不明は null。
+function testedFields(before, after) {
+  const known = before.treeHash !== null && after.treeHash !== null
+  return { testedCommit: before.testedCommit, treeHash: before.treeHash, treeStable: known ? before.treeHash === after.treeHash : null }
+}
+
 async function runGate(args) {
   let cwd = process.cwd()
   let originalShell
@@ -178,10 +184,12 @@ async function runGate(args) {
   if (!d && originalShell !== undefined) {
     // cd等が実行された後のcwdでアダプタが無ければ、元の単純コマンドを実行する。
     // globも元のシェルに展開させる。対応外のテストを成功扱いして飛ばさない。
+    const before = testedState(cwd)
     const res = await execCapture(fallbackArgv(originalShell), { cwd, env: process.env, timeoutMs: 0, forwardOutput: true })
     await appendLog({ phase: 1, event: 'run', invocationId, cwd, command: originalShell,
       adapter: null, mode: 'passthrough', reason: '実行場所で対応アダプタが無いので元のコマンドを実行',
-      status: res.status, timedOut: res.timedOut, durationMs: res.durationMs })
+      status: res.status, timedOut: res.timedOut, durationMs: res.durationMs,
+      ...testedFields(before, testedState(cwd)), establish: false, baselineRecorded: false })
     return res.status
   }
   const adapter = d ? adapters.find(a => a.id === d.adapter) : null
@@ -197,12 +205,14 @@ async function runGate(args) {
   // そのまま流す時のglob等は、元と同じくシェルに展開させる。
   const unchanged = d.argv.length === argv.length && d.argv.every((word, index) => word === argv[index])
   const runArgv = originalShell !== undefined && unchanged ? fallbackArgv(originalShell) : d.argv
+  const before = testedState(cwd)
   const res = await execCapture(runArgv, { cwd, env: process.env, timeoutMs: limitMs, forwardOutput: originalShell !== undefined })
   const parsed = safe(() => adapter?.parseOutput?.(res.output)) ?? {}
   const shown = safe(() => adapter?.stripCounts?.(res.output)) ?? res.output
   const ok = res.status === 0 && !res.timedOut
-  if (ok && d.mode === 'full' && d.root) recordFullPass(d.root, process.env)
-  await appendLog({ phase: 1, event: 'run', invocationId, cwd, command: argv.join(' '), ran: d.argv.join(' '), adapter: d.adapter, mode: d.mode, reason: d.reason, base: d.base, changedCount: d.changedCount, status: res.status, timedOut: res.timedOut, durationMs: res.durationMs, passed: parsed.passed, failed: parsed.failed, skipped: parsed.skipped, errors: parsed.errors })
+  const baselineRecorded = ok && d.mode === 'full' && d.root ? recordFullPass(d.root, process.env) : false
+  const after = testedState(cwd)
+  await appendLog({ phase: 1, event: 'run', invocationId, cwd, command: argv.join(' '), ran: d.argv.join(' '), adapter: d.adapter, mode: d.mode, reason: d.reason, base: d.base, changedCount: d.changedCount, status: res.status, timedOut: res.timedOut, durationMs: res.durationMs, passed: parsed.passed, failed: parsed.failed, skipped: parsed.skipped, errors: parsed.errors, ...testedFields(before, after), establish: d.establish === true, baselineRecorded })
   if (originalShell !== undefined) {
     if (res.timedOut) process.stderr.write(`testgate: 全部流しが ${limitMs / 1000} 秒を超えたので止めた。\n`)
     return res.timedOut ? 124 : res.status

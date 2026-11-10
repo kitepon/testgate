@@ -125,3 +125,42 @@ test('基準なし・変更なしでも、アダプタが passthrough（名指�
   run(dir, env, 'node', 'mocktest.mjs', '--named')
   assert.equal(existsSync(join(out, 'state.json')), false)
 })
+test('run 行に試験した状態を残す: testedCommit・treeHash・treeStable・establish・baselineRecorded', () => {
+  const dir = repo()
+  const out = tmp('tg-out-')
+  const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  const rowsOf = () => readFileSync(join(out, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).filter(r => r.event === 'run')
+  const head = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).stdout.trim()
+  // 基準作りの全部流し（成功）→ 基準を記録した run
+  run(dir, env, 'node', 'mocktest.mjs')
+  const est = rowsOf().at(-1)
+  assert.equal(est.testedCommit, head); assert.match(est.treeHash, /^[0-9a-f]{64}$/)
+  assert.equal(est.treeStable, true); assert.equal(est.establish, true); assert.equal(est.baselineRecorded, true)
+  // 同じ状態でもう一度（TESTGATE_FULL）→ 同じ treeHash、establish ではない
+  run(dir, { ...env, TESTGATE_FULL: '1' }, 'node', 'mocktest.mjs')
+  const again = rowsOf().at(-1)
+  assert.equal(again.treeHash, est.treeHash); assert.equal(again.establish, false); assert.equal(again.baselineRecorded, true)
+  // 未commitの変更 → subset。treeHash が変わり、基準は記録しない
+  writeFileSync(join(dir, 'a.txt'), 'changed')
+  run(dir, env, 'node', 'mocktest.mjs')
+  const sub = rowsOf().at(-1)
+  assert.equal(sub.mode, 'subset'); assert.notEqual(sub.treeHash, est.treeHash)
+  assert.equal(sub.testedCommit, head); assert.equal(sub.baselineRecorded, false); assert.equal(sub.establish, false)
+})
+test('実行中に作業木が変わった run は treeStable=false。名指しの passthrough は基準を記録しない', () => {
+  const dir = repo()
+  const out = tmp('tg-out-')
+  const env = { TESTGATE_LOG: join(out, 'log.jsonl'), XDG_STATE_HOME: join(out, 'state') }
+  const last = () => readFileSync(join(out, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).filter(r => r.event === 'run').at(-1)
+  writeFileSync(join(dir, 'mocktest.mjs'), `import { writeFileSync } from 'node:fs'; writeFileSync('b.txt', 'edited during the run'); console.log('3 ok, 0 ng')`)
+  spawnSync('git', ['-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qam', 'edits'], { cwd: dir })
+  run(dir, env, 'node', 'mocktest.mjs')
+  assert.equal(last().treeStable, false)
+  const dir2 = repo()
+  const out2 = tmp('tg-out-')
+  const env2 = { TESTGATE_LOG: join(out2, 'log.jsonl'), XDG_STATE_HOME: join(out2, 'state') }
+  run(dir2, env2, 'node', 'mocktest.mjs', '--named')
+  const named = readFileSync(join(out2, 'log.jsonl'), 'utf8').trim().split('\n').map(JSON.parse).filter(r => r.event === 'run').at(-1)
+  assert.equal(named.mode, 'passthrough'); assert.equal(named.establish, false); assert.equal(named.baselineRecorded, false)
+  assert.equal(existsSync(join(out2, 'state.json')), false)
+})

@@ -57,6 +57,8 @@
 | `full: true` | `full` | 元のまま |
 | `changed` が空（下の名指し・絞り込み・複合 script などの `passthrough` を先に判定した後） | `none` | — |
 | 複合の script、pre/post、監視モード | `passthrough` | 元のまま |
+| `npm --prefix <dir>` と `-w <dir>`（パスで一つ、そこに package.json がある時）。その package の script が Jest・Vitest なら、`--` の後ろに既製のオプションを足す。`node --test` は、その場所で走らせる必要があるので `passthrough` | `subset` / `passthrough` | `npm … -- --changed` など |
+| 入れ子の script（`test:sensor` = `npm --prefix sensor test` のように別の script を一段だけ呼ぶ）。追加の引数が無く、package.json のある場所から呼ばれた Jest・Vitest だけ、内側の呼び出しへ置き換えて選ぶ。それ以外は `passthrough` | `subset` / `passthrough` | 内側の呼び出し + `-- --changed` |
 | 範囲を絞るオプションがある（`-t`、`--testNamePattern`、`--test-name-pattern`、`--test-only`、`--onlyChanged`、`--changedSince`、`--changed`、`--findRelatedTests`、`--shard`、`--project` など） | `passthrough` | 元のまま |
 | 利用者が argv で打ったファイルの名指し（Jest と Vitest は位置引数があれば全部。`node --test` は glob でもディレクトリでもない引数） | `passthrough` | 元のまま |
 | 全体に効くファイルが変わった（`package.json`、ロックファイル、`tsconfig*.json`、`.npmrc`、`jest.config.*`、`babel.config.*`、`vitest.config.*`、`vite.config.*`、`node_modules/` の下など） | `full` | 元のまま |
