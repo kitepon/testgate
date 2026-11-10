@@ -60,8 +60,11 @@ test('POSIXの前置き環境変数（TESTGATE_FULL=1）は包んだ後も効く
 test('codex / cursor / grok の形', () => {
   const dir = repo()
   if (windows) {
+    // Codex の Bash 道具は Windows では PowerShell 構文なので、& で包む（shellPlan）。workdir が無いので --cwd は付かない
+    const c = JSON.parse(hook('codex', { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir, tool_use_id: 'call_1' }, dir).stdout)
+    assert.match(c.hookSpecificOutput.updatedInput.command, /^& .* run -- npm test$/)
+    assert.doesNotMatch(c.hookSpecificOutput.updatedInput.command, / --cwd /)
     for (const [harness, event] of [
-      ['codex', { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir, tool_use_id: 'call_1' }],
       ['cursor', { command: 'npm test', cwd: dir, workspace_roots: [dir] }],
       ['grok', { toolName: 'run_terminal_command', toolInput: { command: 'npm test', foo: 1 }, cwd: dir }],
     ]) {
@@ -106,12 +109,13 @@ test('codex: tool_input.workdir があれば包んだ run の --cwd はそこ（
   const rows2 = rows(dir).filter(r => r.id === 'call_w1' || r.id === 'call_w2')
   assert.equal(rows2.length, 2); for (const r of rows2) assert.equal(r.cwd, sub)
 })
-test('WindowsのBashは包まず段階0へ中継する', { skip: !windows && 'Windowsの限定仕様' }, () => {
+test('Git Bash が無い WindowsのClaude Bashは包まず段階0へ中継する', { skip: !windows && 'Windowsの限定仕様' }, () => {
   const dir = repo()
   const event = { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir }
-  const r = hook('claude', event, dir)
+  const noGitBash = { CLAUDE_CODE_GIT_BASH_PATH: '', ProgramFiles: '', 'ProgramFiles(x86)': '', LOCALAPPDATA: '' } // gitBashPath の探し先を全て消す
+  const r = hook('claude', event, dir, noGitBash)
   assert.equal(r.status, 0, r.stderr)
-  assert.equal(r.stdout, hook('claude', event, dir, { TESTGATE_PHASE: '0' }).stdout)
+  assert.equal(r.stdout, hook('claude', event, dir, { ...noGitBash, TESTGATE_PHASE: '0' }).stdout)
   assert.equal(rows(dir).at(-2).phase, 0)
 })
 test('PowerShell は & で包む', () => {
