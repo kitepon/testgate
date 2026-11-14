@@ -1,6 +1,6 @@
 # testgate — テストの関所
 
-AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フックに入り、テスト実行を記録し、段階1以降は変更に関わる分だけに絞る。設計は`docs/design.md`、アダプタの契約は `docs/adapter-contract.md`。
+AIハーネス（Claude Code・Codex・Cursor・Grok）のコマンド実行フックに入り、テスト実行を記録し、段階1以降は変更に関わる分だけに絞る。設計は`docs/design.md`、アダプタの契約は `docs/adapter-contract.md`。hookへの登録の約束（登録入口 v1）は `docs/registration-contract.md`。
 
 ## 段階1（v0.2.0 から既定）
 
