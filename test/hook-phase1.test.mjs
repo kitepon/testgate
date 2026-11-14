@@ -112,7 +112,7 @@ test('codex: tool_input.workdir があれば包んだ run の --cwd はそこ（
 test('Git Bash が無い WindowsのClaude Bashは包まず段階0へ中継する', { skip: !windows && 'Windowsの限定仕様' }, () => {
   const dir = repo()
   const event = { tool_name: 'Bash', tool_input: { command: 'npm test' }, cwd: dir }
-  const noGitBash = { CLAUDE_CODE_GIT_BASH_PATH: '', ProgramFiles: '', 'ProgramFiles(x86)': '', LOCALAPPDATA: '' } // gitBashPath の探し先を全て消す
+  const noGitBash = { CLAUDE_CODE_GIT_BASH_PATH: '', ProgramFiles: '', ProgramW6432: '', 'ProgramFiles(x86)': '', LOCALAPPDATA: '' } // gitBashPath の探し先を全て消す。64bitの子はProgramFilesをProgramW6432から埋め直すので、これも空にする
   const r = hook('claude', event, dir, noGitBash)
   assert.equal(r.status, 0, r.stderr)
   assert.equal(r.stdout, hook('claude', event, dir, { ...noGitBash, TESTGATE_PHASE: '0' }).stdout)
