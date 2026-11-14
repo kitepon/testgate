@@ -1,4 +1,4 @@
-# 現行本体の機能図とデータフロー（v0.3.32）
+# 現行本体の機能図とデータフロー（v0.3.33）
 
 旧design.mdの段階計画・旧担当表は履歴。現在は段階1を維持、段階2はOwner停止中。設計/版/受入の統括はシラツル、adapter内部は各言語担当、配布はドリリー、BellTeam登録はトロニー。
 
@@ -13,7 +13,7 @@
 | lib/log.mjs / lib/git.mjs | 記録行→log.jsonl、root→state.jsonのlastFullPass、cwd→testedState(HEAD、`git diff HEAD --binary`と未追跡ファイルの内容hash。未追跡2000件/64MBを超えるとtreeHashはnull。.gitignoreされた物は含まない)。recordFullPassは書けた時だけtrue | logは無制限append・失敗stderr。stateは最後の成功commitをrootごと上書き。別fileでatomic一体更新ではない |
 | 保存/試験 | 通常本体は依存/build生成なし。test/tmp.mjs→worker一時dir | worker exitで自己生成dir回収。SIGKILLの回収保証なし。pruneは停止中、起動しない |
 
-データフロー: 登録者がcommandをharnessのhook設定へ書く→harnessがそのcommandを呼ぶ（以降はhook入力）。harness入力→hook判定→run包み→元shellの実行時cwd→runGate→decide（Git＋state→adapter.select→passthroughならそのまま、基準無しの変更0件/noneだけestablish full）→execCapture→adapter結果読取→表示＋log。full成功→state（passthroughの成功はstateを更新しない。baselineRecordedで、どのrunがstateを書いたか分かる）。run行→外部週次collector（testedCommit・treeHash・treeStable・establish・baselineRecordedをnullable追加フィールドとして出す。schemaVersion 3のまま）→集計側のpairing（同host・同repo・同adapter・同版・同treeHash・両方treeStable=true・S=subset成功→後のF=full の組。n<30は「未評価」とn件を出す）。phase0はRTK中継＋影の判断/log、post補助はreadRecentからidを照合。log→外部週次collector→評価報告。通常実行は作業コピー/backupを作らない。
+データフロー: ドリリーがRTKのharness-entries.json（共通置き場/rtk）へ登録入口v1のcommandを公開→BellTeam（コンテナ）が読んでharness設定へ書く（端末はドリリーが書く）。いずれも登録者がcommandをharnessのhook設定へ書く→harnessがそのcommandを呼ぶ。testgateは自前の公開ファイルを持たない。新しいhook command/event（PostToolUse等）はドリリーへ渡してRTKのファイルを変える（以降はhook入力）。harness入力→hook判定→run包み→元shellの実行時cwd→runGate→decide（Git＋state→adapter.select→passthroughならそのまま、基準無しの変更0件/noneだけestablish full）→execCapture→adapter結果読取→表示＋log。full成功→state（passthroughの成功はstateを更新しない。baselineRecordedで、どのrunがstateを書いたか分かる）。run行→外部週次collector（testedCommit・treeHash・treeStable・establish・baselineRecordedをnullable追加フィールドとして出す。schemaVersion 3のまま）→集計側のpairing（同host・同repo・同adapter・同版・同treeHash・両方treeStable=true・S=subset成功→後のF=full の組。n<30は「未評価」とn件を出す）。phase0はRTK中継＋影の判断/log、post補助はreadRecentからidを照合。log→外部週次collector→評価報告。通常実行は作業コピー/backupを作らない。
 
 保存と一時検証のライフサイクル正本は統括席docs/testgate-storage-lifecycle-20261106.md。単純rotate/compactは週次の欠測と並行append喪失を起こし得るため、90日保持案は未実装。ここに図があることを新配備/刈り込み再開許可としない。
 

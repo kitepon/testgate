@@ -6,8 +6,10 @@ Contract between testgate and the parties that register it into a harness hook c
 
 | Registrant | Who | Where it registers |
 | --- | --- | --- |
-| BellTeam container | Epinel / BellTeam `src/rtk-hooks.mjs` | container harness settings |
+| BellTeam container | Drilly publishes RTK's `/srv/bellteam/shared/tools/rtk/harness-entries.json` (`bellteam.harness-entries.v1`); BellTeam reads it as the single writer of each CLI file (BellTeam PR #1396, Epinel) | container harness settings |
 | Terminals (rabbit, Mac, fox) | Drilly | terminal harness settings |
+
+The item in that file is exactly point 1's command, so RTK consumes this contract; testgate publishes no file of its own (one hook, one publisher). Any new testgate hook command or event (for example a PostToolUse) goes to Drilly, who changes RTK's file.
 
 ## Contract (v1)
 
